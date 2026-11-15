@@ -26,3 +26,14 @@ def check_job_rate(user_id: str, cost: int = 1) -> None:
         raise HTTPException(
             status.HTTP_429_TOO_MANY_REQUESTS, "Too many jobs started. Wait a minute and try again."
         )
+
+
+def check_ip_rate(ip: str, bucket: str, limit: int = 5) -> None:
+    """Fixed-window limit for unauthenticated endpoints (e.g. /setup token guessing)."""
+    key = f"rl:{bucket}:{ip}:{int(time.time() // 60)}"
+    pipe = _r().pipeline()
+    pipe.incr(key)
+    pipe.expire(key, 90)
+    count, _ = pipe.execute()
+    if int(count) > limit:
+        raise HTTPException(status.HTTP_429_TOO_MANY_REQUESTS, "Too many attempts. Wait a minute.")

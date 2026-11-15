@@ -5,6 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { BarChart3, Clapperboard, LayoutGrid, LogOut, Scissors, Settings, Sparkles } from "lucide-react";
 import { supabaseBrowser } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
+import { BudgetBanner } from "./budget-banner";
 import { MemberProvider, type Me } from "./member-context";
 
 const NAV = [
@@ -27,7 +28,8 @@ export function AppShell({ me, children }: { me: Me; children: React.ReactNode }
   return (
     <MemberProvider me={me}>
       <div className="min-h-dvh md:grid md:grid-cols-[232px_1fr]">
-        <aside className="sticky top-0 hidden h-dvh flex-col border-r bg-card/40 p-4 md:flex">
+        <div className="hidden border-r bg-card/40 md:block">
+        <aside className="sticky top-0 flex h-dvh flex-col p-4">
           <Link href="/" className="mb-8 flex items-center gap-2 px-2 font-semibold">
             <Clapperboard className="size-6 text-primary" /> Shorts Studio
           </Link>
@@ -53,6 +55,7 @@ export function AppShell({ me, children }: { me: Me; children: React.ReactNode }
             </button>
           </div>
         </aside>
+        </div>
         <header className="sticky top-0 z-30 flex items-center justify-between border-b bg-background/80 px-4 py-3 backdrop-blur md:hidden">
           <Link href="/" className="flex items-center gap-2 font-semibold">
             <Clapperboard className="size-5 text-primary" /> Shorts Studio
@@ -61,7 +64,10 @@ export function AppShell({ me, children }: { me: Me; children: React.ReactNode }
             <LogOut className="size-4" />
           </button>
         </header>
-        <main className="min-w-0 px-4 pb-24 pt-6 md:px-8 md:pb-10">{children}</main>
+        <main className="min-w-0 px-4 pb-24 pt-6 md:px-8 md:pb-10">
+          <BudgetBanner />
+          {children}
+        </main>
         <nav className="fixed inset-x-0 bottom-0 z-30 grid grid-cols-5 border-t bg-background/95 backdrop-blur md:hidden">
           {NAV.map((n) => (
             <Link

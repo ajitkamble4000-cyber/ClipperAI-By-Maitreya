@@ -17,6 +17,7 @@ async function seedStory(userId: string) {
 }
 
 test("new story form creates a story; no Gemini key shows a clear error", async ({ page }) => {
+  test.skip(process.env.STUDIO_FAKE_GEMINI === "1", "needs the real (unconfigured) Gemini client");
   const a = await createMember("member");
   await login(page, a.email);
   await page.goto("/story/new");
@@ -61,6 +62,7 @@ test("storyboard: autosave, reorder, add, delete, live collaboration", async ({ 
 
   // Everything persisted.
   await page.reload();
+  await expect(page.getByTestId("scene-card")).toHaveCount(3);
   const narr = await page.getByTestId("scene-card").getByLabel("Narration").evaluateAll((els) => els.map((e) => (e as HTMLTextAreaElement).value));
   expect(narr).toEqual(["Nights turn pitch black.", "Tides collapse overnight.", "A brand new ending."]);
   await ctx.close();

@@ -4,12 +4,13 @@ from __future__ import annotations
 
 import hmac
 
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, HTTPException, Request, status
 from pydantic import BaseModel, EmailStr, Field
 from studio_shared import db
 from studio_shared.config import get_settings
 
 from .. import supabase_admin
+from ..ratelimit import check_ip_rate
 
 router = APIRouter(tags=["system"])
 
@@ -38,7 +39,8 @@ class SetupIn(BaseModel):
 
 
 @router.post("/setup")
-def setup(body: SetupIn) -> dict:
+def setup(body: SetupIn, request: Request) -> dict:
+    check_ip_rate(request.client.host if request.client else "unknown", "setup")
     expected = get_settings().setup_token
     if not expected or not expected.get_secret_value():
         raise HTTPException(status.HTTP_403_FORBIDDEN, "Setup is disabled (SETUP_TOKEN is not set)")

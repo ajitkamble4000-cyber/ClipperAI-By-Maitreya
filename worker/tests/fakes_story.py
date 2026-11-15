@@ -11,6 +11,12 @@ class FakeStoryGemini:
 
     def generate_json(self, contents, schema, **kw):
         self.prompts.append(contents)
+        from worker.clipper.moments.schema import ClipIdeas
+
+        if schema is ClipIdeas:  # so one fake can serve both tools in browser tests
+            from fakes import FakeGemini
+
+            return FakeGemini().generate_json(contents, schema)
         if schema is StoryScript:
             lines = [
                 "You fall toward a black hole.",
