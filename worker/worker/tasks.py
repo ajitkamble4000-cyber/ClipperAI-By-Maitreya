@@ -44,7 +44,8 @@ def user_message(exc: BaseException) -> str:
 
 @app.task(name="worker.run_job", bind=True)
 def run_job(self: Task, job_id: str) -> None:
-    lock = _redis().lock(f"job-lock:{job_id}", timeout=LOCK_TTL)
+    # thread_local=False: the heartbeat thread extends the lock the task thread acquired.
+    lock = _redis().lock(f"job-lock:{job_id}", timeout=LOCK_TTL, thread_local=False)
     if not lock.acquire(blocking=False):
         log.info("job %s already running elsewhere; skipping duplicate delivery", job_id)
         return

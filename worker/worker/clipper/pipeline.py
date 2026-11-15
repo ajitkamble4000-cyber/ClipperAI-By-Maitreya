@@ -253,10 +253,18 @@ def render_one(
         on_progress=lambda f: progress(0.6 + 0.35 * f),
     )
     thumb = pick_thumbnail(final, ctx.tmp / f"thumb_{clip['idx']}.jpg", dur)
-    video_key = f"projects/{pid}/clips/{clip['id']}/{clip['filename']}"
-    thumb_key = f"projects/{pid}/clips/{clip['id']}/thumb.jpg"
+    # A fresh key per render so browsers never show a cached old version after a re-render.
+    rev = ctx.job_id[:8]
+    video_key = f"projects/{pid}/clips/{clip['id']}/{rev}/{clip['filename']}"
+    thumb_key = f"projects/{pid}/clips/{clip['id']}/{rev}/thumb.jpg"
     storage.upload_file(final, video_key, "video/mp4")
     storage.upload_file(thumb, thumb_key, "image/jpeg")
+    for old in (clip.get("video_key"), clip.get("thumb_key")):
+        if old and old not in (video_key, thumb_key):
+            try:
+                storage.delete(old)
+            except Exception:  # noqa: BLE001
+                pass
     db.execute(
         "update clips set status = 'ready', base_key = %s, video_key = %s, thumb_key = %s, duration_s = %s "
         "where id = %s",
@@ -306,8 +314,8 @@ def step_render(ctx: JobContext) -> dict[str, Any]:
         done += 1
         if i == 0:
             db.execute(
-                "update projects set thumbnail_key = %s where id = %s",
-                [f"projects/{ctx.project_id}/clips/{c['id']}/thumb.jpg", ctx.project_id],
+                "update projects set thumbnail_key = (select thumb_key from clips where id = %s) where id = %s",
+                [c["id"], ctx.project_id],
             )
     return {"rendered": done}
 

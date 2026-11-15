@@ -1,0 +1,46 @@
+{
+  "fonts": {
+    "Montserrat Black": {"file": "Montserrat-Black.ttf", "css": "Montserrat", "weight": 900},
+    "Montserrat ExtraBold": {"file": "Montserrat-ExtraBold.ttf", "css": "Montserrat", "weight": 800},
+    "Bebas Neue": {"file": "BebasNeue-Regular.otf", "css": "Bebas Neue", "weight": 400},
+    "League Spartan Black": {"file": "LeagueSpartan-Black.otf", "css": "League Spartan", "weight": 900},
+    "Lato Black": {"file": "Lato-Black.ttf", "css": "Lato", "weight": 900},
+    "Inter Black": {"file": "Inter-Black.otf", "css": "Inter", "weight": 900},
+    "Inter Bold": {"file": "Inter-Bold.otf", "css": "Inter", "weight": 700},
+    "Noto Sans Devanagari Bold": {"file": "NotoSansDevanagari-Bold.ttf", "css": "Noto Sans Devanagari", "weight": 700}
+  },
+  "devanagari_font": "Noto Sans Devanagari Bold",
+  "positions": {"top": 0.24, "middle": 0.5, "lower": 0.68},
+  "presets": {
+    "bold_pop": {
+      "label": "Bold Pop", "description": "2–3 words at a time; the spoken word pops in color",
+      "font": "Montserrat Black", "size": 86, "color": "#FFFFFF", "highlight": "#FFE500",
+      "outline_color": "#000000", "outline": 7, "shadow": 3, "uppercase": true, "words_per_line": 3,
+      "position": "lower", "emoji": false
+    },
+    "karaoke": {
+      "label": "Karaoke", "description": "Each word fills with color as it is spoken",
+      "font": "Montserrat ExtraBold", "size": 78, "color": "#FFFFFF", "highlight": "#00E5FF",
+      "outline_color": "#000000", "outline": 6, "shadow": 2, "uppercase": false, "words_per_line": 4,
+      "position": "lower", "emoji": false
+    },
+    "minimal": {
+      "label": "Minimal", "description": "Clean white text with a soft shadow",
+      "font": "Inter Bold", "size": 66, "color": "#FFFFFF", "highlight": "#FFFFFF",
+      "outline_color": "#000000", "outline": 0, "shadow": 4, "uppercase": false, "words_per_line": 5,
+      "position": "lower", "emoji": false
+    },
+    "boxed": {
+      "label": "Boxed", "description": "Text on a rounded background box",
+      "font": "Lato Black", "size": 70, "color": "#FFFFFF", "highlight": "#FFD400",
+      "outline_color": "#000000", "outline": 0, "shadow": 0, "uppercase": false, "words_per_line": 4,
+      "position": "lower", "emoji": false, "box_color": "#000000", "box_opacity": 0.72
+    },
+    "horror": {
+      "label": "Horror", "description": "Shaky red and white text for scary stories",
+      "font": "Bebas Neue", "size": 104, "color": "#F2F2F2", "highlight": "#E10600",
+      "outline_color": "#000000", "outline": 5, "shadow": 6, "uppercase": true, "words_per_line": 2,
+      "position": "middle", "emoji": false
+    }
+  }
+}

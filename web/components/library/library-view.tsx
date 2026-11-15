@@ -34,11 +34,11 @@ const STATUS_VARIANT: Record<string, "success" | "warning" | "destructive" | "se
   draft: "secondary",
 };
 
-export function LibraryView() {
+export function LibraryView({ fixedType }: { fixedType?: "clip" | "story" } = {}) {
   const [rows, setRows] = useState<Row[] | null>(null);
   const [members, setMembers] = useState<Record<string, string>>({});
   const [q, setQ] = useState("");
-  const [type, setType] = useState("all");
+  const [type, setType] = useState<string>(fixedType ?? "all");
   const [creator, setCreator] = useState("all");
   const [status, setStatus] = useState("all");
 
@@ -82,8 +82,14 @@ export function LibraryView() {
   return (
     <>
       <PageHeader
-        title="Library"
-        description="Every project in the workspace."
+        title={fixedType === "clip" ? "Clipper" : fixedType === "story" ? "Story Studio" : "Library"}
+        description={
+          fixedType === "clip"
+            ? "Turn long videos into vertical Shorts with animated captions."
+            : fixedType === "story"
+              ? "Original animated stories from just an idea."
+              : "Every project in the workspace."
+        }
         actions={
           <div className="flex gap-2">
             <Button asChild variant="secondary">
@@ -104,7 +110,7 @@ export function LibraryView() {
           <Search className="absolute left-3 top-3 size-4 text-muted-foreground" />
           <Input placeholder="Search titles" value={q} onChange={(e) => setQ(e.target.value)} className="pl-9" aria-label="Search" />
         </div>
-        <Select
+        {!fixedType && <Select
           value={type}
           onValueChange={setType}
           options={[
@@ -112,7 +118,7 @@ export function LibraryView() {
             { value: "clip", label: "Clips" },
             { value: "story", label: "Stories" },
           ]}
-        />
+        />}
         <Select
           value={creator}
           onValueChange={setCreator}

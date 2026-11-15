@@ -60,3 +60,11 @@
   body { @apply bg-background text-foreground antialiased; }
   ::selection { background: color-mix(in oklch, var(--primary) 40%, transparent); }
 }
+
+@keyframes shake {
+  0% { transform: translate(0, 0) rotate(0deg); }
+  25% { transform: translate(1px, -1px) rotate(-0.6deg); }
+  50% { transform: translate(-1px, 1px) rotate(0.5deg); }
+  75% { transform: translate(1px, 1px) rotate(-0.3deg); }
+  100% { transform: translate(0, 0) rotate(0deg); }
+}

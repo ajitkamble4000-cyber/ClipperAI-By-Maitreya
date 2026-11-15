@@ -6,4 +6,6 @@ from fastapi import APIRouter
 
 
 def extra_routers() -> list[APIRouter]:
-    return []
+    from .routers import clipper, projects
+
+    return [projects.router, clipper.router]
