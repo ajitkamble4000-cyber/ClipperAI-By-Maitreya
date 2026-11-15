@@ -1,0 +1,81 @@
+# Production on a VPS: API + workers + scheduler + Redis behind Caddy (automatic HTTPS).
+# The web app runs on Vercel; Postgres/Auth/Realtime on Supabase; files on Cloudflare R2.
+#   docker compose -f infra/compose.prod.yml --env-file .env up -d --build
+name: shorts-studio
+
+x-logging: &logging
+  driver: json-file
+  options: { max-size: "20m", max-file: "5" }
+
+x-worker: &worker
+  build: { context: .., dockerfile: infra/docker/worker.Dockerfile }
+  env_file: ../.env
+  environment:
+    REDIS_URL: redis://redis:6379/0
+  volumes: [model-cache:/cache, worker-tmp:/tmp/shorts-studio]
+  depends_on:
+    redis: { condition: service_healthy }
+  restart: unless-stopped
+  logging: *logging
+  stop_grace_period: 2m   # let an in-flight ffmpeg step finish or checkpoint
+
+services:
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--appendonly", "yes", "--maxmemory-policy", "noeviction"]
+    volumes: [redis-data:/data]
+    healthcheck: { test: ["CMD", "redis-cli", "ping"], interval: 10s, timeout: 3s, retries: 5 }
+    restart: unless-stopped
+    logging: *logging
+
+  api:
+    build: { context: .., dockerfile: infra/docker/api.Dockerfile }
+    env_file: ../.env
+    environment:
+      REDIS_URL: redis://redis:6379/0
+    command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "2",
+              "--proxy-headers", "--forwarded-allow-ips=*"]
+    depends_on:
+      redis: { condition: service_healthy }
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=4)"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    restart: unless-stopped
+    logging: *logging
+
+  worker-media:
+    <<: *worker
+    command: ["celery", "-A", "worker.celery_app", "worker", "-Q", "media", "-n", "media@%h",
+              "--concurrency", "${WORKER_MEDIA_CONCURRENCY:-2}", "--loglevel", "INFO", "--max-tasks-per-child", "50"]
+
+  worker-ai:
+    <<: *worker
+    command: ["celery", "-A", "worker.celery_app", "worker", "-Q", "ai,poll", "-n", "ai@%h",
+              "--concurrency", "${WORKER_AI_CONCURRENCY:-8}", "--loglevel", "INFO", "--max-tasks-per-child", "200"]
+
+  beat:
+    <<: *worker
+    command: ["celery", "-A", "worker.celery_app", "beat", "--loglevel", "INFO",
+              "--schedule", "/tmp/shorts-studio/celerybeat-schedule"]
+
+  caddy:
+    image: caddy:2-alpine
+    ports: ["80:80", "443:443", "443:443/udp"]
+    environment:
+      API_DOMAIN: ${API_DOMAIN:?set API_DOMAIN in .env, e.g. api.studio.example.com}
+    volumes:
+      - ./caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    depends_on: [api]
+    restart: unless-stopped
+    logging: *logging
+
+volumes:
+  redis-data:
+  model-cache:
+  worker-tmp:
+  caddy-data:
+  caddy-config:

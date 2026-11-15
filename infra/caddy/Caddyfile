@@ -1,0 +1,17 @@
+# Automatic HTTPS (Let's Encrypt) for the API. Point an A record for API_DOMAIN at this server first.
+{$API_DOMAIN} {
+	encode zstd gzip
+	# Uploads go straight to R2, so API bodies are small (cookies.txt is the largest, 1 MB).
+	request_body {
+		max_size 5MB
+	}
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options nosniff
+		Referrer-Policy strict-origin-when-cross-origin
+		-Server
+	}
+	reverse_proxy api:8000 {
+		health_uri /health
+	}
+}

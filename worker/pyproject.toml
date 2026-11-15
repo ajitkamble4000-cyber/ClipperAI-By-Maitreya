@@ -10,7 +10,8 @@ dependencies = [
   "opencv-python-headless>=4.10,<5",
   "mediapipe>=0.10.20",
   "faster-whisper>=1.1",
-  "yt-dlp>=2025.10.22",
+  "yt-dlp[default]>=2025.10.22",
+  "deno>=2.4",  # JS runtime yt-dlp needs for YouTube (installed from PyPI)
 ]
 
 [tool.uv.sources]
