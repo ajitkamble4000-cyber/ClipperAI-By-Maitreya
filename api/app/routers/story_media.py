@@ -237,3 +237,53 @@ def render(project_id: str, m: CurrentMember) -> dict:
     story_or_404(project_id)
     busy(project_id, ("story_render", "story_voice", "story_images", "story_veo"))
     return start("story_render", project_id, {}, m.user_id)
+
+
+# ---------------------------------------------------------------- premium AI video (Veo)
+class VeoIn(BaseModel):
+    scene_ids: list[str] = Field(min_length=1, max_length=20)
+    confirm_usd: float = Field(ge=0, description="The estimate the user confirmed in the dialog")
+
+
+def _veo_estimate(project_id: str, scene_ids: list[str]) -> tuple[float, int]:
+    from ..veo_math import veo_seconds
+
+    rows = db.fetch_all(
+        "select * from scenes where project_id = %s and id = any(%s)", [project_id, scene_ids]
+    )
+    if len(rows) != len(set(scene_ids)):
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, "Unknown scene")
+    model = app_settings.model_for("video")
+    if not model:
+        raise HTTPException(
+            status.HTTP_400_BAD_REQUEST,
+            "No video (Veo) model is selected. An admin can choose one in Settings → AI.",
+        )
+    secs = sum(veo_seconds(r) for r in rows)
+    return round(secs * usage.price_for(model).per_video_second, 2), secs
+
+
+@router.post("/story/{project_id}/veo", status_code=201)
+def generate_veo(project_id: str, body: VeoIn, m: CurrentMember) -> dict:
+    story_or_404(project_id)
+    _premium_ok()
+    cost, _ = _veo_estimate(project_id, body.scene_ids)
+    if cost > body.confirm_usd + 0.01:
+        raise HTTPException(
+            status.HTTP_409_CONFLICT, f"The estimate changed to ${cost:.2f}. Review and confirm again."
+        )
+    st = usage.budget_state()
+    if st["budget"] and st["spent"] + cost > st["budget"]:
+        raise HTTPException(
+            status.HTTP_402_PAYMENT_REQUIRED,
+            f"This would exceed the monthly budget (${st['spent']:.2f} + ${cost:.2f} > ${st['budget']:.2f}).",
+        )
+    busy(project_id, ("story_veo", "story_render"))
+    db.execute(
+        "update scenes set use_premium = true, video_status = 'queued', veo_error = null "
+        "where project_id = %s and id = any(%s)",
+        [project_id, body.scene_ids],
+    )
+    return start(
+        "story_veo", project_id, {"scene_ids": body.scene_ids, "confirmed_usd": body.confirm_usd}, m.user_id
+    )

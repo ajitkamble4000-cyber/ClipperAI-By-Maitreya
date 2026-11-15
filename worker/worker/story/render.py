@@ -82,6 +82,7 @@ def step_segments(ctx: JobContext) -> dict[str, Any]:
         else:
             out = ctx.tmp / f"seg_{i}.mp4"
             src = ctx.fetch(src_key, f"src_{i}{Path(src_key).suffix}")
+
             def prog(f: float, i: int = i) -> None:
                 ctx.progress((i + f) / len(scenes), f"Animating scene {i + 1} of {len(scenes)}")
 

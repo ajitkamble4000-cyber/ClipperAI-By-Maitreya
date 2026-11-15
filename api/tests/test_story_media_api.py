@@ -119,3 +119,21 @@ def test_library_admin_only(client, make_member):
     assert s.status_code == 201 and s.json()["id"] == "retro_vhs"
     assert client.delete("/library/styles/realistic_3d", headers=admin).status_code == 400
     client.delete("/library/styles/retro_vhs", headers=admin)
+
+
+def test_veo_requires_confirmed_estimate(client, story, monkeypatch, no_queue):
+    uid, pid, hdr = story
+    monkeypatch.setattr(
+        "studio_shared.app_settings.model_for", lambda role: {"video": "veo-3.1-fast"}.get(role)
+    )
+    ids = [
+        str(r["id"]) for r in db.fetch_all("select id from scenes where project_id = %s order by idx", [pid])
+    ]
+    r = client.post(f"/story/{pid}/veo", json={"scene_ids": ids, "confirm_usd": 1.0}, headers=hdr)
+    assert r.status_code == 409 and "2.40" in r.json()["detail"]  # (4+4+8) s x 0.15 USD
+    r = client.post(f"/story/{pid}/veo", json={"scene_ids": ids[:1], "confirm_usd": 0.6}, headers=hdr)
+    assert r.status_code == 201 and no_queue[-1]["kind"] == "story_veo"
+    assert db.fetch_one("select video_status, use_premium from scenes where id = %s", [ids[0]]) == {
+        "video_status": "queued",
+        "use_premium": True,
+    }

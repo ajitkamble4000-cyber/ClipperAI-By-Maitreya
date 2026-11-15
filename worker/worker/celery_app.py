@@ -44,9 +44,12 @@ def _install_test_fakes() -> None:
     from studio_shared import gemini as gem_pkg
 
     sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "tests"))
-    from fakes_story import FakeMediaGemini
+    from fakes_story import FakeVeoGemini
 
-    fake = FakeMediaGemini()
+    import worker.story.veo as veo_mod
+
+    veo_mod.POLL_EVERY = 0.5
+    fake = FakeVeoGemini()
     gem_pkg.factory = lambda ctx: fake
     import worker.clipper.pipeline as cp
 

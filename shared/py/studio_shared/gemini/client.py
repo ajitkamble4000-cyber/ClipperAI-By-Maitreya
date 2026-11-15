@@ -308,7 +308,7 @@ class Gemini:
             raise GeminiError("Veo finished without a video (it may have been filtered).")
         video = vids[0].video
         data = video.video_bytes or self._retry(lambda: self._client.files.download(file=video))
-        self._record(model, "video", None, seconds=seconds)
+        # Usage is recorded by the caller (worker), which knows the user/project and the billed seconds.
         return bytes(data)
 
     # ------------------------------------------------------------ models

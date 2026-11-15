@@ -114,3 +114,60 @@ class FakeMediaGemini(FakeStoryGemini):
                 capture_output=True,
             ).stdout
         return pcm
+
+
+class _Op:
+    def __init__(self, name, polls_left, fail=False):
+        self.name, self.polls_left, self.fail = name, polls_left, fail
+        self.done, self.error, self.response = False, None, None
+
+
+class FakeVeoGemini(FakeMediaGemini):
+    """Veo: operations finish after a couple of polls; prompts containing FAILME fail."""
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.ops: dict[str, _Op] = {}
+        self.started = 0
+
+    def start_video(self, *, prompt, image, mime, seconds, model=None, aspect="9:16"):
+        self.started += 1
+        op = _Op(f"operations/fake-{self.started}", 2, fail="FAILME" in prompt)
+        op.seconds = seconds
+        self.ops[op.name] = op
+        return op
+
+    def operation_from_name(self, name):
+        return self.ops[name]
+
+    def get_operation(self, op):
+        op = self.ops[op.name]
+        op.polls_left -= 1
+        if op.polls_left <= 0:
+            op.done = True
+            if op.fail:
+                op.error = {"message": "content filtered"}
+        return op
+
+    def download_video(self, op, *, model, seconds):
+        import subprocess
+        import tempfile
+
+        with tempfile.NamedTemporaryFile(suffix=".mp4") as f:
+            subprocess.run(
+                [
+                    "ffmpeg",
+                    "-loglevel",
+                    "error",
+                    "-y",
+                    "-f",
+                    "lavfi",
+                    "-i",
+                    f"testsrc2=s=720x1280:r=24:d={seconds}",
+                    "-pix_fmt",
+                    "yuv420p",
+                    f.name,
+                ],
+                check=True,
+            )
+            return open(f.name, "rb").read()
