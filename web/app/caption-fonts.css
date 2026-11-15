@@ -1,0 +1,11 @@
+/* Same font files the worker burns into videos, so the caption preview matches the render. */
+@font-face { font-family: "Montserrat"; font-weight: 700; src: url("/fonts/Montserrat-Bold.ttf") format("truetype"); font-display: swap; }
+@font-face { font-family: "Montserrat"; font-weight: 800; src: url("/fonts/Montserrat-ExtraBold.ttf") format("truetype"); font-display: swap; }
+@font-face { font-family: "Montserrat"; font-weight: 900; src: url("/fonts/Montserrat-Black.ttf") format("truetype"); font-display: swap; }
+@font-face { font-family: "Bebas Neue"; font-weight: 400; src: url("/fonts/BebasNeue-Regular.otf") format("opentype"); font-display: swap; }
+@font-face { font-family: "League Spartan"; font-weight: 900; src: url("/fonts/LeagueSpartan-Black.otf") format("opentype"); font-display: swap; }
+@font-face { font-family: "Lato"; font-weight: 900; src: url("/fonts/Lato-Black.ttf") format("truetype"); font-display: swap; }
+@font-face { font-family: "Inter"; font-weight: 700; src: url("/fonts/Inter-Bold.otf") format("opentype"); font-display: swap; }
+@font-face { font-family: "Inter"; font-weight: 900; src: url("/fonts/Inter-Black.otf") format("opentype"); font-display: swap; }
+@font-face { font-family: "Noto Sans Devanagari"; font-weight: 400; src: url("/fonts/NotoSansDevanagari-Regular.ttf") format("truetype"); font-display: swap; }
+@font-face { font-family: "Noto Sans Devanagari"; font-weight: 700; src: url("/fonts/NotoSansDevanagari-Bold.ttf") format("truetype"); font-display: swap; }

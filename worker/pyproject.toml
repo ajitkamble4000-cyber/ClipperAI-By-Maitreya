@@ -1,0 +1,27 @@
+[project]
+name = "studio-worker"
+version = "0.1.0"
+requires-python = ">=3.11,<3.13"
+dependencies = [
+  "studio-shared",
+  "celery[redis]>=5.4",
+  "numpy>=1.26",
+  "pillow>=11",
+  "opencv-python-headless>=4.10",
+  "mediapipe>=0.10.20",
+  "faster-whisper>=1.1",
+  "yt-dlp>=2025.10.22",
+]
+
+[tool.uv.sources]
+studio-shared = { workspace = true }
+
+[project.scripts]
+studio-worker-cli = "worker.cli:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["worker"]

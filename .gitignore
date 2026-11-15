@@ -1,0 +1,40 @@
+# env / secrets
+.env
+.env.*
+!.env.example
+*.pem
+cookies.txt
+
+# python
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# node
+node_modules/
+.next/
+out/
+*.tsbuildinfo
+next-env.d.ts
+
+# media / scratch
+/tmp/
+/data/
+tests/fixtures/media/*.mp4
+tests/fixtures/media/*.mkv
+tests/fixtures/media/*.mov
+tests/fixtures/media/*.webm
+!tests/fixtures/media/README.md
+models/
+.DS_Store
+
+# supabase local
+infra/supabase/.branches
+infra/supabase/.temp
+
+# test output
+web/test-results/
+web/playwright-report/

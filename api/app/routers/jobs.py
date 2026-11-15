@@ -1,0 +1,67 @@
+"""Generic job endpoints: status, cancel, retry (resume), and the dummy test job."""
+
+from __future__ import annotations
+
+from fastapi import APIRouter, HTTPException, status
+from pydantic import BaseModel, Field
+from studio_shared import db, jobs
+
+from ..auth import CurrentMember
+from ..queue import enqueue
+from ..ratelimit import check_job_rate
+
+router = APIRouter(prefix="/jobs", tags=["jobs"])
+
+
+def _get(job_id: str) -> dict:
+    row = jobs.get_job(job_id)
+    if not row:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Job not found")
+    return row
+
+
+@router.get("/{job_id}")
+def get_job(job_id: str, _: CurrentMember) -> dict:
+    job = _get(job_id)
+    job["steps"] = db.fetch_all(
+        "select name, status, started_at, finished_at from job_steps where job_id = %s order by started_at nulls last",
+        [job_id],
+    )
+    job["logs"] = db.fetch_all(
+        "select ts, level, message from job_logs where job_id = %s order by id desc limit 50", [job_id]
+    )
+    return job
+
+
+@router.post("/{job_id}/cancel")
+def cancel_job(job_id: str, _: CurrentMember) -> dict:
+    _get(job_id)
+    return {"canceled": jobs.cancel(job_id)}
+
+
+@router.post("/{job_id}/retry")
+def retry_job(job_id: str, m: CurrentMember) -> dict:
+    job = _get(job_id)
+    if job["status"] not in ("failed", "canceled"):
+        raise HTTPException(status.HTTP_409_CONFLICT, "Only failed or canceled jobs can be retried")
+    check_job_rate(m.user_id)
+    db.execute(
+        "update jobs set status = 'queued', attempts = 0, error = null, finished_at = null, message = 'Queued' "
+        "where id = %s",
+        [job_id],
+    )
+    enqueue(_get(job_id))
+    return {"ok": True}
+
+
+class DummyIn(BaseModel):
+    seconds_per_step: float = Field(default=1.5, ge=0.1, le=30)
+    fail_at: str | None = None
+
+
+@router.post("/dummy", status_code=201)
+def dummy(body: DummyIn, m: CurrentMember) -> dict:
+    check_job_rate(m.user_id)
+    job = jobs.create_job("dummy", project_id=None, params=body.model_dump(), user_id=m.user_id)
+    enqueue(job)
+    return job

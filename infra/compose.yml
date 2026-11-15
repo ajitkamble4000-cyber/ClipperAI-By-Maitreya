@@ -1,0 +1,61 @@
+# Local development: API + workers + Redis + an S3 emulator (stands in for R2).
+# Supabase runs separately: `make supabase-start` (local CLI) or point .env at a cloud project.
+name: shorts-studio
+
+x-worker: &worker
+  build: { context: .., dockerfile: infra/docker/worker.Dockerfile }
+  env_file: ../.env
+  environment:
+    REDIS_URL: redis://redis:6379/0
+    S3_ENDPOINT: ${S3_ENDPOINT_INTERNAL:-http://s3:9090}
+    DATABASE_URL: ${DATABASE_URL_INTERNAL:-postgresql://postgres:postgres@host.docker.internal:54322/postgres}
+    SUPABASE_URL: ${SUPABASE_URL_INTERNAL:-http://host.docker.internal:54321}
+  volumes: [model-cache:/cache, worker-tmp:/tmp/shorts-studio]
+  extra_hosts: ["host.docker.internal:host-gateway"]
+  depends_on: [redis]
+  restart: unless-stopped
+
+services:
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--appendonly", "yes"]
+    ports: ["6379:6379"]
+    volumes: [redis-data:/data]
+
+  s3:
+    image: adobe/s3mock:latest
+    environment: { COM_ADOBE_TESTING_S3MOCK_STORE_INITIAL_BUCKETS: shorts-studio }
+    ports: ["9090:9090"]
+
+  api:
+    build: { context: .., dockerfile: infra/docker/api.Dockerfile }
+    env_file: ../.env
+    environment:
+      REDIS_URL: redis://redis:6379/0
+      S3_ENDPOINT: ${S3_ENDPOINT_INTERNAL:-http://s3:9090}
+      S3_PUBLIC_ENDPOINT: ${S3_PUBLIC_ENDPOINT:-http://127.0.0.1:9090}
+      DATABASE_URL: ${DATABASE_URL_INTERNAL:-postgresql://postgres:postgres@host.docker.internal:54322/postgres}
+      SUPABASE_URL: ${SUPABASE_URL_INTERNAL:-http://host.docker.internal:54321}
+    ports: ["8000:8000"]
+    extra_hosts: ["host.docker.internal:host-gateway"]
+    depends_on: [redis]
+
+  worker-media:
+    <<: *worker
+    command: ["celery", "-A", "worker.celery_app", "worker", "-Q", "media", "-n", "media@%h",
+              "--concurrency", "${WORKER_MEDIA_CONCURRENCY:-2}", "--loglevel", "INFO"]
+
+  worker-ai:
+    <<: *worker
+    command: ["celery", "-A", "worker.celery_app", "worker", "-Q", "ai,poll", "-n", "ai@%h",
+              "--concurrency", "${WORKER_AI_CONCURRENCY:-8}", "--loglevel", "INFO"]
+
+  beat:
+    <<: *worker
+    command: ["celery", "-A", "worker.celery_app", "beat", "--loglevel", "INFO",
+              "--schedule", "/tmp/shorts-studio/celerybeat-schedule"]
+
+volumes:
+  redis-data:
+  model-cache:
+  worker-tmp:
