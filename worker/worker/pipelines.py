@@ -9,6 +9,9 @@ from .pipeline import Pipeline
 
 _REGISTRY: dict[str, str] = {
     "dummy": "worker.dummy:build",
+    "clip": "worker.clipper.pipeline:build",
+    "clip_rerender": "worker.clipper.extra_jobs:build_rerender",
+    "clip_zip": "worker.clipper.extra_jobs:build_zip",
 }
 
 

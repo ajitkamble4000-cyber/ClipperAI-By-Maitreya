@@ -8,11 +8,12 @@ from typing import Any
 from uuid import UUID
 
 from . import db
+from .errors import UserError
 
 WARN_AT = 0.8
 
 
-class BudgetExceeded(RuntimeError):
+class BudgetExceeded(UserError):
     def __init__(self, spent: float, budget: float) -> None:
         super().__init__(
             f"Monthly AI budget reached (${spent:.2f} of ${budget:.2f}). "

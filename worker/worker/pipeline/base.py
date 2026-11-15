@@ -17,11 +17,12 @@ from typing import Any
 
 from studio_shared import jobs, storage
 from studio_shared.config import get_settings
+from studio_shared.errors import UserError
 
 log = logging.getLogger(__name__)
 
 
-class StepFailed(RuntimeError):
+class StepFailed(UserError):
     """A failure with a message that is safe and useful to show the user."""
 
 

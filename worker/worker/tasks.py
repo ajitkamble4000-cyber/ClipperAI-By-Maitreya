@@ -10,12 +10,12 @@ import redis
 from celery import Task
 from studio_shared import db, jobs, storage
 from studio_shared.config import get_settings
+from studio_shared.errors import UserError
 from studio_shared.logging_setup import redact
 from studio_shared.queue import JOB_ROUTES
-from studio_shared.usage import BudgetExceeded
 
 from .celery_app import app
-from .pipeline import JobCanceled, StepFailed
+from .pipeline import JobCanceled
 from .pipelines import get_pipeline
 
 log = logging.getLogger(__name__)
@@ -37,7 +37,7 @@ def _heartbeat(job_id: str, lock: redis.lock.Lock, stop: threading.Event) -> Non
 
 
 def user_message(exc: BaseException) -> str:
-    if isinstance(exc, StepFailed | BudgetExceeded):
+    if isinstance(exc, UserError):
         return str(exc)
     return redact(f"Unexpected error: {type(exc).__name__}: {exc}")[:1000]
 
@@ -62,6 +62,9 @@ def run_job(self: Task, job_id: str) -> None:
         if not job:
             return
         threading.Thread(target=_heartbeat, args=(job_id, lock, stop), daemon=True).start()
+        from .hooks import on_job_started
+
+        on_job_started(job)
         pipeline = get_pipeline(job["kind"], job["params"] or {})
         try:
             result = pipeline.run(job)
