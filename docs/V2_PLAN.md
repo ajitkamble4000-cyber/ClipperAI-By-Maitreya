@@ -35,7 +35,7 @@ Then continue with the first unchecked phase below.
       plans & token prices, providers & keys (owner only), jobs monitor, audit log, announcements, system health
 - [x] 15. Creator extras: templates, batch (many links / many story topics), more genres, AI thumbnails,
       title & hashtag variants
-- [ ] 16. Docs, full regression, push-ready
+- [x] 16. Docs, full regression, push-ready
 
 ## Feature list (target: ~60 shipped updates)
 

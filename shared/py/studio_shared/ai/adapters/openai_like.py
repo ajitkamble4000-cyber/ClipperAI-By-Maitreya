@@ -35,7 +35,7 @@ class OpenAILike:
             )
         if not creds.key and creds.provider != "compat":
             raise NotConfigured(
-                f"No API key for {creds.provider}. The owner can add one in Admin → AI providers."
+                f"No API key for {creds.provider}. The owner can add one in Settings → AI providers."
             )
         self.c = creds
 

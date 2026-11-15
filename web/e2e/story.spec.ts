@@ -16,8 +16,8 @@ async function seedStory(userId: string) {
   return pid as string;
 }
 
-test("new story form creates a story; no Gemini key shows a clear error", async ({ page }) => {
-  test.skip(process.env.STUDIO_FAKE_GEMINI === "1", "needs the real (unconfigured) Gemini client");
+test("new story form creates a story; no AI provider shows a clear error", async ({ page }) => {
+  test.skip(process.env.STUDIO_FAKE_GEMINI === "1", "needs the real (unconfigured) AI client");
   const a = await createMember("member");
   await login(page, a.email);
   await page.goto("/story/new");
@@ -25,7 +25,7 @@ test("new story form creates a story; no Gemini key shows a clear error", async 
   await page.getByLabel("Story idea").fill("Scary story: the last bus at midnight");
   await page.getByTestId("write-script").click();
   await expect(page).toHaveURL(/\/story\/[0-9a-f-]{36}$/);
-  await expect(page.getByTestId("job-error")).toContainText(/Gemini API key|Settings/, { timeout: 60_000 });
+  await expect(page.getByTestId("job-error")).toContainText(/AI providers/, { timeout: 60_000 });
 });
 
 test("storyboard: autosave, reorder, add, delete, live collaboration", async ({ page, browser }) => {

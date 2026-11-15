@@ -77,7 +77,7 @@ def get_transcriber(size: str | None = None) -> FasterWhisperTranscriber:
 
 
 def transcriber_from_settings():
-    """The transcriber chosen in Admin → AI providers ('local:<size>' or e.g. 'openai:whisper-1')."""
+    """The transcriber chosen in Settings → AI providers ('local:<size>' or e.g. 'openai:whisper-1')."""
     from studio_shared import app_settings
     from studio_shared.ai.base import parse_model_ref
 

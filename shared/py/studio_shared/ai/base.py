@@ -155,7 +155,7 @@ def raise_for(resp: httpx.Response, provider: str) -> None:
     label = PROVIDERS.get(provider, ProviderInfo(provider, provider, (), "")).label
     if resp.status_code in (401, 403):
         raise ProviderError(
-            f"{label} rejected the API key ({msg}). The owner can check it in Admin → AI providers.",
+            f"{label} rejected the API key ({msg}). The owner can check it in Settings → AI providers.",
             retryable=True,
         )
     if resp.status_code == 429:
@@ -181,7 +181,7 @@ def credentials(provider: str) -> Credentials:
         key = app_settings.gemini_key()
     base = (row.get("base_url") or info.default_base_url or "").rstrip("/") or None
     if row and row.get("enabled") is False:
-        raise NotConfigured(f"{info.label} is turned off. The owner can enable it in Admin → AI providers.")
+        raise NotConfigured(f"{info.label} is turned off. The owner can enable it in Settings → AI providers.")
     return Credentials(provider, key, base, row.get("extra") or {})
 
 

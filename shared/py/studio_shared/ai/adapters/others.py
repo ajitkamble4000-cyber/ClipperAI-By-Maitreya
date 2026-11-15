@@ -11,7 +11,7 @@ from ..base import Credentials, ImagePart, NotConfigured, ProviderError, http_cl
 
 def _need_key(c: Credentials, label: str) -> None:
     if not c.key:
-        raise NotConfigured(f"No API key for {label}. The owner can add one in Admin → AI providers.")
+        raise NotConfigured(f"No API key for {label}. The owner can add one in Settings → AI providers.")
 
 
 class Anthropic:

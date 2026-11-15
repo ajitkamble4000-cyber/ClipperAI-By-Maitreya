@@ -1,5 +1,5 @@
 """The AI facade every job uses. It routes each role (text, image, tts, video, transcribe) to the provider and
-model chosen in Admin → AI providers, falls back to the next choice when a provider fails, validates/repairs
+model chosen in Settings → AI providers, falls back to the next choice when a provider fails, validates/repairs
 JSON, enforces the budget for premium media, and logs usage + estimated cost for every call."""
 
 from __future__ import annotations
@@ -47,7 +47,7 @@ def adapter(provider: str):
         return Stability(c)
     if provider == "google":
         if not c.key:
-            raise NotConfigured("No Google Gemini key. The owner can add one in Admin → AI providers.")
+            raise NotConfigured("No Google Gemini key. The owner can add one in Settings → AI providers.")
         return Gemini(api_key=c.key)
     raise NotConfigured(f"Unknown provider {provider}")
 
@@ -59,7 +59,7 @@ def role_chain(role: str, override: str | None = None) -> list[tuple[str, str]]:
     refs += list(models.get(f"{role}_fallback") or [])
     chain = [p for p in (parse_model_ref(r) for r in refs if r) if p]
     if not chain:
-        raise NotConfigured(f"No {role} model is selected. The owner can choose one in Admin → AI providers.")
+        raise NotConfigured(f"No {role} model is selected. The owner can choose one in Settings → AI providers.")
     return chain
 
 
