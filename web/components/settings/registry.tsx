@@ -10,6 +10,7 @@ export interface SettingsTab {
   id: string;
   label: string;
   adminOnly?: boolean;
+  ownerOnly?: boolean;
   Component: ComponentType;
 }
 

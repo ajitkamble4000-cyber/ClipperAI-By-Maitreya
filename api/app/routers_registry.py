@@ -1,4 +1,4 @@
-"""Feature routers added in later phases are registered here."""
+"""Feature routers are registered here (core routers are in main.py)."""
 
 from __future__ import annotations
 
@@ -6,7 +6,7 @@ from fastapi import APIRouter
 
 
 def extra_routers() -> list[APIRouter]:
-    from .routers import clipper, library, projects, settings, story, story_media
+    from .routers import admin, clipper, library, projects, settings, story, story_media
 
     return [
         projects.router,
@@ -15,4 +15,5 @@ def extra_routers() -> list[APIRouter]:
         story_media.router,
         library.router,
         settings.router,
+        admin.router,
     ]

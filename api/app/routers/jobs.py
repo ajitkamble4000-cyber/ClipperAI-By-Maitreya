@@ -6,6 +6,7 @@ from fastapi import APIRouter, HTTPException, status
 from pydantic import BaseModel, Field
 from studio_shared import db, jobs
 
+from ..access import job_for
 from ..auth import CurrentMember
 from ..queue import enqueue
 from ..ratelimit import check_job_rate
@@ -13,16 +14,13 @@ from ..ratelimit import check_job_rate
 router = APIRouter(prefix="/jobs", tags=["jobs"])
 
 
-def _get(job_id: str) -> dict:
-    row = jobs.get_job(job_id)
-    if not row:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "Job not found")
-    return row
+def _get(job_id: str, m) -> dict:
+    return job_for(job_id, m)
 
 
 @router.get("/{job_id}")
-def get_job(job_id: str, _: CurrentMember) -> dict:
-    job = _get(job_id)
+def get_job(job_id: str, m: CurrentMember) -> dict:
+    job = _get(job_id, m)
     job["steps"] = db.fetch_all(
         "select name, status, started_at, finished_at from job_steps where job_id = %s order by started_at nulls last",
         [job_id],
@@ -34,14 +32,14 @@ def get_job(job_id: str, _: CurrentMember) -> dict:
 
 
 @router.post("/{job_id}/cancel")
-def cancel_job(job_id: str, _: CurrentMember) -> dict:
-    _get(job_id)
+def cancel_job(job_id: str, m: CurrentMember) -> dict:
+    _get(job_id, m)
     return {"canceled": jobs.cancel(job_id)}
 
 
 @router.post("/{job_id}/retry")
 def retry_job(job_id: str, m: CurrentMember) -> dict:
-    job = _get(job_id)
+    job = _get(job_id, m)
     if job["status"] not in ("failed", "canceled"):
         raise HTTPException(status.HTTP_409_CONFLICT, "Only failed or canceled jobs can be retried")
     check_job_rate(m.user_id)
@@ -50,7 +48,7 @@ def retry_job(job_id: str, m: CurrentMember) -> dict:
         "where id = %s",
         [job_id],
     )
-    enqueue(_get(job_id))
+    enqueue(_get(job_id, m))
     return {"ok": True}
 
 

@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { AppShell } from "@/components/shell/app-shell";
 import type { Me } from "@/components/shell/member-context";
+import { env } from "@/lib/env";
 import { supabaseServer } from "@/lib/supabase/server";
 
 export default async function StudioLayout({ children }: { children: React.ReactNode }) {
@@ -9,17 +10,28 @@ export default async function StudioLayout({ children }: { children: React.React
     data: { user },
   } = await sb.auth.getUser();
   if (!user) redirect("/login");
-  // RLS only returns member rows to members, so a non-member gets nothing here.
-  const { data: me } = await sb.from("members").select("user_id, email, role, display_name").eq("user_id", user.id).maybeSingle();
+  const {
+    data: { session },
+  } = await sb.auth.getSession();
+  let me: Me | null = null;
+  let problem: string | null = null;
+  try {
+    const r = await fetch(`${env.apiUrl}/me`, { headers: { Authorization: `Bearer ${session?.access_token ?? ""}` }, cache: "no-store" });
+    if (r.ok) me = (await r.json()) as Me;
+    else problem = ((await r.json().catch(() => ({}))) as { detail?: string }).detail ?? `Error ${r.status}`;
+  } catch {
+    problem = "The server is unreachable right now. Try again in a minute.";
+  }
   if (!me) {
     return (
       <div className="flex min-h-dvh items-center justify-center px-4 text-center">
         <div>
-          <h1 className="text-xl font-semibold">You're not a member of this workspace</h1>
-          <p className="mt-2 text-sm text-muted-foreground">Signed in as {user.email}. Ask an admin to invite this email.</p>
+          <h1 className="text-xl font-semibold">We can't open your workspace</h1>
+          <p className="mt-2 text-sm text-muted-foreground">{problem}</p>
+          <p className="mt-1 text-xs text-muted-foreground">Signed in as {user.email}</p>
         </div>
       </div>
     );
   }
-  return <AppShell me={me as Me}>{children}</AppShell>;
+  return <AppShell me={me}>{children}</AppShell>;
 }

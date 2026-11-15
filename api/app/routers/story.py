@@ -9,7 +9,8 @@ from fastapi import APIRouter, HTTPException, status
 from pydantic import BaseModel, Field
 from studio_shared import db, jobs
 
-from ..auth import CurrentMember
+from ..access import project_for, scene_for
+from ..auth import CurrentMember, Member
 from ..queue import enqueue
 from ..ratelimit import check_job_rate
 
@@ -32,7 +33,8 @@ class StoryIn(BaseModel):
     generate: bool = True
 
 
-def story_or_404(project_id: str) -> dict[str, Any]:
+def story_or_404(project_id: str, m: Member) -> dict[str, Any]:
+    project_for(project_id, m)
     row = db.fetch_one(
         "select s.*, p.created_by from stories s join projects p on p.id = s.project_id where s.project_id = %s",
         [project_id],
@@ -95,7 +97,7 @@ AI_KINDS = ("story_script", "story_scene_ai")
 
 @router.post("/story/{project_id}/script", status_code=201)
 def regenerate_script(project_id: str, m: CurrentMember) -> dict:
-    story_or_404(project_id)
+    story_or_404(project_id, m)
     busy(project_id, AI_KINDS)
     return start("story_script", project_id, {}, m.user_id)
 
@@ -106,7 +108,7 @@ class RewriteIn(BaseModel):
 
 @router.post("/scenes/{scene_id}/rewrite", status_code=201)
 def rewrite_scene(scene_id: str, body: RewriteIn, m: CurrentMember) -> dict:
-    sc = db.fetch_one("select project_id from scenes where id = %s", [scene_id])
+    sc = scene_for(scene_id, m)
     if not sc:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Scene not found")
     busy(str(sc["project_id"]), AI_KINDS)
@@ -120,7 +122,7 @@ def rewrite_scene(scene_id: str, body: RewriteIn, m: CurrentMember) -> dict:
 
 @router.post("/story/{project_id}/hook", status_code=201)
 def stronger_hook(project_id: str, m: CurrentMember) -> dict:
-    story_or_404(project_id)
+    story_or_404(project_id, m)
     busy(project_id, AI_KINDS)
     return start("story_scene_ai", project_id, {"op": "hook"}, m.user_id)
 

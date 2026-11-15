@@ -8,6 +8,7 @@ from fastapi import APIRouter, HTTPException, status
 from pydantic import BaseModel, Field, model_validator
 from studio_shared import db, jobs
 
+from ..access import clip_for
 from ..auth import CurrentMember
 from ..queue import enqueue
 from ..ratelimit import check_job_rate
@@ -91,9 +92,7 @@ class RerenderIn(BaseModel):
 
 @router.post("/clips/{clip_id}/rerender", status_code=201)
 def rerender_clip(clip_id: str, body: RerenderIn, m: CurrentMember) -> dict:
-    clip = db.fetch_one("select id, project_id, start_s, end_s from clips where id = %s", [clip_id])
-    if not clip:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "Clip not found")
+    clip = clip_for(clip_id, m)
     if jobs.active_job_for_project(clip["project_id"], ("clip",)):
         raise HTTPException(status.HTTP_409_CONFLICT, "Clips are still being generated")
     busy = db.fetch_one(

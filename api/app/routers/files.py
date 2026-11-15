@@ -5,6 +5,7 @@ from __future__ import annotations
 from fastapi import APIRouter, HTTPException, Query, status
 from studio_shared import storage
 
+from ..access import key_allowed
 from ..auth import CurrentMember
 
 router = APIRouter(prefix="/files", tags=["files"])
@@ -20,7 +21,6 @@ def sign(
 ) -> dict:
     if ".." in key or key.startswith("/"):
         raise HTTPException(status.HTTP_400_BAD_REQUEST, "Bad key")
-    own_upload = key.startswith(f"uploads/{m.user_id}/")
-    if not (own_upload or key.startswith(SHARED_PREFIXES)):
+    if not key_allowed(key, m):
         raise HTTPException(status.HTTP_403_FORBIDDEN, "Not allowed")
     return {"url": storage.presign_get(key, expires=900, filename=download), "expires_in": 900}

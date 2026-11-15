@@ -3,7 +3,7 @@ import { createMember, login, SUPABASE } from "./helpers";
 
 const SERVICE =
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImV4cCI6MTk4MzgxMjk5Nn0.EGIM96RAZx35lJzdJsyH-qQwv8Hdp7fsn3W0YpN81IU";
-const H = { apikey: SERVICE, Authorization: `Bearer ${SERVICE}`, "Content-Type": "application/json", Prefer: "return=minimal" };
+const H = { apikey: SERVICE, Authorization: `Bearer ${SERVICE}`, "Content-Type": "application/json" };
 
 async function rest(path: string, method: string, body?: unknown) {
   return fetch(`${SUPABASE}/rest/v1/${path}`, { method, headers: H, body: body ? JSON.stringify(body) : undefined });
@@ -20,7 +20,10 @@ test("admin settings, budget warning banner, usage dashboard; members see no adm
     await page.goto("/settings");
     await expect(page.getByRole("tab", { name: "AI & budget" })).toBeVisible();
     await expect(page.getByText("Not set").first()).toBeVisible();
-    await page.getByLabel("Monthly budget").fill("12");
+    // Budget so that this month's spend (incl. earlier test runs) is ~87%: the 80% warning state.
+    const ev = await (await rest("usage_events?select=cost_usd&ts=gte." + new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString(), "GET")).json();
+    const spent = (ev as { cost_usd: number }[]).reduce((a, r) => a + Number(r.cost_usd), 0);
+    await page.getByLabel("Monthly budget").fill(String(Math.ceil(spent / 0.87)));
     await page.getByRole("button", { name: "Save budget" }).click();
     await expect(page.getByText("Budget saved")).toBeVisible();
 
@@ -39,7 +42,7 @@ test("admin settings, budget warning banner, usage dashboard; members see no adm
     await login(p2, member.email);
     await p2.goto("/settings");
     await expect(p2.getByRole("tab", { name: "AI & budget" })).toHaveCount(0);
-    await expect(p2.getByRole("tab", { name: "Members" })).toBeVisible();
+    await expect(p2.getByRole("tab", { name: "Team" })).toBeVisible();
     await expect(p2.getByTestId("budget-banner")).toBeVisible();
     await ctx.close();
   } finally {
@@ -48,9 +51,10 @@ test("admin settings, budget warning banner, usage dashboard; members see no adm
   }
 });
 
-test("library: filters by type and creator, search", async ({ page }) => {
-  const a = await createMember("member");
-  const b = await createMember("member");
+test("library: filters, search, and the shared team library", async ({ page }) => {
+  // Staff/Creator team members share a library; projects are otherwise private.
+  const a = await createMember("member", undefined, { team: "staff", plan_id: "team" });
+  const b = await createMember("member", undefined, { team: "creator", plan_id: "team" });
   const stamp = Date.now();
   await rest("projects", "POST", [
     { type: "clip", title: `Alpha clip ${stamp}`, created_by: a.id, status: "ready" },

@@ -7,17 +7,22 @@ const admin = { apikey: SERVICE, Authorization: `Bearer ${SERVICE}`, "Content-Ty
 
 export const PASSWORD = "e2e-password-123";
 
-export async function createMember(role: "admin" | "member", email = `e2e-${Date.now()}-${Math.random().toString(36).slice(2, 6)}@example.com`) {
+export async function createMember(
+  role: "owner" | "admin" | "member" | "user",
+  email = `e2e-${Date.now()}-${Math.random().toString(36).slice(2, 6)}@example.com`,
+  extra?: Record<string, unknown>,
+) {
   const r = await fetch(`${SUPABASE}/auth/v1/admin/users`, {
     method: "POST",
     headers: admin,
     body: JSON.stringify({ email, password: PASSWORD, email_confirm: true }),
   });
   const user = await r.json();
-  const m = await fetch(`${SUPABASE}/rest/v1/members`, {
-    method: "POST",
+  // The sign-up trigger creates the profile; set the role (and optional team/plan) for the test.
+  const m = await fetch(`${SUPABASE}/rest/v1/members?user_id=eq.${user.id}`, {
+    method: "PATCH",
     headers: { ...admin, Prefer: "return=minimal" },
-    body: JSON.stringify({ user_id: user.id, email, role, display_name: `E2E ${role}` }),
+    body: JSON.stringify({ role: role === "member" ? "user" : role, display_name: `E2E ${role}`, ...(extra ?? {}) }),
   });
   if (!m.ok) throw new Error(await m.text());
   return { id: user.id as string, email };

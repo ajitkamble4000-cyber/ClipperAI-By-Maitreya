@@ -29,14 +29,15 @@ test("new story form creates a story; no Gemini key shows a clear error", async 
 });
 
 test("storyboard: autosave, reorder, add, delete, live collaboration", async ({ page, browser }) => {
-  const a = await createMember("member");
+  // Two Staff-team members: the team library is shared, so they can co-edit.
+  const a = await createMember("member", undefined, { team: "staff", plan_id: "team" });
   const pid = await seedStory(a.id);
   await login(page, a.email);
   await page.goto(`/story/${pid}`);
   await expect(page.getByTestId("scene-card")).toHaveCount(3);
 
   // Teammate opens the same story.
-  const b = await createMember("member");
+  const b = await createMember("member", undefined, { team: "staff", plan_id: "team" });
   const ctx = await browser.newContext();
   const p2 = await ctx.newPage();
   await login(p2, b.email);

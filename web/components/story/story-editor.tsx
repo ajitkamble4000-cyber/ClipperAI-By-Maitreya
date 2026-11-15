@@ -110,11 +110,10 @@ export function StoryEditor({ projectId }: { projectId: string }) {
               )}
             </div>
           </div>
-          {(me.role === "admin" || me.user_id) && (
-            <Button variant="ghost" size="icon" onClick={remove} aria-label="Delete story">
-              <Trash2 />
-            </Button>
-          )}
+          {/* Delete rights (creator or admin) are enforced by the API. */}
+          <Button variant="ghost" size="icon" onClick={remove} aria-label="Delete story">
+            <Trash2 />
+          </Button>
         </div>
 
         {activeAi && <JobProgress job={activeAi} compact />}

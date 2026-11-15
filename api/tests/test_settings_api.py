@@ -30,6 +30,25 @@ def fake_models(monkeypatch):
 
 
 @pytest.fixture
+def owner(monkeypatch):
+    """A real owner account (OWNER_EMAIL = this test user's verified email)."""
+    import uuid
+
+    from authutil import create_auth_user, sign_in
+    from studio_shared.config import get_settings
+
+    email = f"owner-{uuid.uuid4().hex[:8]}@example.com"
+    monkeypatch.setattr(get_settings(), "owner_email", email)
+    db.execute("update members set role = 'admin' where role = 'owner'")
+    uid = create_auth_user(email)
+    yield {"Authorization": f"Bearer {sign_in(email)}"}
+    db.execute("update members set role = 'user' where user_id = %s", [uid])
+    from app.supabase_admin import delete_user
+
+    delete_user(uid)
+
+
+@pytest.fixture
 def restore_settings():
     before = db.fetch_one("select * from settings where id = 1")
     yield
@@ -47,8 +66,10 @@ def restore_settings():
     )
 
 
-def test_key_is_encrypted_masked_and_never_returned(client, make_member, fake_models, restore_settings):
-    _, _, admin = make_member("admin")
+def test_key_is_encrypted_masked_and_never_returned(
+    client, make_member, fake_models, restore_settings, owner
+):
+    admin = owner
     _, _, member = make_member("member")
     key = "AIzaSyTEST-not-a-real-key-1234567890abcd"
     assert client.put("/settings/gemini-key", json={"key": key}, headers=member).status_code == 403
@@ -68,22 +89,22 @@ def test_key_is_encrypted_masked_and_never_returned(client, make_member, fake_mo
     assert all("embedding" not in m["name"] for m in roles["text"])
 
 
-def test_bad_key_rejected(client, make_member, monkeypatch, restore_settings):
+def test_bad_key_rejected(client, make_member, monkeypatch, restore_settings, owner):
     from studio_shared.gemini import client as gc
 
     def boom(self):
         raise gc.GeminiError("The Gemini API key was rejected.")
 
     monkeypatch.setattr(gc.Gemini, "list_models", boom)
-    _, _, admin = make_member("admin")
+    admin = owner
     r = client.put(
         "/settings/gemini-key", json={"key": "AIzaSyBAD-key-xxxxxxxxxxxxxxxxxxxxxxx"}, headers=admin
     )
     assert r.status_code == 400 and "rejected" in r.json()["detail"]
 
 
-def test_budget_models_proxy_cookies(client, make_member, restore_settings):
-    _, _, admin = make_member("admin")
+def test_budget_models_proxy_cookies(client, make_member, restore_settings, owner):
+    admin = owner
     r = client.put(
         "/settings", json={"monthly_budget_usd": 25, "models": {"text": "gemini-2.5-flash"}}, headers=admin
     )
@@ -128,6 +149,7 @@ def test_pricing_editable_by_admin_only(client, make_member):
     body = {"model": "test-model-x", "per_image": 0.5}
     assert client.put("/settings/pricing", json=body, headers=member).status_code == 403
     assert client.put("/settings/pricing", json=body, headers=admin).json()["per_image"] == 0.5
-    assert any(p["model"] == "test-model-x" for p in client.get("/settings/pricing", headers=member).json())
+    assert client.get("/settings/pricing", headers=member).status_code == 403  # internal costs are admin-only
+    assert any(p["model"] == "test-model-x" for p in client.get("/settings/pricing", headers=admin).json())
     client.delete("/settings/pricing/test-model-x", headers=admin)
     assert httpx

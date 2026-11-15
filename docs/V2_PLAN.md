@@ -19,7 +19,7 @@ Then continue with the first unchecked phase below.
 
 ## Phases (each ends with tests + a commit)
 
-- [ ] 9. Business accounts & tenancy: public sign-up, owner by verified email, roles owner/admin/user,
+- [x] 9. Business accounts & tenancy: public sign-up, owner by verified email, roles owner/admin/user,
       Staff/Creator team (unlimited), plans table, private projects (RLS + API checks), suspension, audit log
 - [ ] 10. Token economy: wallets, daily refill, bonus grants, ledger, editable token prices, charge on job
       start, auto-refund on failure/cancel, quotes, plan limits and feature gates

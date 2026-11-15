@@ -11,6 +11,7 @@ from pydantic import BaseModel, Field
 from studio_shared import app_settings, db, storage, usage
 from studio_shared.gemini import CallContext, GeminiError, get_client
 
+from ..access import scene_for
 from ..auth import CurrentMember
 from .story import busy, start, story_or_404
 from .uploads import take_completed_upload
@@ -37,7 +38,7 @@ class CharactersIn(BaseModel):
 
 @router.post("/story/{project_id}/characters", status_code=201)
 def generate_characters(project_id: str, body: CharactersIn, m: CurrentMember) -> dict:
-    story_or_404(project_id)
+    story_or_404(project_id, m)
     _premium_ok()
     busy(project_id, ("story_characters",))
     return start("story_characters", project_id, {"character_ids": body.character_ids}, m.user_id)
@@ -49,8 +50,8 @@ class CharacterIn(BaseModel):
 
 
 @router.post("/story/{project_id}/characters/add", status_code=201)
-def add_character(project_id: str, body: CharacterIn, _: CurrentMember) -> dict:
-    story_or_404(project_id)
+def add_character(project_id: str, body: CharacterIn, m: CurrentMember) -> dict:
+    story_or_404(project_id, m)
     row = db.fetch_one(
         "insert into characters (project_id, name, description) values (%s,%s,%s) returning *",
         [project_id, body.name.strip(), body.description.strip()],
@@ -77,11 +78,11 @@ def _image_count(project_id: str, body: ImagesIn) -> int:
 @router.get("/story/{project_id}/estimate")
 def estimate(
     project_id: str,
-    _: CurrentMember,
+    m: CurrentMember,
     what: str = Query(default="images", pattern="^(images|veo)$"),
     scene_ids: str | None = None,
 ) -> dict:
-    story_or_404(project_id)
+    story_or_404(project_id, m)
     if what == "images":
         n = int(
             db.fetch_one(
@@ -124,7 +125,7 @@ def estimate(
 
 @router.post("/story/{project_id}/images", status_code=201)
 def generate_images(project_id: str, body: ImagesIn, m: CurrentMember) -> dict:
-    story_or_404(project_id)
+    story_or_404(project_id, m)
     _premium_ok()
     if not _image_count(project_id, body):
         raise HTTPException(status.HTTP_400_BAD_REQUEST, "Every scene already has an image.")
@@ -136,16 +137,13 @@ class SceneImageIn(BaseModel):
     instruction: str | None = Field(default=None, max_length=500)
 
 
-def _scene(scene_id: str) -> dict[str, Any]:
-    sc = db.fetch_one("select * from scenes where id = %s", [scene_id])
-    if not sc:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "Scene not found")
-    return sc
+def _scene(scene_id: str, m) -> dict[str, Any]:
+    return scene_for(scene_id, m)
 
 
 @router.post("/scenes/{scene_id}/image", status_code=201)
 def scene_image(scene_id: str, body: SceneImageIn, m: CurrentMember) -> dict:
-    sc = _scene(scene_id)
+    sc = _scene(scene_id, m)
     _premium_ok()
     pending = db.fetch_one(
         "select 1 from jobs where kind = 'story_image_one' and status in ('queued','running') "
@@ -168,7 +166,7 @@ class UploadRef(BaseModel):
 
 @router.post("/scenes/{scene_id}/image/upload")
 def scene_image_upload(scene_id: str, body: UploadRef, m: CurrentMember) -> dict:
-    _scene(scene_id)
+    _scene(scene_id, m)
     if not body.upload_id:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, "upload_id is required")
     up = take_completed_upload(body.upload_id, m.user_id, "image")
@@ -183,7 +181,7 @@ def scene_image_upload(scene_id: str, body: UploadRef, m: CurrentMember) -> dict
 # ---------------------------------------------------------------- voice
 @router.post("/story/{project_id}/voice", status_code=201)
 def generate_voice(project_id: str, m: CurrentMember) -> dict:
-    st = story_or_404(project_id)
+    st = story_or_404(project_id, m)
     if not st["voiceover_key"]:
         _premium_ok()
     busy(project_id, ("story_voice",))
@@ -192,7 +190,7 @@ def generate_voice(project_id: str, m: CurrentMember) -> dict:
 
 @router.put("/story/{project_id}/voiceover")
 def set_voiceover(project_id: str, body: UploadRef, m: CurrentMember) -> dict:
-    story_or_404(project_id)
+    story_or_404(project_id, m)
     key = take_completed_upload(body.upload_id, m.user_id, "voiceover")["r2_key"] if body.upload_id else None
     db.execute("update stories set voiceover_key = %s where project_id = %s", [key, project_id])
     return {"voiceover_key": key}
@@ -234,7 +232,7 @@ def voice_preview(
 # ---------------------------------------------------------------- render
 @router.post("/story/{project_id}/render", status_code=201)
 def render(project_id: str, m: CurrentMember) -> dict:
-    story_or_404(project_id)
+    story_or_404(project_id, m)
     busy(project_id, ("story_render", "story_voice", "story_images", "story_veo"))
     return start("story_render", project_id, {}, m.user_id)
 
@@ -265,7 +263,7 @@ def _veo_estimate(project_id: str, scene_ids: list[str]) -> tuple[float, int]:
 
 @router.post("/story/{project_id}/veo", status_code=201)
 def generate_veo(project_id: str, body: VeoIn, m: CurrentMember) -> dict:
-    story_or_404(project_id)
+    story_or_404(project_id, m)
     _premium_ok()
     cost, _ = _veo_estimate(project_id, body.scene_ids)
     if cost > body.confirm_usd + 0.01:

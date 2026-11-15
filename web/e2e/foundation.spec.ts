@@ -43,10 +43,10 @@ test("dummy job progress is live in two browsers", async ({ page, browser }) => 
   await expect(page).toHaveURL(/job=/);
   const url = page.url();
 
-  const b = await createMember("member");
+  // Same account on a second device: jobs are private, but live everywhere you're signed in.
   const ctx = await browser.newContext();
   const p2 = await ctx.newPage();
-  await login(p2, b.email);
+  await login(p2, a.email);
   await p2.goto(url.replace("http://localhost:3000", ""));
 
   const seen = new Set<string>();

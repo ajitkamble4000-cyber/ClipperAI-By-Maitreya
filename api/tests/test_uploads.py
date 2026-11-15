@@ -83,4 +83,7 @@ def test_sign_rejects_settings_and_other_users(client, make_member):
         client.get("/files/sign", params={"key": "uploads/someone-else/x.mp4"}, headers=hdr).status_code
         == 403
     )
-    assert client.get("/files/sign", params={"key": "projects/x/clip.mp4"}, headers=hdr).status_code == 200
+    assert (
+        client.get("/files/sign", params={"key": "projects/x/clip.mp4"}, headers=hdr).status_code == 403
+    )  # not theirs
+    assert client.get("/files/sign", params={"key": "library/music/a.mp3"}, headers=hdr).status_code == 200

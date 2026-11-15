@@ -33,7 +33,7 @@ def test_member_reads_outsider_does_not(make_member):
         create_auth_user(outsider)
         otoken = sign_in(outsider)
         assert rest(otoken, "projects?select=id").json() == []
-        assert rest(otoken, "members?select=email").json() == []
+        assert [m["email"] for m in rest(otoken, "members?select=email").json()] == [outsider]
         anon = rest(None, "projects?select=id")
         assert anon.status_code in (401, 403) or anon.json() == []
     finally:

@@ -12,7 +12,7 @@ from studio_shared import app_settings, db, usage
 from studio_shared.gemini import Gemini, GeminiError
 from studio_shared.gemini.models import classify
 
-from ..auth import AdminMember, CurrentMember
+from ..auth import AdminMember, CurrentMember, OwnerMember, audit
 
 router = APIRouter(tags=["settings"])
 WHISPER = Literal["tiny", "base", "small", "medium", "large-v3", "large-v3-turbo", "distil-large-v3"]
@@ -69,7 +69,7 @@ def _test(key: str | None) -> dict:
 
 
 @router.put("/settings/gemini-key")
-def set_key(body: KeyIn, admin: AdminMember) -> dict:
+def set_key(body: KeyIn, admin: OwnerMember) -> dict:
     if body.key:
         key = body.key.strip()
         if len(key) < 20 or " " in key:
@@ -80,6 +80,7 @@ def set_key(body: KeyIn, admin: AdminMember) -> dict:
         app_settings.set_gemini_key(key)
     else:
         app_settings.set_gemini_key(None)
+    audit(admin, "settings.gemini_key", "settings", "gemini", set=bool(body.key))
     return get_settings_view(admin)
 
 
@@ -104,7 +105,7 @@ class ProxyIn(BaseModel):
 
 
 @router.put("/settings/proxy")
-def set_proxy(body: ProxyIn, _: AdminMember) -> dict:
+def set_proxy(body: ProxyIn, _: OwnerMember) -> dict:
     if body.url:
         p = urlparse(body.url.strip())
         if p.scheme not in ("http", "https", "socks5", "socks5h") or not p.hostname:
@@ -119,7 +120,7 @@ def set_proxy(body: ProxyIn, _: AdminMember) -> dict:
 
 
 @router.post("/settings/cookies")
-async def upload_cookies(_: AdminMember, file: Annotated[UploadFile, File()]) -> dict:
+async def upload_cookies(_: OwnerMember, file: Annotated[UploadFile, File()]) -> dict:
     data = await file.read(1024 * 1024 + 1)
     if len(data) > 1024 * 1024:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, "cookies.txt is too large (max 1 MB)")
@@ -138,7 +139,7 @@ async def upload_cookies(_: AdminMember, file: Annotated[UploadFile, File()]) ->
 
 
 @router.delete("/settings/cookies")
-def delete_cookies(_: AdminMember) -> dict:
+def delete_cookies(_: OwnerMember) -> dict:
     app_settings.clear_cookies()
     return {"cookies_set": False}
 
@@ -157,7 +158,7 @@ def _floats(row: dict[str, Any]) -> dict[str, Any]:
 
 
 @router.get("/settings/pricing")
-def get_pricing(_: CurrentMember) -> list[dict]:
+def get_pricing(_: AdminMember) -> list[dict]:
     return [_floats(r) for r in db.fetch_all("select * from model_pricing order by model")]
 
 

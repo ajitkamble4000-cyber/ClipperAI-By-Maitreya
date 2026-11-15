@@ -30,7 +30,7 @@ def _member() -> str:
         [uid, f"clip-{uid[:8]}@example.com"],
     )
     db.execute(
-        "insert into members (user_id, email, role) values (%s, %s, 'member')",
+        "insert into members (user_id, email, role) values (%s, %s, 'user') on conflict (user_id) do nothing",
         [uid, f"clip-{uid[:8]}@example.com"],
     )
     return uid

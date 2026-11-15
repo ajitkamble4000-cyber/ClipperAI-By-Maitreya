@@ -5,24 +5,22 @@ from __future__ import annotations
 from fastapi import APIRouter, HTTPException, status
 from studio_shared import db, jobs, storage
 
-from ..auth import CurrentMember
+from ..access import can_delete, project_for
+from ..auth import CurrentMember, audit
 from ..queue import enqueue
 from ..ratelimit import check_job_rate
 
 router = APIRouter(prefix="/projects", tags=["projects"])
 
 
-def get_project(project_id: str) -> dict:
-    row = db.fetch_one("select * from projects where id = %s", [project_id])
-    if not row:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "Project not found")
-    return row
+def get_project(project_id: str, m) -> dict:
+    return project_for(project_id, m)
 
 
 @router.delete("/{project_id}")
 def delete_project(project_id: str, m: CurrentMember) -> dict:
-    p = get_project(project_id)
-    if not (m.is_admin or str(p["created_by"]) == m.user_id):
+    p = get_project(project_id, m)
+    if not can_delete(p, m):
         raise HTTPException(status.HTTP_403_FORBIDDEN, "Only the creator or an admin can delete a project")
     for j in db.fetch_all(
         "select id from jobs where project_id = %s and status in ('queued','running')", [project_id]
@@ -38,12 +36,14 @@ def delete_project(project_id: str, m: CurrentMember) -> dict:
     storage.delete_prefix(f"projects/{project_id}/")
     storage.delete_prefix(f"sources/{project_id}/")
     db.execute("delete from projects where id = %s", [project_id])
+    if str(p["created_by"]) != m.user_id:
+        audit(m, "project.delete", "project", project_id, title=p["title"])
     return {"ok": True}
 
 
 @router.post("/{project_id}/zip", status_code=201)
 def zip_project(project_id: str, m: CurrentMember) -> dict:
-    p = get_project(project_id)
+    p = get_project(project_id, m)
     if p["type"] != "clip":
         raise HTTPException(status.HTTP_400_BAD_REQUEST, "Only clip projects can be zipped")
     check_job_rate(m.user_id)

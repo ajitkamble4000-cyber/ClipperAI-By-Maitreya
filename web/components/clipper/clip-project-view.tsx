@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { ArrowLeft, FileArchive, Info, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { JobProgress } from "@/components/jobs/job-progress";
-import { useMe } from "@/components/shell/member-context";
+import { isAdmin, useMe } from "@/components/shell/member-context";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useJob, useProjectJobs } from "@/hooks/use-job";
@@ -82,7 +82,7 @@ export function ClipProjectView({ projectId }: { projectId: string }) {
           <Button onClick={zip} disabled={!readyCount || !!zipJobId} data-testid="zip">
             <FileArchive /> {zipJobId ? `Zipping ${zipJob?.percent ?? 0}%` : "Download all (ZIP)"}
           </Button>
-          {(me.role === "admin" || project.created_by === me.user_id) && (
+          {(isAdmin(me) || project.created_by === me.user_id) && (
             <Button variant="ghost" size="icon" onClick={remove} aria-label="Delete project">
               <Trash2 />
             </Button>

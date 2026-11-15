@@ -94,6 +94,6 @@ def test_rerender_and_zip(client, make_member, no_queue):
     assert client.post(f"/clips/{cid}/rerender", headers=hdr, json={}).status_code == 409  # already queued
     assert client.post(f"/projects/{pid}/zip", headers=hdr).status_code == 201
     other_uid, _, other = make_member()
-    assert client.delete(f"/projects/{pid}", headers=other).status_code == 403
+    assert client.delete(f"/projects/{pid}", headers=other).status_code == 404  # private: not even visible
     assert client.delete(f"/projects/{pid}", headers=hdr).status_code == 200
     assert db.fetch_one("select 1 from projects where id = %s", [pid]) is None

@@ -18,10 +18,17 @@ def unique_email() -> str:
 def make_member():
     created: list[str] = []
 
-    def _make(role: str = "member") -> tuple[str, str, dict[str, str]]:
+    def _make(
+        role: str = "user", *, team: str | None = None, plan: str = "free"
+    ) -> tuple[str, str, dict[str, str]]:
+        role = "user" if role == "member" else role
         email = f"m-{uuid.uuid4().hex[:10]}@example.com"
         uid = create_auth_user(email)
-        db.execute("insert into members (user_id, email, role) values (%s, %s, %s)", [uid, email, role])
+        # The sign-up trigger already created the profile; set role/team/plan for the test.
+        db.execute(
+            "update members set role = %s, team = %s, plan_id = %s where user_id = %s",
+            [role, team, plan, uid],
+        )
         created.append(uid)
         return uid, email, {"Authorization": f"Bearer {sign_in(email)}"}
 
