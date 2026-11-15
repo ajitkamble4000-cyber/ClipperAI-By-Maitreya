@@ -300,6 +300,23 @@ def partial_refund(job_id: str, amount: int, why: str) -> int:
         return amount
 
 
+def on_plan_change(user_id: str, *, actor_id: str | None = None) -> Wallet:
+    """After an upgrade the new daily allowance applies today: top up to it (never take tokens away)."""
+    with db.transaction() as c:
+        p, w = _locked_wallet(c, user_id)
+        allowance = _allowance(p)
+        if allowance is not None and allowance > w["daily_balance"]:
+            delta = allowance - w["daily_balance"]
+            w = c.execute(
+                "update wallets set daily_balance = %s, updated_at = now() where user_id = %s returning *",
+                [allowance, user_id],
+            ).fetchone()
+            _ledger(
+                c, user_id, delta, "daily", "plan_change", w, actor_id=actor_id, meta={"allowance": allowance}
+            )
+        return _wallet_obj(p, w)
+
+
 def grant(user_id: str, amount: int, *, actor_id: str | None, note: str = "") -> Wallet:
     """Admin grant (positive) or revoke (negative) of bonus tokens. Revokes never go below zero."""
     with db.transaction() as c:

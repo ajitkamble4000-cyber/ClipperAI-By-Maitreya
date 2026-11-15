@@ -21,17 +21,17 @@ Then continue with the first unchecked phase below.
 
 - [x] 9. Business accounts & tenancy: public sign-up, owner by verified email, roles owner/admin/user,
       Staff/Creator team (unlimited), plans table, private projects (RLS + API checks), suspension, audit log
-- [ ] 10. Token economy: wallets, daily refill, bonus grants, ledger, editable token prices, charge on job
+- [x] 10. Token economy: wallets, daily refill, bonus grants, ledger, editable token prices, charge on job
       start, auto-refund on failure/cancel, quotes, plan limits and feature gates
-- [ ] 11. Multi-provider AI: provider keys (encrypted), OpenAI, Anthropic, OpenRouter, OpenAI-compatible
+- [x] 11. Multi-provider AI: provider keys (encrypted), OpenAI, Anthropic, OpenRouter, OpenAI-compatible
       (Groq/DeepSeek/Mistral/Ollama), ElevenLabs, Replicate, Stability, Google; per-role choice + fallback,
       model lists, pricing; cloud transcription; frame-based visual analysis
-- [ ] 12. Any-link quick mode & captions tool: platform detection, auto mode, output formats
+- [x] 12. Any-link quick mode & captions tool: platform detection, auto mode, output formats
       (9:16/1:1/4:5/16:9), SRT/VTT/TXT exports, translation, keyword emphasis, filler/silence removal,
       progress bar, free-plan watermark, brand-kit logo
-- [ ] 13. User panel: landing, pricing, sign-up, dashboard (wallet, quick paste, recent), notifications,
+- [x] 13. User panel: landing, pricing, sign-up, dashboard (wallet, quick paste, recent), notifications,
       token history, brand kit, account (delete), share links, onboarding, locked-feature UI
-- [ ] 14. Admin panel: overview analytics, users (plan/team/tokens/suspend/role), admins (owner only),
+- [x] 14. Admin panel: overview analytics, users (plan/team/tokens/suspend/role), admins (owner only),
       plans & token prices, providers & keys (owner only), jobs monitor, audit log, announcements, system health
 - [ ] 15. Creator extras: templates, batch (many links / many story topics), more genres, AI thumbnails,
       title & hashtag variants

@@ -20,5 +20,7 @@ def notify(user_id: str, title: str, body: str = "", *, kind: str = "info", link
 
 
 def notify_admins(title: str, body: str = "", *, link: str | None = None) -> None:
-    for r in db.fetch_all("select user_id from members where role in ('owner', 'admin') and status = 'active'"):
+    for r in db.fetch_all(
+        "select user_id from members where role in ('owner', 'admin') and status = 'active'"
+    ):
         notify(str(r["user_id"]), title, body, link=link)

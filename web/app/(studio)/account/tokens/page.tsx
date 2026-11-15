@@ -39,6 +39,7 @@ const REASON: Record<string, { label: string; icon: typeof Coins }> = {
   grant: { label: "Gift from the team", icon: Gift },
   revoke: { label: "Removed by the team", icon: ArrowDownRight },
   daily_refill: { label: "Daily refill", icon: RefreshCcw },
+  plan_change: { label: "New plan allowance", icon: RefreshCcw },
   waived: { label: "Free for your team", icon: InfinityIcon },
 };
 

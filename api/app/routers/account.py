@@ -178,7 +178,7 @@ def decide_request(request_id: str, body: DecisionIn, admin: AdminMember) -> dic
     uid = str(row["user_id"])
     if body.approve:
         db.execute("update members set plan_id = %s where user_id = %s", [row["plan_id"], uid])
-        tokens.get_wallet(uid)  # make sure the wallet exists; the new allowance applies from the next refill
+        tokens.on_plan_change(uid, actor_id=admin.user_id)  # the bigger daily allowance applies today
         notify(
             uid,
             f"You're on {plan['name']} now",

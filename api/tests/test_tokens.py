@@ -191,6 +191,10 @@ def test_prices_and_plans_admin(client, make_member, monkeypatch):
         assert r.status_code == 200 and r.json()["price_usd_month"] == 24
         assert r.json()["limits"]["concurrent_jobs"] == 3  # merged, other limits kept
         assert client.put("/admin/plans/pro", json={"limits": {"bogus": 1}}, headers=owner).status_code == 400
+        r = client.put("/admin/plans/pro", json={"features": ["brand_kit"]}, headers=owner)
+        assert {"clipper", "captions", "story", "brand_kit"} <= set(
+            r.json()["features"]
+        )  # base never removed
         b = client.post(
             "/admin/tokens/broadcast",
             json={"amount": 5, "plan_id": "business", "note": "promo"},
@@ -199,6 +203,9 @@ def test_prices_and_plans_admin(client, make_member, monkeypatch):
         assert b.status_code == 200
     finally:
         db.execute(
-            "update plans set price_usd_month = 19, limits = jsonb_set(limits, '{max_clips_per_job}', '15') where id = 'pro'"
+            "update plans set price_usd_month = 19, limits = jsonb_set(limits, '{max_clips_per_job}', '15'), "
+            "features = array['clipper','captions','story','exports','basic_voices','no_watermark','visual_analysis',"
+            "'brand_kit','translation','filler_removal','keyword_emphasis','templates','premium_voices','thumbnails',"
+            "'title_variants','share_links','output_formats'] where id = 'pro'"
         )
         db.execute("update members set role = 'user' where user_id = %s", [oid])

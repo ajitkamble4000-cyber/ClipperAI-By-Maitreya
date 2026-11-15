@@ -111,6 +111,10 @@ def patch_user(user_id: str, body: UserPatch, admin: AdminMember) -> dict:
         return target
     cols = ", ".join(f"{k} = %({k})s" for k in sets)
     db.execute(f"update members set {cols} where user_id = %(id)s", {**sets, "id": user_id})
+    if "plan_id" in sets or "team" in sets:
+        from studio_shared import tokens
+
+        tokens.on_plan_change(user_id, actor_id=admin.user_id)
     audit(admin, "user.update", "user", user_id, email=target["email"], **{k: v for k, v in sets.items()})
     return _target(user_id)
 
@@ -136,6 +140,13 @@ def delete_user(user_id: str, admin: AdminMember) -> dict:
     _guard(admin, target)
     if str(target["user_id"]) == admin.user_id:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, "Use Account settings to delete your own account")
+    from studio_shared import storage
+
+    for p in db.fetch_all("select id from projects where created_by = %s", [user_id]):
+        storage.delete_prefix(f"projects/{p['id']}/")
+        storage.delete_prefix(f"sources/{p['id']}/")
+    storage.delete_prefix(f"uploads/{user_id}/")
+    storage.delete_prefix(f"brand/{user_id}/")
     db.execute("delete from projects where created_by = %s", [user_id])
     db.execute("delete from members where user_id = %s", [user_id])
     supabase_admin.delete_user(user_id)

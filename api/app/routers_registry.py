@@ -9,6 +9,7 @@ def extra_routers() -> list[APIRouter]:
     from .routers import (
         account,
         admin,
+        admin_ops,
         brand,
         clipper,
         library,
@@ -30,4 +31,5 @@ def extra_routers() -> list[APIRouter]:
         tokens.router,
         brand.router,
         account.router,
+        admin_ops.router,
     ]

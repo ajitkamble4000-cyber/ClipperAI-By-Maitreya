@@ -21,5 +21,5 @@ export const extraSettingsTabs: SettingsTab[] = [
   { id: "ai", label: "Budget", adminOnly: true, Component: AiTab },
   { id: "downloads", label: "Downloads & storage", adminOnly: true, Component: DownloadsTab },
   { id: "library", label: "Library", adminOnly: true, Component: LibraryTab },
-  { id: "pricing", label: "Pricing", adminOnly: true, Component: PricingTab },
+  { id: "pricing", label: "AI model costs", adminOnly: true, Component: PricingTab },
 ];

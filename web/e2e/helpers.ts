@@ -60,3 +60,22 @@ export async function rest(path: string, method = "GET", body?: unknown) {
   if (!r.ok) throw new Error(`${method} ${path}: ${r.status} ${await r.text()}`);
   return r;
 }
+
+export const OWNER = "e2e-owner@example.com";
+
+/** The test owner account (OWNER_EMAIL for the e2e API server). Created once, reused across runs. */
+export async function ensureOwner(): Promise<{ id: string; email: string }> {
+  const list = await (await fetch(`${SUPABASE}/auth/v1/admin/users?per_page=1000`, { headers: admin })).json();
+  const found = (list.users ?? []).find((u: { email: string }) => u.email === OWNER);
+  if (found) {
+    await fetch(`${SUPABASE}/auth/v1/admin/users/${found.id}`, { method: "PUT", headers: admin, body: JSON.stringify({ password: PASSWORD }) });
+    return { id: found.id, email: OWNER };
+  }
+  const r = await fetch(`${SUPABASE}/auth/v1/admin/users`, {
+    method: "POST",
+    headers: admin,
+    body: JSON.stringify({ email: OWNER, password: PASSWORD, email_confirm: true }),
+  });
+  const user = await r.json();
+  return { id: user.id, email: OWNER };
+}

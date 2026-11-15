@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useRef, useState } from "react";
 import Link from "next/link";
 import { Bell, CheckCheck } from "lucide-react";
 import type { RealtimeChannel } from "@supabase/supabase-js";
@@ -27,6 +27,7 @@ export function NotificationBell({ className, align = "right" }: { className?: s
   const [unread, setUnread] = useState(0);
   const [open, setOpen] = useState(false);
   const box = useRef<HTMLDivElement>(null);
+  const uid = useId(); // each bell (sidebar, phone header) needs its own Realtime channel
 
   const load = useCallback(() => {
     api<{ unread: number; items: Note[] }>("/notifications?limit=20")
@@ -44,12 +45,18 @@ export function NotificationBell({ className, align = "right" }: { className?: s
     load();
     realtimeAuth(sb).then(() => {
       if (!alive) return;
-      ch = sb.channel("notifications").on("postgres_changes", { event: "*", schema: "public", table: "notifications" }, load).subscribe();
+      ch = sb.channel(`notifications${uid}`).on("postgres_changes", { event: "*", schema: "public", table: "notifications" }, load).subscribe();
     });
     return () => {
       alive = false;
       if (ch) sb.removeChannel(ch);
     };
+  }, [load, uid]);
+
+  useEffect(() => {
+    const sync = () => load();
+    window.addEventListener("notifications-read", sync);
+    return () => window.removeEventListener("notifications-read", sync);
   }, [load]);
 
   useEffect(() => {
@@ -62,7 +69,8 @@ export function NotificationBell({ className, align = "right" }: { className?: s
   const markRead = async () => {
     setUnread(0);
     await api("/notifications/read", { method: "POST" }).catch(() => {});
-    load();
+    window.dispatchEvent(new Event("notifications-read")); // the other bell updates too
+
   };
 
   return (

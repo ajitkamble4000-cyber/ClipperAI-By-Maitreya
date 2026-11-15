@@ -215,7 +215,8 @@ def update_plan(plan_id: str, body: PlanIn, owner: OwnerMember) -> dict:
         unknown = set(body.features) - BASE_FEATURES - set(FEATURE_LABELS)
         if unknown:
             raise HTTPException(status.HTTP_400_BAD_REQUEST, f"Unknown feature: {', '.join(sorted(unknown))}")
-        sets["features"] = list(dict.fromkeys(body.features))
+        base = ["clipper", "captions", "story", "exports", "basic_voices"]  # always included in every plan
+        sets["features"] = list(dict.fromkeys([*base, *body.features]))
     if "limits" in sets:
         sets["limits"] = db.jsonb(sets["limits"])
     if not sets and body.unlimited is None:

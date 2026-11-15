@@ -76,7 +76,9 @@ def overview(_: AdminMember) -> dict:
         "select kind, count(*) as n from jobs where created_at > now() - interval '30 days' and kind <> 'dummy' "
         "group by kind order by n desc"
     )
-    pending_upgrades = db.fetch_one("select count(*) as n from upgrade_requests where status = 'pending'")["n"]
+    pending_upgrades = db.fetch_one("select count(*) as n from upgrade_requests where status = 'pending'")[
+        "n"
+    ]
     done = int(job_stats["ok_1d"]) + int(job_stats["failed_1d"])
     return {
         "users": users,
@@ -132,13 +134,11 @@ def cancel_job(job_id: str, admin: AdminMember) -> dict:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Job not found") from e
     if not job:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Job not found")
-    if job["status"] not in ("queued", "running"):
+    if not jobs.cancel(job_id):
         raise HTTPException(status.HTTP_409_CONFLICT, "The job isn't running")
-    jobs.request_cancel(job_id)
-    if job["status"] == "queued":
-        tokens.refund_job(job_id, "canceled by an admin")
-    audit(admin, "job.cancel", "job", job_id, kind=job["kind"])
-    return {"ok": True}
+    refunded = tokens.refund_job(job_id, "canceled by an admin")
+    audit(admin, "job.cancel", "job", job_id, kind=job["kind"], refunded=refunded)
+    return {"canceled": True, "refunded": refunded}
 
 
 @router.get("/health")

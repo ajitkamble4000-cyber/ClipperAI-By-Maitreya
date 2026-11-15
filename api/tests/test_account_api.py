@@ -55,6 +55,7 @@ def test_upgrade_request_flow(client, make_member):
     assert r.status_code == 200 and r.json()["status"] == "approved"
     assert db.fetch_one("select plan_id from members where user_id = %s", [uid])["plan_id"] == "pro"
     assert client.get("/me", headers=user).json()["plan"]["id"] == "pro"
+    assert client.get("/tokens", headers=user).json()["daily_balance"] == 5000  # upgrade applies today
     assert (
         client.post(f"/admin/upgrade-requests/{rid}", headers=admin, json={"approve": False}).status_code
         == 404

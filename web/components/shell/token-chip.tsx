@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useId, useState } from "react";
 import Link from "next/link";
 import { Coins, Infinity as InfinityIcon } from "lucide-react";
 import type { RealtimeChannel } from "@supabase/supabase-js";
@@ -16,6 +16,7 @@ export type { Wallet };
 /** Live token balance (updates over Realtime whenever the wallet changes). */
 export function useWallet(initial?: Wallet | null) {
   const [w, setW] = useState<Wallet | null>(initial ?? null);
+  const uid = useId(); // one Realtime channel per chip (sidebar + phone header)
   useEffect(() => {
     const sb = supabaseBrowser();
     let ch: RealtimeChannel | null = null;
@@ -24,7 +25,7 @@ export function useWallet(initial?: Wallet | null) {
     load();
     realtimeAuth(sb).then(() => {
       if (!alive) return;
-      ch = sb.channel("wallet").on("postgres_changes", { event: "*", schema: "public", table: "wallets" }, load).subscribe();
+      ch = sb.channel(`wallet${uid}`).on("postgres_changes", { event: "*", schema: "public", table: "wallets" }, load).subscribe();
     });
     const id = setInterval(load, 60_000);
     return () => {
@@ -32,7 +33,7 @@ export function useWallet(initial?: Wallet | null) {
       clearInterval(id);
       if (ch) sb.removeChannel(ch);
     };
-  }, []);
+  }, [uid]);
   return w;
 }
 
