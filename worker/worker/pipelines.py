@@ -12,6 +12,8 @@ _REGISTRY: dict[str, str] = {
     "clip": "worker.clipper.pipeline:build",
     "clip_rerender": "worker.clipper.extra_jobs:build_rerender",
     "clip_zip": "worker.clipper.extra_jobs:build_zip",
+    "story_script": "worker.story.script:build_script",
+    "story_scene_ai": "worker.story.script:build_scene_ai",
 }
 
 

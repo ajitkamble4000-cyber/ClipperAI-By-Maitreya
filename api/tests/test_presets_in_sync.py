@@ -11,3 +11,8 @@ def test_web_caption_presets_match_shared():
     web = json.loads((ROOT / "web/lib/presets/captions.json").read_text())
     assert shared == web, "run: cp shared/presets/captions.json web/lib/presets/captions.json"
 
+
+def test_web_story_presets_match_shared():
+    shared = json.loads((ROOT / "shared/presets/story.json").read_text())
+    web = json.loads((ROOT / "web/lib/presets/story.json").read_text())
+    assert shared == web, "run: cp shared/presets/story.json web/lib/presets/story.json"

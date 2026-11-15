@@ -1,4 +1,5 @@
-import { PageHeader } from "@/components/shell/page-header";
-export default function Page() {
-  return <PageHeader title="Story Studio" description="Coming in Phase 3." />;
+import { LibraryView } from "@/components/library/library-view";
+
+export default function StoryPage() {
+  return <LibraryView fixedType="story" />;
 }

@@ -1,0 +1,74 @@
+{
+  "genres": {
+    "what_if": {
+      "label": "\"What happens if…\" explainer",
+      "example": "What happens if you fall into a black hole?",
+      "prompt": "A realistic, science-grounded 'what happens if' explainer told in second person ('you'). Escalate step by step: each scene raises the stakes with a vivid, concrete consequence (numbers, sensations, timelines). Calm authority with a sense of awe. End with a mind-blowing final fact or twist.",
+      "hook": "Open with the scenario as a direct, dramatic question or a shocking first consequence in the first sentence.",
+      "visual_style": "realistic_3d", "music": "epic", "captions": "bold_pop", "speaking_style": "dramatic", "voice": "Charon"
+    },
+    "scary": {
+      "label": "Scary story",
+      "example": "Scary story: the last bus at midnight",
+      "prompt": "A short first-person horror story with a slow-burn build, specific sensory details (sounds, cold, smells), rising dread and an unsettling twist ending. Short sentences. Never gory; terrifying through suggestion.",
+      "hook": "Start in the middle of something wrong: a strange detail, a rule being broken, or a line like 'I should never have…'.",
+      "visual_style": "dark_horror", "music": "horror", "captions": "horror", "speaking_style": "creepy_whisper", "voice": "Algenib"
+    },
+    "funny": {
+      "label": "Funny story",
+      "example": "My grandma accidentally joined a biker gang",
+      "prompt": "A funny, absurd short story with escalating chaos, comic timing, a clear running gag and a punchline ending. Light, warm, family-friendly humor.",
+      "hook": "Open with the most ridiculous fact of the story stated as if completely normal.",
+      "visual_style": "pixar_3d", "music": "funny", "captions": "bold_pop", "speaking_style": "excited", "voice": "Puck"
+    },
+    "facts": {
+      "label": "Mind-blowing facts",
+      "example": "5 facts about the ocean that sound fake",
+      "prompt": "A rapid-fire list of surprising, TRUE facts on one topic. One fact per scene, each with a concrete number or comparison that makes it vivid. Build from interesting to jaw-dropping. Do not invent facts.",
+      "hook": "Lead with the single most unbelievable fact, or 'This sounds fake, but…'.",
+      "visual_style": "realistic_3d", "music": "upbeat", "captions": "bold_pop", "speaking_style": "excited", "voice": "Fenrir"
+    },
+    "motivational": {
+      "label": "Motivational",
+      "example": "Why the first hour of your day decides everything",
+      "prompt": "A punchy motivational piece built around one idea, with a short story or example, a turning point and a clear call to action. Direct, second person, no clichés.",
+      "hook": "Open with a hard truth or a bold claim that challenges the viewer.",
+      "visual_style": "realistic_3d", "music": "epic", "captions": "bold_pop", "speaking_style": "dramatic", "voice": "Orus"
+    },
+    "history": {
+      "label": "History",
+      "example": "The man who sold the Eiffel Tower twice",
+      "prompt": "A true historical story told like a thriller: who, where, when, the stakes, the turning point and the outcome. Accurate names and dates; no invented facts.",
+      "hook": "Open with the most surprising outcome first, then rewind.",
+      "visual_style": "realistic_3d", "music": "suspense", "captions": "boxed", "speaking_style": "dramatic", "voice": "Iapetus"
+    }
+  },
+  "speaking_styles": {
+    "dramatic": {"label": "Dramatic", "prompt": "Read this like a dramatic movie-trailer narrator: deep, intense, with weighty pauses"},
+    "calm": {"label": "Calm", "prompt": "Read this in a calm, warm, measured documentary narrator voice"},
+    "excited": {"label": "Excited", "prompt": "Read this with high energy and excitement, fast-paced like a viral short"},
+    "creepy_whisper": {"label": "Creepy whisper", "prompt": "Read this as a slow, creepy, breathy whisper, like telling a ghost story in the dark"}
+  },
+  "voices": [
+    {"name": "Charon", "desc": "Informative, deep"}, {"name": "Puck", "desc": "Upbeat"}, {"name": "Kore", "desc": "Firm"},
+    {"name": "Fenrir", "desc": "Excitable"}, {"name": "Orus", "desc": "Firm"}, {"name": "Zephyr", "desc": "Bright"},
+    {"name": "Aoede", "desc": "Breezy"}, {"name": "Leda", "desc": "Youthful"}, {"name": "Enceladus", "desc": "Breathy"},
+    {"name": "Iapetus", "desc": "Clear"}, {"name": "Algenib", "desc": "Gravelly"}, {"name": "Algieba", "desc": "Smooth"},
+    {"name": "Alnilam", "desc": "Firm"}, {"name": "Achernar", "desc": "Soft"}, {"name": "Autonoe", "desc": "Bright"},
+    {"name": "Callirrhoe", "desc": "Easy-going"}, {"name": "Despina", "desc": "Smooth"}, {"name": "Erinome", "desc": "Clear"},
+    {"name": "Gacrux", "desc": "Mature"}, {"name": "Laomedeia", "desc": "Upbeat"}, {"name": "Pulcherrima", "desc": "Forward"},
+    {"name": "Rasalgethi", "desc": "Informative"}, {"name": "Sadachbia", "desc": "Lively"}, {"name": "Sadaltager", "desc": "Knowledgeable"},
+    {"name": "Schedar", "desc": "Even"}, {"name": "Sulafat", "desc": "Warm"}, {"name": "Umbriel", "desc": "Easy-going"},
+    {"name": "Vindemiatrix", "desc": "Gentle"}, {"name": "Zubenelgenubi", "desc": "Casual"}, {"name": "Achird", "desc": "Friendly"}
+  ],
+  "voices_note": "The Gemini API has no endpoint that lists TTS voices; this list follows Google's docs. Admins can edit it here.",
+  "languages": {
+    "en": {"label": "English", "instruction": "Write the narration in natural spoken English."},
+    "hi": {"label": "Hindi", "instruction": "Write the narration in natural spoken Hindi using Devanagari script."},
+    "hinglish": {"label": "Hinglish", "instruction": "Write the narration in Hinglish: conversational Hindi mixed with common English words, written in Latin (Roman) script, the way young Indians text and talk."}
+  },
+  "lengths": [30, 45, 60, 90],
+  "words_per_second": 2.5,
+  "camera_motions": ["zoom-in", "zoom-out", "pan-left", "pan-right", "shake", "static"],
+  "music_moods": ["suspense", "horror", "upbeat", "epic", "funny", "calm", "emotional"]
+}
