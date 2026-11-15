@@ -18,8 +18,9 @@ test("admin settings, budget warning banner, usage dashboard; members see no adm
   try {
     await login(page, admin.email);
     await page.goto("/settings");
-    await expect(page.getByRole("tab", { name: "AI & budget" })).toBeVisible();
-    await expect(page.getByText("Not set").first()).toBeVisible();
+    await expect(page.getByRole("tab", { name: "AI providers" })).toBeVisible();
+    await expect(page.getByTestId("provider-openai")).toBeVisible();
+    await page.goto("/settings?tab=ai");
     // Budget so that this month's spend (incl. earlier test runs) is ~87%: the 80% warning state.
     const ev = await (await rest("usage_events?select=cost_usd&ts=gte." + new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString(), "GET")).json();
     const spent = (ev as { cost_usd: number }[]).reduce((a, r) => a + Number(r.cost_usd), 0);
@@ -41,7 +42,7 @@ test("admin settings, budget warning banner, usage dashboard; members see no adm
     const p2 = await ctx.newPage();
     await login(p2, member.email);
     await p2.goto("/settings");
-    await expect(p2.getByRole("tab", { name: "AI & budget" })).toHaveCount(0);
+    await expect(p2.getByRole("tab", { name: "AI providers" })).toHaveCount(0);
     await expect(p2.getByRole("tab", { name: "Team" })).toBeVisible();
     await expect(p2.getByTestId("budget-banner")).toBeVisible();
     await ctx.close();
@@ -61,6 +62,7 @@ test("library: filters, search, and the shared team library", async ({ page }) =
     { type: "story", title: `Beta story ${stamp}`, created_by: b.id, status: "draft" },
   ]);
   await login(page, a.email);
+  await page.goto("/library");
   await page.getByLabel("Search").fill(String(stamp));
   await expect(page.getByTestId("library-grid").getByRole("link")).toHaveCount(2);
   await page.getByLabel("Search").fill(`Beta story ${stamp}`);

@@ -7,6 +7,7 @@ import zipfile
 from typing import Any
 
 from studio_shared import db, storage
+from studio_shared.captions_files import render_file
 
 from ..media.names import slugify
 from ..pipeline import JobContext, Pipeline, Step, StepFailed
@@ -36,6 +37,9 @@ def _rerender(ctx: JobContext) -> dict[str, Any]:
     if p.get("reframe") and p["reframe"] != clip["reframe"]:
         updates["reframe"] = p["reframe"]
         cut_changed = True
+    if p.get("aspect") and p["aspect"] != clip.get("aspect"):
+        updates["aspect"] = p["aspect"]
+        cut_changed = True
     if p.get("caption_style") is not None:
         updates["caption_style"] = p["caption_style"]
     if updates:
@@ -60,7 +64,7 @@ def _zip(ctx: JobContext) -> dict[str, Any]:
     pid = ctx.project_id
     proj = db.fetch_one("select title from projects where id = %s", [pid])
     clips = db.fetch_all(
-        "select filename, video_key, title, description, hashtags from clips where project_id = %s "
+        "select filename, video_key, words_key, title, description, hashtags from clips where project_id = %s "
         "and status = 'ready' and video_key is not null order by idx",
         [pid],
     )
@@ -73,6 +77,9 @@ def _zip(ctx: JobContext) -> dict[str, Any]:
             ctx.check_canceled()
             local = ctx.fetch(c["video_key"], c["filename"])
             z.write(local, c["filename"])
+            if c.get("words_key") and storage.exists(c["words_key"]):
+                words = json.loads(storage.get_bytes(c["words_key"]))
+                z.writestr(c["filename"].rsplit(".", 1)[0] + ".srt", render_file(words, "srt"))
             lines.append(
                 f"{c['filename']}\nTitle: {c['title']}\n{c['description']}\n{' '.join(c['hashtags'])}\n"
             )

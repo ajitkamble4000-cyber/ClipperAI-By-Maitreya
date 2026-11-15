@@ -27,7 +27,7 @@ test("admin invites a teammate who joins via the email link", async ({ page, bro
   await p2.getByLabel("Your name").fill("New Teammate");
   await p2.getByLabel("Password").fill("brand-new-password");
   await p2.getByRole("button", { name: "Continue" }).click();
-  await expect(p2.getByRole("heading", { name: "Library" })).toBeVisible();
+  await expect(p2.getByRole("heading", { name: "Home" })).toBeVisible();
   await p2.goto("/settings?tab=members");
   await expect(p2.getByText("New Teammate (you)")).toBeVisible();
   // Members cannot invite.
@@ -99,7 +99,7 @@ test("upload resumes after a page refresh without re-sending finished parts", as
 test("library and nav work on a phone @mobile", async ({ page }) => {
   const a = await createMember("member");
   await login(page, a.email);
-  await expect(page.getByRole("link", { name: "Settings" }).last()).toBeVisible();
+  await expect(page.getByRole("link", { name: "Account" }).last()).toBeVisible();
   const overflow = await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth);
   expect(overflow).toBe(false);
 });

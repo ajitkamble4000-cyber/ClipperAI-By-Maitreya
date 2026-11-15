@@ -11,8 +11,7 @@ from studio_shared import db, jobs
 
 from ..access import project_for, scene_for
 from ..auth import CurrentMember, Member
-from ..queue import enqueue
-from ..ratelimit import check_job_rate
+from ..plans import launch
 
 router = APIRouter(tags=["story"])
 
@@ -52,10 +51,10 @@ def busy(project_id: str, kinds: tuple[str, ...]) -> None:
         )
 
 
-def start(kind: str, project_id: str, params: dict[str, Any], user_id: str) -> dict[str, Any]:
-    check_job_rate(user_id)
-    job = jobs.create_job(kind, project_id=project_id, params=params, user_id=user_id)
-    enqueue(job)
+def start(
+    kind: str, project_id: str, params: dict[str, Any], m: Member, quote_params: dict[str, Any] | None = None
+) -> dict[str, Any]:
+    job = launch(m, kind, project_id, params, quote_params)
     return job
 
 
@@ -88,7 +87,7 @@ def create_story(body: StoryIn, m: CurrentMember) -> dict:
         )
     out: dict[str, Any] = {"project_id": p["id"]}
     if body.generate:
-        out["job_id"] = start("story_script", str(p["id"]), {}, m.user_id)["id"]
+        out["job_id"] = start("story_script", str(p["id"]), {}, m)["id"]
     return out
 
 
@@ -99,7 +98,7 @@ AI_KINDS = ("story_script", "story_scene_ai")
 def regenerate_script(project_id: str, m: CurrentMember) -> dict:
     story_or_404(project_id, m)
     busy(project_id, AI_KINDS)
-    return start("story_script", project_id, {}, m.user_id)
+    return start("story_script", project_id, {}, m)
 
 
 class RewriteIn(BaseModel):
@@ -116,7 +115,7 @@ def rewrite_scene(scene_id: str, body: RewriteIn, m: CurrentMember) -> dict:
         "story_scene_ai",
         str(sc["project_id"]),
         {"op": "rewrite", "scene_id": scene_id, "instruction": body.instruction},
-        m.user_id,
+        m,
     )
 
 
@@ -124,7 +123,7 @@ def rewrite_scene(scene_id: str, body: RewriteIn, m: CurrentMember) -> dict:
 def stronger_hook(project_id: str, m: CurrentMember) -> dict:
     story_or_404(project_id, m)
     busy(project_id, AI_KINDS)
-    return start("story_scene_ai", project_id, {"op": "hook"}, m.user_id)
+    return start("story_scene_ai", project_id, {"op": "hook"}, m)
 
 
 @router.get("/story/presets")

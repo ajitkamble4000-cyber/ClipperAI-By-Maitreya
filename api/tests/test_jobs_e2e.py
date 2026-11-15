@@ -97,7 +97,7 @@ def test_cancel_stops_job(client, make_member, worker):
     _, _, hdr = make_member()
     jid = client.post("/jobs/dummy", json={"seconds_per_step": 5}, headers=hdr).json()["id"]
     wait_for(jid, ("running",), 20)
-    assert client.post(f"/jobs/{jid}/cancel", headers=hdr).json() == {"canceled": True}
+    assert client.post(f"/jobs/{jid}/cancel", headers=hdr).json()["canceled"] is True
     time.sleep(2)
     assert db.fetch_one("select status from jobs where id = %s", [jid])["status"] == "canceled"
 

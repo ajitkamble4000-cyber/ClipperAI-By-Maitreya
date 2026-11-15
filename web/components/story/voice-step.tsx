@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Mic, Play, X } from "lucide-react";
 import { toast } from "sonner";
 import { UploadDropzone } from "@/components/upload/upload-dropzone";
@@ -24,6 +24,19 @@ export function VoiceStep({ story, scenes, jobs }: StepProps) {
   const audio = useRef<HTMLAudioElement | null>(null);
   const [previewing, setPreviewing] = useState(false);
   const timed = scenes.filter((s) => s.audio_start_s !== null).length === scenes.length;
+  const [voiceList, setVoiceList] = useState<{ name: string; label: string; desc?: string }[]>(VOICES.map((v) => ({ name: v.name, label: v.name, desc: v.desc })));
+  const [voiceProvider, setVoiceProvider] = useState("google");
+  useEffect(() => {
+    api<{ provider: string; voices: { name: string; label: string; desc?: string }[] }>("/story/voices")
+      .then((r) => {
+        setVoiceProvider(r.provider);
+        if (r.voices.length) {
+          setVoiceList(r.voices);
+          if (!r.voices.some((v) => v.name === voice)) setVoice(r.voices[0].name);
+        }
+      })
+      .catch(() => {});
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const preview = async () => {
     setPreviewing(true);
@@ -59,8 +72,8 @@ export function VoiceStep({ story, scenes, jobs }: StepProps) {
       <CardContent className="grid gap-5">
         {!story.voiceover_key ? (
           <div className="grid gap-4 sm:grid-cols-[1fr_1fr_auto] sm:items-end">
-            <Field label="Voice">
-              <Select value={voice} onValueChange={(v) => { setVoice(v); save({ voice: v }); }} options={VOICES.map((v) => ({ value: v.name, label: `${v.name} · ${v.desc}` }))} />
+            <Field label={`Voice (${voiceProvider})`}>
+              <Select value={voice} onValueChange={(v) => { setVoice(v); save({ voice: v }); }} options={voiceList.map((v) => ({ value: v.name, label: v.desc ? `${v.label} · ${v.desc}` : v.label }))} />
             </Field>
             <Field label="Speaking style">
               <Select value={style} onValueChange={(v) => { setStyle(v); save({ speaking_style: v }); }} options={Object.entries(SPEAKING_STYLES).map(([v, s]) => ({ value: v, label: s.label }))} />

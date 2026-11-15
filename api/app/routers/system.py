@@ -26,6 +26,14 @@ def public_plans() -> list[dict]:
     return [{**r, "price_usd_month": float(r["price_usd_month"])} for r in rows]
 
 
+@router.get("/public/token-prices")
+def public_token_prices() -> list[dict]:
+    """What things cost in tokens, for the public pricing page."""
+    return db.fetch_all(
+        "select action, label, tokens, unit, description from token_prices where tokens > 0 order by sort"
+    )
+
+
 @router.get("/announcements")
 def announcements(_: CurrentMember) -> list[dict]:
     return db.fetch_all(

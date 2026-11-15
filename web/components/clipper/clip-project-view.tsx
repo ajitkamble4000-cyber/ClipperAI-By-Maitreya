@@ -73,9 +73,12 @@ export function ClipProjectView({ projectId }: { projectId: string }) {
           <h1 className="truncate text-2xl font-semibold tracking-tight" data-testid="project-title">
             {String(project.title ?? "")}
           </h1>
-          <p className="text-sm text-muted-foreground">
-            {meta.options?.content_type ? `${String(meta.options.content_type)} · ` : ""}
-            {clips ? `${readyCount}/${clips.length} clips ready` : ""}
+          <p className="text-sm text-muted-foreground" data-testid="project-summary">
+            {meta.mode === "whole"
+              ? `Whole video with captions · ${readyCount ? "ready" : "rendering"}`
+              : `${meta.options?.content_type ? `${String(meta.options.content_type)} · ` : ""}${clips ? `${readyCount}/${clips.length} clips ready` : ""}`}
+            {meta.options?.aspect && meta.options.aspect !== "9:16" ? ` · ${String(meta.options.aspect)}` : ""}
+            {meta.options?.translate_to ? ` · captions in ${String(meta.options.translate_to)}` : ""}
           </p>
         </div>
         <div className="flex gap-2">
@@ -104,9 +107,13 @@ export function ClipProjectView({ projectId }: { projectId: string }) {
       {clips === null ? (
         <Skeleton className="h-72" />
       ) : clips.length === 0 && generating ? (
-        <p className="text-sm text-muted-foreground">Clips will appear here as soon as the best moments are found.</p>
+        <p className="text-sm text-muted-foreground">
+          {meta.options?.mode === "captions"
+            ? "Your captioned video will appear here as soon as the speech is transcribed."
+            : "Clips will appear here as soon as the best moments are found."}
+        </p>
       ) : (
-        <div className="grid gap-4 xl:grid-cols-2">
+        <div className={meta.mode === "whole" ? "grid max-w-4xl gap-4" : "grid gap-4 xl:grid-cols-2"}>
           {clips.map((c) => (
             <ClipCard key={c.id} clip={c} locked={!!generating} />
           ))}

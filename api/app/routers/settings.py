@@ -197,7 +197,7 @@ def budget(_: CurrentMember) -> dict:
 
 
 @router.get("/usage/summary")
-def usage_summary(_: CurrentMember, days: int = 30) -> dict:
+def usage_summary(_: AdminMember, days: int = 30) -> dict:
     days = max(7, min(365, days))
     f = lambda rows: [{k: (float(v) if isinstance(v, Decimal) else v) for k, v in r.items()} for r in rows]  # noqa: E731
     per_day = f(
@@ -245,3 +245,156 @@ def usage_summary(_: CurrentMember, days: int = 30) -> dict:
         "per_month": per_month,
         "recent": recent,
     }
+
+
+# ---------------------------------------------------------------- AI providers (many, not only Google)
+def _adapter_with(pid: str, key: str | None, base_url: str | None):
+    from studio_shared.ai.base import PROVIDERS, Credentials, credentials
+    from studio_shared.ai.client import adapter as make_adapter
+
+    if pid not in PROVIDERS or pid == "local":
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Unknown provider")
+    if key is None and base_url is None:
+        return make_adapter(pid)
+    cur = credentials(pid)
+    creds = Credentials(pid, key or cur.key, (base_url or cur.base_url or "").rstrip("/") or None)
+    from studio_shared.ai.adapters.openai_like import OpenAILike
+    from studio_shared.ai.adapters.others import Anthropic, ElevenLabs, Replicate, Stability
+
+    cls = {
+        "openai": OpenAILike,
+        "openrouter": OpenAILike,
+        "compat": OpenAILike,
+        "anthropic": Anthropic,
+        "elevenlabs": ElevenLabs,
+        "replicate": Replicate,
+        "stability": Stability,
+    }.get(pid)
+    if cls is None:  # google
+        return Gemini(api_key=creds.key)
+    return cls(creds)
+
+
+def _test_provider(pid: str, key: str | None = None, base_url: str | None = None) -> dict:
+    from studio_shared.ai.base import ProviderError
+
+    try:
+        models = _adapter_with(pid, key, base_url).list_models()
+    except (ProviderError, GeminiError) as e:
+        return {"ok": False, "error": str(e)}
+    except Exception as e:  # noqa: BLE001 - network errors, bad URLs
+        return {"ok": False, "error": f"Could not reach the provider: {e}"[:300]}
+    return {"ok": True, "models": len(models)}
+
+
+@router.get("/settings/providers")
+def providers(_: AdminMember) -> list[dict]:
+    from studio_shared.ai.base import provider_status
+
+    return provider_status()
+
+
+class ProviderIn(BaseModel):
+    key: str | None = Field(default=None, max_length=400)
+    base_url: str | None = Field(default=None, max_length=300)
+    enabled: bool | None = None
+    clear_key: bool = False
+
+
+@router.put("/settings/providers/{pid}")
+def save_provider(pid: str, body: ProviderIn, owner: OwnerMember) -> dict:
+    from studio_shared.ai.base import provider_status, save_credentials
+
+    if body.base_url:
+        p = urlparse(body.base_url)
+        if p.scheme not in ("http", "https") or not p.hostname:
+            raise HTTPException(
+                status.HTTP_400_BAD_REQUEST, "Base URL must look like https://api.example.com/v1"
+            )
+    if body.key or body.base_url:
+        result = _test_provider(pid, body.key.strip() if body.key else None, body.base_url)
+        if not result["ok"]:
+            raise HTTPException(status.HTTP_400_BAD_REQUEST, f"Test failed: {result['error']}")
+    save_credentials(
+        pid,
+        key=body.key.strip() if body.key else None,
+        base_url=body.base_url,
+        enabled=body.enabled,
+        clear_key=body.clear_key,
+    )
+    if pid == "google" and body.key:
+        app_settings.set_gemini_key(body.key.strip())
+    audit(
+        owner,
+        "settings.provider",
+        "provider",
+        pid,
+        key_set=bool(body.key),
+        base_url=body.base_url,
+        enabled=body.enabled,
+        cleared=body.clear_key,
+    )
+    return next(p for p in provider_status() if p["id"] == pid)
+
+
+@router.post("/settings/providers/{pid}/test")
+def test_provider(pid: str, _: AdminMember) -> dict:
+    return _test_provider(pid)
+
+
+@router.get("/settings/providers/{pid}/models")
+def provider_models(pid: str, _: AdminMember) -> list[dict]:
+    from studio_shared.ai.base import ProviderError
+    from studio_shared.ai.client import AI
+
+    try:
+        return AI.list_models(pid)
+    except (ProviderError, GeminiError) as e:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, str(e)) from e
+
+
+class RolesIn(BaseModel):
+    """Each value is 'provider:model' (e.g. 'openai:gpt-4.1-mini', 'local:small'); fallbacks are tried in order."""
+
+    text: str | None = Field(default=None, max_length=200)
+    image: str | None = Field(default=None, max_length=200)
+    tts: str | None = Field(default=None, max_length=200)
+    video: str | None = Field(default=None, max_length=200)
+    transcribe: str | None = Field(default=None, max_length=200)
+    text_fallback: list[str] | None = Field(default=None, max_length=4)
+    image_fallback: list[str] | None = Field(default=None, max_length=4)
+    tts_fallback: list[str] | None = Field(default=None, max_length=4)
+
+
+@router.put("/settings/roles")
+def set_roles(body: RolesIn, owner: OwnerMember) -> dict:
+    from studio_shared.ai.base import PROVIDERS, parse_model_ref
+
+    models = dict(app_settings.get_row()["models"] or {})
+    for role, value in body.model_dump(exclude_none=True).items():
+        refs = value if isinstance(value, list) else [value]
+        for ref in refs:
+            parsed = parse_model_ref(ref)
+            base_role = role.removesuffix("_fallback")
+            if not parsed or base_role not in PROVIDERS[parsed[0]].roles:
+                raise HTTPException(status.HTTP_400_BAD_REQUEST, f"{ref!r} can't be used for {base_role}")
+        models[role] = value
+    for role, value in list(models.items()):
+        if value in ("", []):
+            models.pop(role)
+    db.execute("update settings set models = %s, updated_at = now() where id = 1", [models])
+    audit(owner, "settings.roles", "settings", "models", **models)
+    return {"models": models}
+
+
+@router.get("/story/voices")
+def story_voices(_: CurrentMember) -> dict:
+    """Voices for whichever voice (TTS) provider is selected."""
+    from studio_shared.ai.base import NotConfigured, ProviderError, parse_model_ref
+    from studio_shared.ai.client import AI
+
+    ref = parse_model_ref(app_settings.model_for("tts")) or ("google", "")
+    try:
+        return {"provider": ref[0], "voices": AI.voices(ref[0])}
+    except (NotConfigured, ProviderError):
+        return {"provider": "google", "voices": AI.voices("google")}

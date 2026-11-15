@@ -24,18 +24,24 @@ KIT = {
 
 
 def ensure_builtin_sfx(tmp: Path) -> None:
+    """Synthesize the built-in kit once; also re-create any built-in file that went missing from storage."""
     have = {r["tag"] for r in db.fetch_all("select distinct tag from sfx")}
     for tag, expr in KIT.items():
-        if tag in have:
+        key = f"library/sfx/builtin-{tag}.wav"
+        row_exists = tag in have
+        if row_exists and storage.exists(key):
             continue
+        if row_exists and not db.fetch_one("select 1 from sfx where r2_key = %s", [key]):
+            continue  # an admin-uploaded effect owns this tag
         out = tmp / f"sfx_{tag}.wav"
         try:
             ffmpeg.run(["-f", "lavfi", "-i", expr, "-ar", "48000", "-ac", "1", str(out)], what=f"SFX {tag}")
         except Exception:  # noqa: BLE001
             log.exception("could not synthesize %s", tag)
             continue
-        key = f"library/sfx/builtin-{tag}.wav"
         storage.upload_file(out, key, "audio/wav")
+        if row_exists:
+            continue
         db.execute(
             "insert into sfx (name, tag, r2_key, duration_s) values (%s, %s, %s, %s)",
             [f"{tag.title()} (built-in)", tag, key, ffmpeg.probe(out).duration],

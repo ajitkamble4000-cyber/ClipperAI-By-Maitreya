@@ -64,14 +64,14 @@ def test_resumable_multipart_upload(client, make_member):
     "body,msg",
     [
         ({"filename": "a.exe", "size": 10, "content_type": "video/mp4"}, "not allowed"),
-        ({"filename": "a.mp4", "size": 5 * 1024**3, "content_type": "video/mp4"}, "too large"),
+        ({"filename": "a.mp4", "size": 5 * 1024**3, "content_type": "video/mp4"}, "up to 1 GB"),
         ({"filename": "a.mp4", "size": 10, "content_type": "text/html"}, "not allowed"),
     ],
 )
 def test_upload_validation(client, make_member, body, msg):
     _, _, hdr = make_member()
     r = client.post("/uploads", json=body, headers=hdr)
-    assert r.status_code == 400 and msg in r.json()["detail"]
+    assert r.status_code in (400, 403) and msg in r.json()["detail"]
 
 
 def test_sign_rejects_settings_and_other_users(client, make_member):

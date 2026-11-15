@@ -6,7 +6,7 @@ test.skip(process.env.STUDIO_FAKE_GEMINI !== "1", "run with STUDIO_FAKE_GEMINI=1
 
 test("story studio: idea → script → characters → images → voice → render → download", async ({ page }) => {
   test.setTimeout(600_000);
-  const a = await createMember("member");
+  const a = await createMember("member", undefined, { plan_id: "pro" }); // Pro: several jobs at once
   await login(page, a.email);
   await page.goto("/story/new");
   await page.getByLabel("Story idea").fill("What happens if you fall into a black hole");

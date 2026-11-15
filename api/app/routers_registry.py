@@ -6,7 +6,18 @@ from fastapi import APIRouter
 
 
 def extra_routers() -> list[APIRouter]:
-    from .routers import admin, clipper, library, projects, settings, story, story_media
+    from .routers import (
+        account,
+        admin,
+        brand,
+        clipper,
+        library,
+        projects,
+        settings,
+        story,
+        story_media,
+        tokens,
+    )
 
     return [
         projects.router,
@@ -16,4 +27,7 @@ def extra_routers() -> list[APIRouter]:
         library.router,
         settings.router,
         admin.router,
+        tokens.router,
+        brand.router,
+        account.router,
     ]

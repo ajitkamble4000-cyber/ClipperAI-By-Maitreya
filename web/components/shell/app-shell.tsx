@@ -2,24 +2,33 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { BarChart3, Clapperboard, LayoutGrid, LogOut, Scissors, Settings, Sparkles } from "lucide-react";
+import { BarChart3, Clapperboard, Home, LayoutGrid, LogOut, Scissors, Settings, Shield, Sparkles, UserRound } from "lucide-react";
 import { supabaseBrowser } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
 import { BudgetBanner } from "./budget-banner";
-import { MemberProvider, type Me } from "./member-context";
+import { TokenChip } from "./token-chip";
+import { isAdmin, MemberProvider, type Me } from "./member-context";
+import { NotificationBell } from "./notification-bell";
 
-const NAV = [
-  { href: "/", label: "Library", icon: LayoutGrid },
+type NavItem = { href: string; label: string; icon: typeof Home; admin?: boolean; owner?: boolean };
+
+const NAV: NavItem[] = [
+  { href: "/", label: "Home", icon: Home },
   { href: "/clipper", label: "Clipper", icon: Scissors },
   { href: "/story", label: "Story Studio", icon: Sparkles },
-  { href: "/usage", label: "Usage", icon: BarChart3 },
-  { href: "/settings", label: "Settings", icon: Settings },
+  { href: "/library", label: "Library", icon: LayoutGrid },
+  { href: "/account", label: "Account", icon: UserRound },
+  { href: "/admin", label: "Admin", icon: Shield, admin: true },
+  { href: "/usage", label: "Usage", icon: BarChart3, admin: true },
+  { href: "/settings", label: "Settings", icon: Settings, admin: true },
 ];
+const MOBILE = ["/", "/clipper", "/story", "/library", "/account"];
 
 export function AppShell({ me, children }: { me: Me; children: React.ReactNode }) {
   const path = usePathname();
   const router = useRouter();
   const active = (href: string) => (href === "/" ? path === "/" : path.startsWith(href));
+  const nav = NAV.filter((n) => !n.admin || isAdmin(me));
   const signOut = async () => {
     await supabaseBrowser().auth.signOut();
     router.replace("/login");
@@ -30,11 +39,14 @@ export function AppShell({ me, children }: { me: Me; children: React.ReactNode }
       <div className="min-h-dvh md:grid md:grid-cols-[232px_1fr]">
         <div className="hidden border-r bg-card/40 md:block">
         <aside className="sticky top-0 flex h-dvh flex-col p-4">
-          <Link href="/" className="mb-8 flex items-center gap-2 px-2 font-semibold">
-            <Clapperboard className="size-6 text-primary" /> Shorts Studio
-          </Link>
+          <div className="mb-8 flex items-center justify-between gap-2 px-2">
+            <Link href="/" className="flex items-center gap-2 font-semibold">
+              <Clapperboard className="size-6 text-primary" /> Shorts Studio
+            </Link>
+            <NotificationBell align="left" />
+          </div>
           <nav className="grid gap-1">
-            {NAV.map((n) => (
+            {nav.map((n) => (
               <Link
                 key={n.href}
                 href={n.href}
@@ -48,8 +60,11 @@ export function AppShell({ me, children }: { me: Me; children: React.ReactNode }
             ))}
           </nav>
           <div className="mt-auto border-t pt-4">
+            <TokenChip className="mx-2 mb-3" initial={me.wallet} />
             <p className="truncate px-2 text-sm font-medium">{me.display_name ?? me.email}</p>
-            <p className="px-2 text-xs capitalize text-muted-foreground">{me.role}</p>
+            <p className="px-2 text-xs text-muted-foreground">
+              {me.role === "owner" ? "Owner" : me.role === "admin" ? "Admin" : me.team ? `${me.team[0].toUpperCase()}${me.team.slice(1)} team` : `${me.plan.name} plan`}
+            </p>
             <button onClick={signOut} className="mt-2 flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-sm text-muted-foreground hover:bg-accent">
               <LogOut className="size-4" /> Sign out
             </button>
@@ -60,16 +75,15 @@ export function AppShell({ me, children }: { me: Me; children: React.ReactNode }
           <Link href="/" className="flex items-center gap-2 font-semibold">
             <Clapperboard className="size-5 text-primary" /> Shorts Studio
           </Link>
-          <button onClick={signOut} aria-label="Sign out" className="rounded-lg p-2 text-muted-foreground">
-            <LogOut className="size-4" />
-          </button>
+          <TokenChip className="ml-auto mr-1" initial={me.wallet} />
+          <NotificationBell />
         </header>
         <main className="min-w-0 px-4 pb-24 pt-6 md:px-8 md:pb-10">
           <BudgetBanner />
           {children}
         </main>
         <nav className="fixed inset-x-0 bottom-0 z-30 grid grid-cols-5 border-t bg-background/95 backdrop-blur md:hidden">
-          {NAV.map((n) => (
+          {NAV.filter((n) => MOBILE.includes(n.href)).map((n) => (
             <Link
               key={n.href}
               href={n.href}

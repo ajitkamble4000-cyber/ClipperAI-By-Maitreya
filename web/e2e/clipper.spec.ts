@@ -13,6 +13,7 @@ test("clipper: upload → live progress → clip cards → edit, restyle, nudge,
   await expect(page.getByTestId("file-input-source")).toBeAttached();
   await page.getByTestId("file-input-source").setInputFiles(PODCAST);
   await expect(page.getByText("Ready: podcast.mp4")).toBeVisible({ timeout: 60_000 });
+  await page.getByTestId("mode-clips").click(); // the default (auto) would caption a short video whole
 
   // 2 clips, 15–25 s (slider keyboard control)
   const num = page.getByRole("slider").first();

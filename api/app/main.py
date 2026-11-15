@@ -11,6 +11,7 @@ from fastapi.responses import JSONResponse
 from studio_shared import db
 from studio_shared.config import get_settings
 from studio_shared.logging_setup import setup as setup_logging
+from studio_shared.tokens import InsufficientTokens
 from studio_shared.usage import BudgetExceeded
 
 from .routers import files, jobs, members, system, uploads
@@ -45,6 +46,11 @@ app.add_middleware(
     allow_headers=["authorization", "content-type"],
     max_age=600,
 )
+
+
+@app.exception_handler(InsufficientTokens)
+async def tokens_handler(_: Request, exc: InsufficientTokens) -> JSONResponse:
+    return JSONResponse({"detail": str(exc)}, status_code=402)
 
 
 @app.exception_handler(BudgetExceeded)

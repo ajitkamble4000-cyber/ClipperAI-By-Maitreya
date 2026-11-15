@@ -3,26 +3,39 @@
 from __future__ import annotations
 
 import hashlib
+import logging
 import re
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from studio_shared import db
+from studio_shared import db, storage
 
 from ..media import ffmpeg
 from . import presets
 
+log = logging.getLogger(__name__)
+
+
+def _stored(row: dict[str, Any]) -> bool:
+    """Library rows whose file is missing from storage are skipped (logged) instead of failing a render."""
+    if storage.exists(row["r2_key"]):
+        return True
+    log.warning("library file missing from storage, skipping: %s", row["r2_key"])
+    return False
+
 
 def pick_music(st: dict[str, Any]) -> dict[str, Any] | None:
     if st["music_track_id"]:
-        return db.fetch_one("select * from music_tracks where id = %s", [st["music_track_id"]])
+        row = db.fetch_one("select * from music_tracks where id = %s", [st["music_track_id"]])
+        return row if row and _stored(row) else None
     if not st["music_auto"]:
         return None
     mood = presets.genre(st["genre"])["music"]
     tracks = db.fetch_all("select * from music_tracks where mood = %s order by created_at", [mood])
     if not tracks:
         tracks = db.fetch_all("select * from music_tracks order by created_at")
+    tracks = [t for t in tracks if _stored(t)]
     if not tracks:
         return None
     i = int(hashlib.md5(str(st["project_id"]).encode()).hexdigest(), 16) % len(tracks)  # stable per story
@@ -63,7 +76,8 @@ def plan_sfx(scenes: list[dict[str, Any]], starts: list[float], fetch, enabled: 
     lib = db.fetch_all("select * from sfx order by created_at")
     by_tag: dict[str, dict[str, Any]] = {}
     for r in lib:
-        by_tag.setdefault(r["tag"].lower(), r)
+        if r["tag"].lower() not in by_tag and _stored(r):
+            by_tag[r["tag"].lower()] = r
     hits: list[SfxHit] = []
     for i, s in enumerate(scenes):
         tag = sfx_tag_for(s["sfx_suggestion"] or "", set(by_tag))

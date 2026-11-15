@@ -3,12 +3,11 @@
 from __future__ import annotations
 
 from fastapi import APIRouter, HTTPException, status
-from studio_shared import db, jobs, storage
+from studio_shared import db, jobs, storage, tokens
 
 from ..access import can_delete, project_for
 from ..auth import CurrentMember, audit
-from ..queue import enqueue
-from ..ratelimit import check_job_rate
+from ..plans import launch
 
 router = APIRouter(prefix="/projects", tags=["projects"])
 
@@ -26,6 +25,7 @@ def delete_project(project_id: str, m: CurrentMember) -> dict:
         "select id from jobs where project_id = %s and status in ('queued','running')", [project_id]
     ):
         jobs.cancel(j["id"])
+        tokens.refund_job(str(j["id"]), "project deleted")
     for s in db.fetch_all(
         "select r2_key from sources where project_id = %s and r2_key is not null", [project_id]
     ):
@@ -46,7 +46,5 @@ def zip_project(project_id: str, m: CurrentMember) -> dict:
     p = get_project(project_id, m)
     if p["type"] != "clip":
         raise HTTPException(status.HTTP_400_BAD_REQUEST, "Only clip projects can be zipped")
-    check_job_rate(m.user_id)
-    job = jobs.create_job("clip_zip", project_id=project_id, params={}, user_id=m.user_id)
-    enqueue(job)
+    job = launch(m, "clip_zip", project_id, {})
     return job

@@ -1,4 +1,4 @@
-"""Burn ASS captions (+ emoji overlays) onto a 1080x1920 video."""
+"""Burn ASS captions (+ emoji overlays, watermark, brand logo, progress bar) onto the video in one encode."""
 
 from __future__ import annotations
 
@@ -6,6 +6,7 @@ from collections.abc import Callable
 from pathlib import Path
 
 from ..media import ffmpeg
+from ..media import overlays as brand_overlays
 from .emoji import Overlay
 from .style import fonts_dir
 
@@ -23,6 +24,8 @@ def burn(
     duration: float,
     on_progress: Callable[[float], None] | None = None,
     audio_args: list[str] | None = None,
+    brand: brand_overlays.OverlayOptions | None = None,
+    size: tuple[int, int] = (ffmpeg.OUT_W, ffmpeg.OUT_H),
 ) -> Path:
     inputs = ["-i", str(src)]
     chain = "[0:v]"
@@ -39,6 +42,15 @@ def burn(
             f"[{label}][{i + 1}:v]overlay=x={ov.x}:y={ov.y}:enable='between(t,{ov.start:.3f},{ov.end:.3f})'[{nxt}]"
         )
         label = nxt
+    if brand and brand.any:
+        logo_input = None
+        if brand.logo is not None:
+            logo_input = len(overlays or []) + 1
+            inputs += ["-i", str(brand.logo)]
+        extra, label = brand_overlays.chain(
+            brand, label, width=size[0], height=size[1], duration=duration, logo_input=logo_input
+        )
+        parts.extend(extra)
     ffmpeg.run(
         [
             *inputs,

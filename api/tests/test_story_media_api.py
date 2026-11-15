@@ -7,7 +7,7 @@ pytestmark = pytest.mark.integration
 @pytest.fixture(autouse=True)
 def no_queue(monkeypatch):
     sent = []
-    monkeypatch.setattr("app.routers.story.enqueue", lambda job: sent.append(job))
+    monkeypatch.setattr("app.plans.enqueue", lambda job: sent.append(job))
     return sent
 
 

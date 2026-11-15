@@ -5,8 +5,6 @@ from __future__ import annotations
 import math
 from collections.abc import Callable
 
-from studio_shared.gemini import Gemini
-
 from ...transcribe.base import Transcript
 from .prompts import SYSTEM, build_prompt
 from .schema import Candidate, ClipIdeas
@@ -33,7 +31,7 @@ def _windows(duration: float) -> list[tuple[float, float]]:
 
 
 def find(
-    gem: Gemini,
+    gem,
     t: Transcript,
     *,
     n: int,
@@ -54,7 +52,7 @@ def find(
         win_peaks = [p for p in peaks if a <= p[0] <= b]
         contents: list = []
         if video_part is not None and len(wins) == 1:
-            contents.append(video_part)
+            contents.extend(video_part if isinstance(video_part, list) else [video_part])
         contents.append(
             build_prompt(
                 transcript_text=transcript_lines(t, a, b),
@@ -77,7 +75,7 @@ def find(
         # Long video: one extra pass over the whole video for visual-only moments.
         res = gem.generate_json(
             [
-                video_part,
+                *(video_part if isinstance(video_part, list) else [video_part]),
                 build_prompt(
                     transcript_text="",
                     n=min(n, 10),

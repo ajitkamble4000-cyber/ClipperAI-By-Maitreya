@@ -13,7 +13,7 @@ from studio_shared.gemini import CallContext, get_client
 
 from ..media import ffmpeg
 from ..pipeline import JobContext, Pipeline, Step, StepFailed
-from ..transcribe.faster_whisper_impl import get_transcriber
+from ..transcribe.faster_whisper_impl import transcriber_from_settings
 from . import assets, presets
 from .align import align
 from .render import texts_hash
@@ -89,7 +89,7 @@ def make_voice(ctx: JobContext) -> dict[str, Any]:
     w16 = ffmpeg.extract_audio(wav, ctx.tmp / "n16.wav")
     lang = st["language"] if st["language"] in ("en", "hi") else None
     heard = (
-        get_transcriber(app_settings.get_row()["whisper_model"])
+        transcriber_from_settings()
         .transcribe(
             w16,
             language=lang,

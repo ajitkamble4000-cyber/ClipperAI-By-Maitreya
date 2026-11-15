@@ -18,6 +18,7 @@ export function Select({
   className,
   disabled,
   id,
+  "aria-label": ariaLabel,
 }: {
   value?: string;
   onValueChange: (v: string) => void;
@@ -26,11 +27,13 @@ export function Select({
   className?: string;
   disabled?: boolean;
   id?: string;
+  "aria-label"?: string;
 }) {
   return (
     <S.Root value={value} onValueChange={onValueChange} disabled={disabled}>
       <S.Trigger
         id={id}
+        aria-label={ariaLabel}
         className={cn(
           "flex h-10 w-full items-center justify-between rounded-lg border border-input bg-background/60 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-50",
           className,

@@ -17,6 +17,20 @@ class FakeStoryGemini:
             from fakes import FakeGemini
 
             return FakeGemini().generate_json(contents, schema)
+        from worker.captions.translate import CueTranslations
+        from worker.clipper.whole import WholeMeta
+
+        if schema is WholeMeta:
+            return WholeMeta(
+                title="A quick captioned video",
+                hook_text="WATCH THIS",
+                description="Captioned automatically.",
+                hashtags=["#shorts", "captions"],
+            )
+        if schema is CueTranslations:  # "translate" by tagging each line, keeping the count
+            body = str(contents).split("\n\n", 1)[-1]
+            lines = [ln.split(". ", 1)[-1] for ln in body.splitlines() if ln.strip()]
+            return CueTranslations(lines=[f"[es] {ln}" for ln in lines])
         if schema is StoryScript:
             lines = [
                 "You fall toward a black hole.",

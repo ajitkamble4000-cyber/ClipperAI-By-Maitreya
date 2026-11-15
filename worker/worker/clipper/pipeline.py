@@ -1,26 +1,45 @@
-"""Clipper job: ingest -> transcribe -> find moments -> render clips."""
+"""Clipper job: ingest -> transcribe -> find moments (or the whole video) -> render clips.
+
+Modes: "clips" finds the best moments; "captions" captions the whole video; "auto" captions short videos whole
+(and refunds the difference in tokens) and clips long ones. Every clip can be rendered in 9:16, 1:1, 4:5 or
+16:9, with jump cuts, translated captions, keyword emphasis, a progress bar, the brand kit and the free-plan
+watermark."""
 
 from __future__ import annotations
 
 import json
+from pathlib import Path
 from typing import Any
 
 import numpy as np
-from studio_shared import app_settings, db, storage, usage
-from studio_shared.gemini import CallContext, GeminiError, available, get_client
+from studio_shared import db, storage, tokens, usage
+from studio_shared.gemini import AIError, CallContext, available, get_client
 
-from ..media import audio, ffmpeg
+from ..captions.ass import ASPECTS, canvas_for
+from ..media import audio, ffmpeg, jumpcut
 from ..media.names import clip_filename
+from ..media.overlays import OverlayOptions
 from ..pipeline import JobContext, Pipeline, Step, StepFailed
 from ..transcribe import cache as tcache
 from ..transcribe.base import Transcript
-from ..transcribe.faster_whisper_impl import get_transcriber
-from . import ingest
+from ..transcribe.faster_whisper_impl import transcriber_from_settings
+from . import ingest, whole
 from .moments import basic, gemini_moments, validate
 from .moments.schema import Candidate
 from .render import pick_thumbnail, render_base, render_final
 
 HOP = 0.5
+CAPTIONS_MAX_S = 15 * 60
+RENDER_OPT_KEYS = (
+    "watermark",
+    "progress_bar",
+    "brand",
+    "keyword_emphasis",
+    "emphasis_words",
+    "remove_silence",
+    "remove_fillers",
+    "translate_to",
+)
 
 
 def _params(ctx: JobContext) -> dict[str, Any]:
@@ -36,7 +55,21 @@ def _params(ctx: JobContext) -> dict[str, Any]:
         "visual": bool(p.get("visual_analysis")),
         "hook_overlay": bool(p.get("hook_overlay", True)),
         "force_basic": bool(p.get("force_basic")),
+        "mode": p.get("mode") if p.get("mode") in ("auto", "clips", "captions") else "clips",
+        "aspect": p.get("aspect") if p.get("aspect") in ASPECTS else "9:16",
+        "auto_whole_max_s": int(max(15, min(180, p.get("auto_whole_max_s", 90)))),
     }
+
+
+def _meta_options(ctx: JobContext, o: dict[str, Any]) -> dict[str, Any]:
+    """Options shown on the project page (no brand details)."""
+    extra = ("translate_to", "remove_silence", "remove_fillers", "keyword_emphasis", "progress_bar")
+    return {**o, **{k: ctx.params[k] for k in extra if ctx.params.get(k)}}
+
+
+def render_opts(params: dict[str, Any]) -> dict[str, Any]:
+    """Per-clip render options stored on the clip, so re-renders look the same."""
+    return {k: params[k] for k in RENDER_OPT_KEYS if params.get(k)}
 
 
 # ---------------------------------------------------------------- steps
@@ -48,8 +81,7 @@ def step_transcribe(ctx: JobContext) -> dict[str, Any]:
     curve = audio.loudness_curve(wav, HOP) if wav else np.zeros(0)
     storage.put_bytes(loud_key, json.dumps([round(float(x), 2) for x in curve]).encode(), "application/json")
 
-    model = app_settings.get_row()["whisper_model"]
-    tr = get_transcriber(model)
+    tr = transcriber_from_settings()
     lang = _params(ctx)["language"]
     lang = lang if lang in ("en", "hi") else None  # "hinglish"/auto -> let whisper detect
     cached = tcache.get(meta["hash"], tr.name)
@@ -87,6 +119,13 @@ def step_moments(ctx: JobContext) -> dict[str, Any]:
     peaks = [(p.time, p.score) for p in audio.find_peaks(curve, HOP)]
     min_len, max_len = min(o["min_len"], o["max_len"]), max(o["min_len"], o["max_len"])
     duration = float(meta["duration"])
+    if o["mode"] == "captions" and duration > CAPTIONS_MAX_S:
+        raise StepFailed(
+            f"Captions mode works on videos up to {CAPTIONS_MAX_S // 60} minutes (this one is "
+            f"{duration / 60:.0f}). Use Clips mode for long videos. Your tokens were refunded."
+        )
+    if o["mode"] == "captions" or (o["mode"] == "auto" and duration <= o["auto_whole_max_s"]):
+        return _whole(ctx, o, t, meta, duration)
     if duration < min_len:
         min_len = max(5, int(duration * 0.5))
         max_len = max(min_len, int(duration))
@@ -113,8 +152,17 @@ def step_moments(ctx: JobContext) -> dict[str, Any]:
         try:
             gem = get_client(CallContext(ctx.user_id, ctx.project_id, ctx.job_id))
             video_part, uploaded = None, None
-            if o["visual"]:
-                ctx.progress(0.1, "Sending video to Gemini for visual analysis")
+            whole_video = getattr(gem, "supports_video_input", lambda: True)()
+            if o["visual"] and not whole_video:
+                # Providers without video input look at sampled frames instead (any vision model).
+                ctx.progress(0.1, "Sampling frames for visual analysis")
+                from studio_shared.ai.client import ImageParts
+
+                from ..media.frames import sample_jpegs
+
+                video_part = ImageParts(sample_jpegs(ingest.local_source(ctx), float(meta["duration"])))
+            elif o["visual"]:
+                ctx.progress(0.1, "Sending video to the AI for visual analysis")
                 if ctx.params.get("url") and "youtu" in ctx.params["url"]:
                     video_part = gem.video_part(youtube_url=ctx.params["url"])
                 else:
@@ -162,7 +210,7 @@ def step_moments(ctx: JobContext) -> dict[str, Any]:
                 if uploaded:
                     gem.delete_file(uploaded)
             mode = "ai"
-        except GeminiError as e:
+        except AIError as e:
             reason = str(e)
             ctx.log(f"Gemini unavailable, using basic mode: {e}", "warn")
     if mode == "basic":
@@ -180,8 +228,9 @@ def step_moments(ctx: JobContext) -> dict[str, Any]:
     for i, c in enumerate(final, start=1):
         row = db.fetch_one(
             """insert into clips (project_id, source_id, idx, start_s, end_s, title, hook_text, description, hashtags,
-                                  virality_score, reason, mode, reframe, caption_style, status, filename, duration_s)
-               values (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,'pending',%s,%s) returning id""",
+                                  virality_score, reason, mode, reframe, caption_style, status, filename, duration_s,
+                                  aspect, render_opts)
+               values (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,'pending',%s,%s,%s,%s) returning id""",
             [
                 ctx.project_id,
                 source_id,
@@ -199,6 +248,8 @@ def step_moments(ctx: JobContext) -> dict[str, Any]:
                 o["caption_style"],
                 clip_filename(i, c.title),
                 round(c.end - c.start, 3),
+                o["aspect"],
+                db.jsonb(render_opts(ctx.params)),
             ],
         )
         ids.append(str(row["id"]))
@@ -209,12 +260,98 @@ def step_moments(ctx: JobContext) -> dict[str, Any]:
                 "transcript_key": ctx.outputs["transcribe"]["transcript_key"],
                 "source_id": source_id,
                 "mode": mode,
-                "options": o,
+                "options": _meta_options(ctx, o),
             },
             ctx.project_id,
         ],
     )
     return {"clip_ids": ids, "mode": mode, "basic_reason": reason}
+
+
+def _whole(ctx: JobContext, o: dict[str, Any], t: Transcript, meta: dict[str, Any], duration: float) -> dict:
+    """One clip covering the whole video (captions tool, or a short video in auto mode)."""
+    if o["mode"] == "auto":
+        tk = ctx.params.get("_tokens") or {}
+        whole_cost, _ = tokens.quote("clip", {**(tk.get("params") or {}), "mode": "captions"})
+        diff = int(tk.get("cost") or 0) - whole_cost
+        if diff > 0:
+            back = tokens.partial_refund(ctx.job_id, diff, "auto: short video captioned whole")
+            if back:
+                ctx.log(f"Short video: captioned whole, {back} tokens returned")
+    info = None
+    reason = None
+    if available():
+        try:
+            gem = get_client(CallContext(ctx.user_id, ctx.project_id, ctx.job_id))
+            info = whole.describe(gem, t, source_title=meta.get("title"), language=None)
+        except AIError as e:
+            reason = str(e)
+            ctx.log(f"AI title unavailable: {e}", "warn")
+    info = info or whole.basic(t, meta.get("title"))
+    db.execute("delete from clips where project_id = %s", [ctx.project_id])
+    row = db.fetch_one(
+        """insert into clips (project_id, source_id, idx, start_s, end_s, title, hook_text, description, hashtags,
+                              virality_score, reason, mode, reframe, caption_style, status, filename, duration_s,
+                              aspect, render_opts)
+           values (%s,%s,1,0,%s,%s,%s,%s,%s,0,%s,'whole',%s,%s,'pending',%s,%s,%s,%s) returning id""",
+        [
+            ctx.project_id,
+            meta["source_id"],
+            round(duration, 3),
+            info.title,
+            info.hook_text,
+            info.description,
+            info.hashtags,
+            "Whole video with captions",
+            o["reframe"],
+            o["caption_style"],
+            clip_filename(1, info.title),
+            round(duration, 3),
+            o["aspect"],
+            db.jsonb(render_opts(ctx.params)),
+        ],
+    )
+    # Uploads only have a filename as their title: prefer the AI title. Links keep the source's real title.
+    from_upload = bool(ctx.params.get("upload_id"))
+    db.execute(
+        "update projects set meta = meta || %s, title = case when title in ('Untitled', 'Captioned video', "
+        "'Quick video', '') or (%s and title = %s) then %s else title end where id = %s",
+        [
+            {
+                "transcript_key": ctx.outputs["transcribe"]["transcript_key"],
+                "source_id": meta["source_id"],
+                "mode": "whole",
+                "options": _meta_options(ctx, o),
+            },
+            from_upload,
+            meta.get("title") or "",
+            info.title[:120],
+            ctx.project_id,
+        ],
+    )
+    return {"clip_ids": [str(row["id"])], "mode": "whole", "basic_reason": reason}
+
+
+def _translate(ctx: JobContext, words: list, target: str, source_language: str | None) -> list:
+    from ..captions.translate import translate_words
+
+    if not words:
+        return words
+    try:
+        gem = get_client(CallContext(ctx.user_id, ctx.project_id, ctx.job_id))
+        return translate_words(words, target, gem, source_language=source_language)
+    except AIError as e:
+        ctx.log(f"Translation unavailable, keeping the original captions: {e}", "warn")
+        back = tokens.partial_refund(ctx.job_id, tokens.price("translation"), "translation unavailable")
+        if back:
+            ctx.log(f"{back} translation tokens returned")
+        return words
+
+
+def _words_json(words: list) -> bytes:
+    return json.dumps(
+        [{"text": w.text, "start": round(w.start, 3), "end": round(w.end, 3)} for w in words]
+    ).encode()
 
 
 def render_one(
@@ -226,21 +363,63 @@ def render_one(
     progress=lambda f: None,
     reuse_base: bool = False,
 ) -> dict[str, Any]:
+    from ..transcribe.base import Word
+
     start, end = float(clip["start_s"]), float(clip["end_s"])
     dur = round(end - start, 3)
     pid = clip["project_id"]
+    ro = clip.get("render_opts") or {}
+    canvas = canvas_for(clip.get("aspect"))
     base_key = f"projects/{pid}/clips/{clip['id']}/base.mp4"
     base = ctx.tmp / f"base_{clip['idx']}.mp4"
+    words: list[Word] | None = None
     if reuse_base and clip.get("base_key") and storage.exists(clip["base_key"]):
         ctx.fetch(clip["base_key"], base.name)
         base = ctx.tmp / "dl" / base.name
+        if clip.get("duration_s"):
+            dur = float(clip["duration_s"])  # jump cuts may have shortened the base
+        if clip.get("words_key") and storage.exists(clip["words_key"]):
+            words = [
+                Word(w["text"], w["start"], w["end"])
+                for w in json.loads(storage.get_bytes(clip["words_key"]))
+            ]
         progress(0.6)
     else:
         src = ingest.local_source(ctx) if "ingest" in ctx.outputs else _source_for_clip(ctx, clip)
         pr = ffmpeg.probe(src)
-        render_base(src, pr, start, end, clip["reframe"], base, ctx.tmp, lambda f: progress(0.6 * f))
+        render_base(
+            src,
+            pr,
+            start,
+            end,
+            clip["reframe"],
+            base,
+            ctx.tmp,
+            lambda f: progress(0.5 * f),
+            size=(canvas.w, canvas.h),
+        )
+        words = t.slice(start, end)
+        if ro.get("remove_silence") or ro.get("remove_fillers"):
+            segs = jumpcut.keep_segments(
+                words,
+                dur,
+                remove_silence=bool(ro.get("remove_silence")),
+                remove_fillers=bool(ro.get("remove_fillers")),
+            )
+            if jumpcut.saved_seconds(segs, dur) >= 0.3:
+                cut = ctx.tmp / f"cut_{clip['idx']}.mp4"
+                jumpcut.apply(base, segs, cut)
+                base = cut
+                words = jumpcut.remap(words, segs)
+                dur = round(sum(b - a for a, b in segs), 3)
+        progress(0.55)
+        if ro.get("translate_to"):
+            words = _translate(ctx, words, ro["translate_to"], t.language)
         storage.upload_file(base, base_key, "video/mp4")
-    words = t.slice(start, end)
+    if words is None:
+        words = t.slice(start, end)
+    progress(0.6)
+    brand = OverlayOptions.from_params(ro, lambda k: ctx.fetch(k, "brand_logo" + Path(k).suffix.lower()))
     final = ctx.tmp / clip["filename"]
     render_final(
         base,
@@ -251,24 +430,31 @@ def render_one(
         duration=dur,
         hook=clip["hook_text"] if hook_overlay else None,
         on_progress=lambda f: progress(0.6 + 0.35 * f),
+        canvas=canvas,
+        emphasis=bool(ro.get("keyword_emphasis")),
+        emphasis_words=ro.get("emphasis_words"),
+        brand=brand,
     )
     thumb = pick_thumbnail(final, ctx.tmp / f"thumb_{clip['idx']}.jpg", dur)
     # A fresh key per render so browsers never show a cached old version after a re-render.
     rev = ctx.job_id[:8]
     video_key = f"projects/{pid}/clips/{clip['id']}/{rev}/{clip['filename']}"
     thumb_key = f"projects/{pid}/clips/{clip['id']}/{rev}/thumb.jpg"
+    words_key = f"projects/{pid}/clips/{clip['id']}/{rev}/words.json"
     storage.upload_file(final, video_key, "video/mp4")
     storage.upload_file(thumb, thumb_key, "image/jpeg")
-    for old in (clip.get("video_key"), clip.get("thumb_key")):
-        if old and old not in (video_key, thumb_key):
+    storage.put_bytes(words_key, _words_json(words), "application/json")
+    for old in (clip.get("video_key"), clip.get("thumb_key"), clip.get("words_key")):
+        if old and old not in (video_key, thumb_key, words_key):
             try:
                 storage.delete(old)
             except Exception:  # noqa: BLE001
                 pass
+    language = ro.get("translate_to") or t.language
     db.execute(
-        "update clips set status = 'ready', base_key = %s, video_key = %s, thumb_key = %s, duration_s = %s "
-        "where id = %s",
-        [base_key, video_key, thumb_key, dur, clip["id"]],
+        "update clips set status = 'ready', base_key = %s, video_key = %s, thumb_key = %s, words_key = %s, "
+        "duration_s = %s, language = %s where id = %s",
+        [base_key, video_key, thumb_key, words_key, dur, language, clip["id"]],
     )
     progress(1.0)
     return {"video_key": video_key, "thumb_key": thumb_key}
@@ -281,8 +467,6 @@ def _source_for_clip(ctx: JobContext, clip: dict[str, Any]):
             "The original video was deleted after the retention period, so the cut can't be changed. "
             "Caption style can still be changed."
         )
-    from pathlib import Path
-
     return ctx.fetch(src["r2_key"], "source" + Path(src["r2_key"]).suffix)
 
 

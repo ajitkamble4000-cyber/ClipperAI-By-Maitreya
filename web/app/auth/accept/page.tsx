@@ -26,7 +26,7 @@ function Accept() {
     const sb = supabaseBrowser();
     const code = params.get("code");
     const tokenHash = params.get("token_hash");
-    const type = params.get("type") as "invite" | "recovery" | null;
+    const type = params.get("type") as "invite" | "recovery" | "signup" | "email" | null;
     (async () => {
       if (code) {
         const { error } = await sb.auth.exchangeCodeForSession(code);
@@ -48,9 +48,16 @@ function Accept() {
       }
       const { data } = await sb.auth.getSession();
       if (!data.session) return setFailed("This link is invalid or has expired. Ask an admin for a new invite.");
+      if (params.get("mode") === "signup") {
+        toast.success("Email confirmed. Welcome!");
+        const next = params.get("next");
+        router.replace(next && next.startsWith("/") && !next.startsWith("//") ? next : "/");
+        router.refresh();
+        return;
+      }
       setReady(true);
     })();
-  }, [params]);
+  }, [params, router]);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();

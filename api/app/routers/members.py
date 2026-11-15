@@ -6,7 +6,7 @@ from typing import Literal
 
 from fastapi import APIRouter, HTTPException, status
 from pydantic import BaseModel, EmailStr, Field
-from studio_shared import db
+from studio_shared import db, tokens
 from studio_shared.config import get_settings
 
 from .. import supabase_admin
@@ -36,6 +36,7 @@ def me_payload(m) -> dict:
         "features": list(plan.get("features") or []),
         "limits": plan.get("limits") or {},
         "onboarding": row.get("onboarding") or {},
+        "wallet": tokens.get_wallet(m.user_id).to_json(),
     }
 
 
@@ -72,6 +73,7 @@ def delete_me(m: CurrentMember) -> dict:
         storage.delete_prefix(f"projects/{p['id']}/")
         storage.delete_prefix(f"sources/{p['id']}/")
     storage.delete_prefix(f"uploads/{m.user_id}/")
+    storage.delete_prefix(f"brand/{m.user_id}/")
     db.execute("delete from projects where created_by = %s", [m.user_id])
     db.execute("delete from members where user_id = %s", [m.user_id])
     supabase_admin.delete_user(m.user_id)

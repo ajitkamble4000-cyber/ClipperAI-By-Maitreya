@@ -1,4 +1,5 @@
-"""Per-clip rendering: frame-accurate cut + 9:16 reframe + loudness (base), then captions (final)."""
+"""Per-clip rendering: frame-accurate cut + reframe to the output format + loudness (base), then captions and
+overlays (final)."""
 
 from __future__ import annotations
 
@@ -7,12 +8,13 @@ from pathlib import Path
 
 import cv2
 
-from ..captions.ass import build_ass
+from ..captions.ass import Canvas, build_ass
 from ..captions.burn import burn
 from ..captions.emoji import emoji_overlays
 from ..captions.style import CaptionStyle, catalog
 from ..media import ffmpeg, loudnorm
 from ..media.ffmpeg import FPS, Probe
+from ..media.overlays import OverlayOptions
 from ..transcribe.base import Word
 from .reframe import detect, smooth
 from .reframe import render as rf
@@ -26,14 +28,15 @@ def reframe_filter(
     mode: str,
     workdir: Path,
     on_progress: Callable[[float], None] | None = None,
+    size: rf.Size = rf.VERTICAL,
 ) -> str:
     dur = end - start
     if mode == "blur":
-        return rf.blur_filter()
-    if mode == "center" or rf.is_vertical_enough(pr):
-        return rf.center_filter(pr)
+        return rf.blur_filter(size)
+    if mode == "center" or rf.fits(pr, size):
+        return rf.center_filter(pr, size)
     w, h = pr.display_size
-    crop_frac = rf.crop_width(pr) / w
+    crop_frac = rf.crop_width(pr, size) / w
     if mode == "action":
         samples = detect.motion_track(src, start, end, crop_frac)
         path = smooth.camera_path(
@@ -44,11 +47,11 @@ def reframe_filter(
         found = sum(1 for _, v in samples if v is not None)
         if found < max(2, len(samples) * 0.15):
             # No (or very few) faces: fall back to the blurred-background fit rather than a random crop.
-            return rf.blur_filter()
+            return rf.blur_filter(size)
         path = smooth.camera_path(samples, duration=dur, fps=FPS, crop_frac=crop_frac)
     if on_progress:
         on_progress(1.0)
-    return rf.dynamic_filter(pr, path, workdir / f"crop_{start:.2f}.cmd")
+    return rf.dynamic_filter(pr, path, workdir / f"crop_{start:.2f}.cmd", size)
 
 
 def render_base(
@@ -60,11 +63,12 @@ def render_base(
     out: Path,
     workdir: Path,
     on_progress: Callable[[float], None] | None = None,
+    size: rf.Size = rf.VERTICAL,
 ) -> Path:
-    """Cut [start, end) frame-accurately (re-encode), reframe to 1080x1920@30, normalize audio to -14 LUFS."""
+    """Cut [start, end) frame-accurately (re-encode), reframe to `size`@30, normalize audio to -14 LUFS."""
     dur = end - start
     p = on_progress or (lambda f: None)
-    vf = reframe_filter(src, pr, start, end, mode, workdir, lambda f: p(0.25 * f))
+    vf = reframe_filter(src, pr, start, end, mode, workdir, lambda f: p(0.25 * f), size)
     audio: list[str]
     if pr.has_audio:
         meas = loudnorm.measure(src, start=start, duration=dur)
@@ -132,14 +136,45 @@ def render_final(
     duration: float,
     hook: str | None = None,
     on_progress: Callable[[float], None] | None = None,
+    canvas: Canvas | None = None,
+    emphasis: bool = False,
+    emphasis_words: list[str] | None = None,
+    brand: OverlayOptions | None = None,
 ) -> Path:
+    canvas = canvas or Canvas()
     style = CaptionStyle.from_dict(style_dict)
-    ass = build_ass(words, style, workdir / f"{out.stem}.ass", hook=hook, hook_duration=min(3.0, duration))
+    ass = build_ass(
+        words,
+        style,
+        workdir / f"{out.stem}.ass",
+        hook=hook,
+        hook_duration=min(3.0, duration),
+        canvas=canvas,
+        emphasis=emphasis,
+        emphasis_words=emphasis_words,
+    )
     overlays = []
     if style.enabled and style.emoji:
-        y = int(1920 * catalog()["positions"][style.position])
-        overlays = emoji_overlays(words, style.words_per_line, y, workdir)
-    return burn(base, ass, out, overlays=overlays, duration=duration, on_progress=on_progress)
+        y = int(canvas.h * catalog()["positions"][style.position])
+        overlays = emoji_overlays(
+            words,
+            style.words_per_line,
+            y,
+            workdir,
+            size=round(140 * canvas.scale),
+            center_x=canvas.center_x,
+            height=canvas.h,
+        )
+    return burn(
+        base,
+        ass,
+        out,
+        overlays=overlays,
+        duration=duration,
+        on_progress=on_progress,
+        brand=brand,
+        size=(canvas.w, canvas.h),
+    )
 
 
 def pick_thumbnail(video: Path, out: Path, duration: float) -> Path:

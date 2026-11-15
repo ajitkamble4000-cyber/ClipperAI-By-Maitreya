@@ -35,11 +35,17 @@ def content_hash(path: Path) -> str:
     return h.hexdigest()[:32]
 
 
-def friendly_ytdlp_error(msg: str) -> str:
-    if BOT_PATTERNS.search(msg):
+def friendly_ytdlp_error(msg: str, url: str = "") -> str:
+    from studio_shared import platforms
+
+    plat = platforms.detect(url) if url else platforms.GENERIC
+    site = plat.label if plat.id != "web" else "The site"
+    if BOT_PATTERNS.search(msg) or re.search(
+        r"login required|log in|rate-limit reached|requested content is not available", msg, re.I
+    ):
         return (
-            'YouTube blocked the download from our server ("Sign in to confirm you\'re not a bot"). '
-            "Upload the video file instead, or ask an admin to add a cookies.txt file and/or a proxy in "
+            f"{site} blocked the download from our server (it wants a logged-in browser). "
+            "Upload the video file instead, or ask the owner to add a cookies.txt file and/or a proxy in "
             "Settings → Downloads."
         )
     if re.search(r"private video|members-only|join this channel", msg, re.I):
@@ -87,7 +93,7 @@ def download_url(url: str, dest_dir: Path, on_progress=None) -> tuple[Path, dict
         with yt_dlp.YoutubeDL(opts) as ydl:
             info = ydl.extract_info(url, download=True)
     except Exception as e:  # noqa: BLE001 - yt-dlp raises many types
-        raise StepFailed(friendly_ytdlp_error(str(e))) from e
+        raise StepFailed(friendly_ytdlp_error(str(e), url)) from e
     finally:
         if cookies:
             cookies.unlink(missing_ok=True)
@@ -126,8 +132,14 @@ def run(ctx: JobContext) -> dict[str, Any]:
     pr = ffmpeg.probe(local)
     if not pr.has_video:
         raise StepFailed("This file has no video track.")
-    if pr.duration < 5:
-        raise StepFailed("The video is too short to clip (under 5 seconds).")
+    if pr.duration < 3:
+        raise StepFailed("The video is too short (under 3 seconds).")
+    max_min = int(p.get("max_source_minutes") or 0)
+    if max_min and pr.duration > max_min * 60:
+        raise StepFailed(
+            f"This video is {pr.duration / 60:.0f} minutes long; your plan handles up to {max_min} minutes. "
+            "Trim it, or upgrade for longer videos. Your tokens were refunded."
+        )
     days = app_settings.get_row()["source_retention_days"]
     row = db.fetch_one(
         """insert into sources (project_id, kind, url, r2_key, filename, size_bytes, duration_s, width, height, fps,
@@ -151,7 +163,8 @@ def run(ctx: JobContext) -> dict[str, Any]:
     )
     if meta.get("title"):
         db.execute(
-            "update projects set title = %s where id = %s and title in ('Untitled', '')",
+            "update projects set title = %s where id = %s "
+            "and title in ('Untitled', '', 'Captioned video', 'Quick video')",
             [str(meta["title"])[:120], ctx.project_id],
         )
     return {
@@ -164,6 +177,7 @@ def run(ctx: JobContext) -> dict[str, Any]:
         "has_audio": pr.has_audio,
         "hash": content_hash(local),
         "suffix": local.suffix,
+        "title": (str(meta["title"])[:120] if meta.get("title") else None),
     }
 
 

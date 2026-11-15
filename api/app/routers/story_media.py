@@ -13,6 +13,7 @@ from studio_shared.gemini import CallContext, GeminiError, get_client
 
 from ..access import scene_for
 from ..auth import CurrentMember
+from ..plans import require_feature
 from .story import busy, start, story_or_404
 from .uploads import take_completed_upload
 
@@ -41,7 +42,19 @@ def generate_characters(project_id: str, body: CharactersIn, m: CurrentMember) -
     story_or_404(project_id, m)
     _premium_ok()
     busy(project_id, ("story_characters",))
-    return start("story_characters", project_id, {"character_ids": body.character_ids}, m.user_id)
+    n = (
+        len(body.character_ids)
+        if body.character_ids
+        else int(
+            db.fetch_one(
+                "select count(*) as n from characters where project_id = %s and ref_key is null and not locked",
+                [project_id],
+            )["n"]
+        )
+    )
+    return start(
+        "story_characters", project_id, {"character_ids": body.character_ids}, m, {"count": max(1, n)}
+    )
 
 
 class CharacterIn(BaseModel):
@@ -130,7 +143,7 @@ def generate_images(project_id: str, body: ImagesIn, m: CurrentMember) -> dict:
     if not _image_count(project_id, body):
         raise HTTPException(status.HTTP_400_BAD_REQUEST, "Every scene already has an image.")
     busy(project_id, ("story_images",))
-    return start("story_images", project_id, body.model_dump(), m.user_id)
+    return start("story_images", project_id, body.model_dump(), m, {"count": _image_count(project_id, body)})
 
 
 class SceneImageIn(BaseModel):
@@ -156,7 +169,7 @@ def scene_image(scene_id: str, body: SceneImageIn, m: CurrentMember) -> dict:
         "story_image_one",
         str(sc["project_id"]),
         {"scene_id": scene_id, "instruction": body.instruction},
-        m.user_id,
+        m,
     )
 
 
@@ -185,7 +198,13 @@ def generate_voice(project_id: str, m: CurrentMember) -> dict:
     if not st["voiceover_key"]:
         _premium_ok()
     busy(project_id, ("story_voice",))
-    return start("story_voice", project_id, {}, m.user_id)
+    words = sum(
+        len((r["narration"] or "").split())
+        for r in db.fetch_all("select narration from scenes where project_id = %s", [project_id])
+    )
+    return start(
+        "story_voice", project_id, {}, m, {"uploaded": bool(st["voiceover_key"]), "seconds": words / 2.5}
+    )
 
 
 @router.put("/story/{project_id}/voiceover")
@@ -234,7 +253,7 @@ def voice_preview(
 def render(project_id: str, m: CurrentMember) -> dict:
     story_or_404(project_id, m)
     busy(project_id, ("story_render", "story_voice", "story_images", "story_veo"))
-    return start("story_render", project_id, {}, m.user_id)
+    return start("story_render", project_id, {}, m)
 
 
 # ---------------------------------------------------------------- premium AI video (Veo)
@@ -264,6 +283,7 @@ def _veo_estimate(project_id: str, scene_ids: list[str]) -> tuple[float, int]:
 @router.post("/story/{project_id}/veo", status_code=201)
 def generate_veo(project_id: str, body: VeoIn, m: CurrentMember) -> dict:
     story_or_404(project_id, m)
+    require_feature(m, "premium_video")
     _premium_ok()
     cost, _ = _veo_estimate(project_id, body.scene_ids)
     if cost > body.confirm_usd + 0.01:
@@ -282,6 +302,11 @@ def generate_veo(project_id: str, body: VeoIn, m: CurrentMember) -> dict:
         "where project_id = %s and id = any(%s)",
         [project_id, body.scene_ids],
     )
+    _, secs = _veo_estimate(project_id, body.scene_ids)
     return start(
-        "story_veo", project_id, {"scene_ids": body.scene_ids, "confirmed_usd": body.confirm_usd}, m.user_id
+        "story_veo",
+        project_id,
+        {"scene_ids": body.scene_ids, "confirmed_usd": body.confirm_usd},
+        m,
+        {"seconds": secs},
     )

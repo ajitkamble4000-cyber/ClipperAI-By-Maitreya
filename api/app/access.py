@@ -81,7 +81,7 @@ def key_allowed(key: str, m: Member) -> bool:
     parts = key.split("/")
     if key.startswith(("assets/", "library/")):
         return True  # content-addressed (unguessable) or the shared library
-    if parts[0] == "uploads":
+    if parts[0] in ("uploads", "brand"):
         return len(parts) > 1 and (parts[1] == m.user_id or m.is_admin)
     if parts[0] in ("projects", "sources") and len(parts) > 1:
         try:

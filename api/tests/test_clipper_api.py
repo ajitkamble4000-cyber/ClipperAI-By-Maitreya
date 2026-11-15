@@ -11,8 +11,8 @@ pytestmark = pytest.mark.integration
 @pytest.fixture(autouse=True)
 def no_queue(monkeypatch):
     sent = []
-    monkeypatch.setattr("app.routers.clipper.enqueue", lambda job: sent.append(job))
-    monkeypatch.setattr("app.routers.projects.enqueue", lambda job: sent.append(job))
+    monkeypatch.setattr("app.plans.enqueue", lambda job: sent.append(job))
+    monkeypatch.setattr("app.plans.enqueue", lambda job: sent.append(job))
     return sent
 
 
@@ -85,7 +85,9 @@ def test_rerender_and_zip(client, make_member, no_queue):
         f"/clips/{cid}/rerender", headers=hdr, json={"start": 12, "caption_style": {"preset": "karaoke"}}
     )
     assert r.status_code == 201
-    assert r.json()["params"] == {
+    params = {k: v for k, v in r.json()["params"].items() if k != "_tokens"}
+    assert r.json()["params"]["_tokens"]["cost"] == 10
+    assert params == {
         "clip_id": str(cid),
         "start": 12.0,
         "end": 40.0,

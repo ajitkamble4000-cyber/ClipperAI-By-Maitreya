@@ -1,6 +1,7 @@
 "use client";
 
 import { Suspense, useState } from "react";
+import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -40,7 +41,13 @@ function LoginForm() {
     <Card>
       <CardHeader>
         <CardTitle>Sign in</CardTitle>
-        <CardDescription>This workspace is invite-only. Ask an admin for an invite.</CardDescription>
+        <CardDescription>
+          New here?{" "}
+          <Link href="/signup" className="text-primary underline-offset-4 hover:underline">
+            Create a free account
+          </Link>{" "}
+          and get 1,000 tokens every day.
+        </CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={submit} className="grid gap-4">

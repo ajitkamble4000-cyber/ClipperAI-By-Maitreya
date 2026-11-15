@@ -11,6 +11,16 @@ export interface Plan {
   limits: Record<string, number | boolean>;
 }
 
+export interface Wallet {
+  daily_balance: number;
+  bonus_balance: number;
+  total: number;
+  daily_allowance: number | null;
+  resets_at: string;
+  unlimited: boolean;
+  lifetime_spent: number;
+}
+
 export interface Me {
   user_id: string;
   email: string;
@@ -23,6 +33,7 @@ export interface Me {
   features: string[];
   limits: Record<string, number | boolean>;
   onboarding: Record<string, boolean>;
+  wallet: Wallet;
 }
 
 const Ctx = createContext<Me | null>(null);

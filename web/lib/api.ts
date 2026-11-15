@@ -50,3 +50,25 @@ export async function signedUrl(key: string, download?: string): Promise<string>
   const r = await api<{ url: string }>(`/files/sign?${q}`);
   return r.url;
 }
+
+/** Download an authenticated API response (e.g. a caption file) as a file. */
+export async function downloadFrom(path: string, fallbackName: string): Promise<void> {
+  const t = await token();
+  const res = await fetch(`${env.apiUrl}${path}`, { headers: t ? { Authorization: `Bearer ${t}` } : {} });
+  if (!res.ok) {
+    let msg = res.statusText;
+    try {
+      msg = (await res.json()).detail ?? msg;
+    } catch {}
+    throw new ApiError(res.status, msg);
+  }
+  const name = /filename="([^"]+)"/.exec(res.headers.get("content-disposition") ?? "")?.[1] ?? fallbackName;
+  const url = URL.createObjectURL(await res.blob());
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = name;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 2000);
+}

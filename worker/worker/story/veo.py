@@ -11,7 +11,7 @@ import time
 from typing import Any
 
 from studio_shared import app_settings, db, storage, usage
-from studio_shared.gemini import CallContext, GeminiError, get_client
+from studio_shared.gemini import AIError, CallContext, get_client
 from studio_shared.veo_math import veo_seconds
 
 from ..pipeline import JobContext, Pipeline, Step, StepFailed
@@ -84,7 +84,7 @@ def run_veo(ctx: JobContext) -> dict[str, Any]:
                 usage.assert_premium_allowed()
                 img = storage.get_bytes(s["image_key"])
                 op = gem.start_video(prompt=prompt, image=img, mime="image/png", seconds=secs)
-            except GeminiError as e:
+            except AIError as e:
                 failed[str(s["id"])] = str(e)
                 db.execute(
                     "update scenes set video_status = 'failed', veo_error = %s where id = %s",
@@ -110,7 +110,7 @@ def run_veo(ctx: JobContext) -> dict[str, Any]:
             s = p["scene"]
             try:
                 op = gem.get_operation(p["op"])
-            except GeminiError as e:
+            except AIError as e:
                 log.warning("poll failed for %s: %s", sid, e)
                 continue
             p["op"] = op
@@ -118,7 +118,7 @@ def run_veo(ctx: JobContext) -> dict[str, Any]:
             if op.done and not err:
                 try:
                     data = gem.download_video(op, model=model, seconds=p["secs"])
-                except GeminiError as e:
+                except AIError as e:
                     err = str(e)
                 else:
                     usage.record(

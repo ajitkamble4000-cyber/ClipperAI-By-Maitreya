@@ -10,6 +10,7 @@ from studio_shared import db, storage
 from studio_shared.config import get_settings
 
 from ..auth import CurrentMember
+from ..plans import limit
 from ..validation import safe_filename, validate_upload
 
 router = APIRouter(prefix="/uploads", tags=["uploads"])
@@ -49,7 +50,16 @@ def _public(row: dict) -> dict:
 @router.post("", status_code=201)
 def init_upload(body: InitIn, m: CurrentMember) -> dict:
     name = safe_filename(body.filename)
-    validate_upload(body.purpose, name, body.content_type, body.size, get_settings().max_upload_bytes)
+    max_bytes = get_settings().max_upload_bytes
+    if body.purpose == "source":
+        plan_mb = int(limit(m, "max_upload_mb", 1024))
+        if body.size > plan_mb * 1024**2:
+            raise HTTPException(
+                status.HTTP_403_FORBIDDEN,
+                f"Your plan uploads files up to {plan_mb // 1024 if plan_mb >= 1024 else plan_mb} "
+                f"{'GB' if plan_mb >= 1024 else 'MB'}. Paste a link instead, or upgrade for bigger files.",
+            )
+    validate_upload(body.purpose, name, body.content_type, body.size, max_bytes)
     part = storage.choose_part_size(body.size)
     row = db.fetch_one(
         """insert into uploads (user_id, purpose, r2_key, filename, content_type, size_bytes, part_size)

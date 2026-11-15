@@ -33,7 +33,7 @@ export async function login(page: Page, email: string) {
   await page.getByLabel("Email").fill(email);
   await page.getByLabel("Password").fill(PASSWORD);
   await page.getByRole("button", { name: "Sign in" }).click();
-  await expect(page.getByRole("heading", { name: "Library" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Home" })).toBeVisible();
 }
 
 export async function latestEmailLink(to: string): Promise<string> {
@@ -48,4 +48,15 @@ export async function latestEmailLink(to: string): Promise<string> {
     await new Promise((r) => setTimeout(r, 500));
   }
   throw new Error(`no email for ${to}`);
+}
+
+/** Service-role REST call (test setup only). */
+export async function rest(path: string, method = "GET", body?: unknown) {
+  const r = await fetch(`${SUPABASE}/rest/v1/${path}`, {
+    method,
+    headers: { ...admin, Prefer: "return=representation" },
+    body: body === undefined ? undefined : JSON.stringify(body),
+  });
+  if (!r.ok) throw new Error(`${method} ${path}: ${r.status} ${await r.text()}`);
+  return r;
 }

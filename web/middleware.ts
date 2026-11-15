@@ -2,7 +2,7 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { env } from "@/lib/env";
 
-const PUBLIC = ["/login", "/signup", "/auth", "/pricing", "/s/"];
+const PUBLIC = ["/login", "/signup", "/auth", "/pricing", "/welcome", "/s/"];
 
 export async function middleware(request: NextRequest) {
   let response = NextResponse.next({ request });
@@ -20,6 +20,11 @@ export async function middleware(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
   const path = request.nextUrl.pathname;
+  if (!user && path === "/") {
+    const url = request.nextUrl.clone();
+    url.pathname = "/welcome"; // visitors see the landing page; members go straight to their studio
+    return NextResponse.redirect(url);
+  }
   if (!user && !PUBLIC.some((p) => path.startsWith(p))) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";

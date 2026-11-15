@@ -1,0 +1,70 @@
+import type { Metadata } from "next";
+import Link from "next/link";
+import { Clapperboard, Download } from "lucide-react";
+import { env } from "@/lib/env";
+
+interface Shared {
+  title: string;
+  description: string;
+  hashtags: string[];
+  aspect: string;
+  video_url: string;
+  poster_url: string | null;
+  download_url: string;
+  by: string | null;
+}
+
+async function load(token: string): Promise<Shared | null> {
+  try {
+    const r = await fetch(`${env.apiUrl}/public/share/${encodeURIComponent(token)}`, { cache: "no-store" });
+    return r.ok ? ((await r.json()) as Shared) : null;
+  } catch {
+    return null;
+  }
+}
+
+export const metadata: Metadata = { title: "Shared video · Shorts Studio", robots: { index: false, follow: false } };
+
+const RATIO: Record<string, string> = { "9:16": "aspect-[9/16] max-w-sm", "1:1": "aspect-square max-w-xl", "4:5": "aspect-[4/5] max-w-md", "16:9": "aspect-video max-w-3xl" };
+
+/** Public page for a share link: watch and download, no account needed. */
+export default async function SharedPage({ params }: { params: Promise<{ token: string }> }) {
+  const { token } = await params;
+  const v = await load(token);
+  return (
+    <div className="flex min-h-dvh flex-col items-center px-4 py-8">
+      <Link href="/welcome" className="mb-6 flex items-center gap-2 font-semibold">
+        <Clapperboard className="size-6 text-primary" /> Shorts Studio
+      </Link>
+      {!v ? (
+        <div className="mt-20 text-center">
+          <h1 className="text-xl font-semibold">This link isn't available</h1>
+          <p className="mt-2 text-sm text-muted-foreground">It may have expired or been turned off by its owner.</p>
+        </div>
+      ) : (
+        <div className="grid w-full justify-items-center gap-4">
+          <div className={`w-full overflow-hidden rounded-xl bg-black ${RATIO[v.aspect] ?? RATIO["9:16"]}`}>
+            <video src={v.video_url} poster={v.poster_url ?? undefined} controls playsInline className="size-full" data-testid="shared-video" />
+          </div>
+          <div className="w-full max-w-xl">
+            <h1 className="text-lg font-semibold" data-testid="shared-title">
+              {v.title}
+            </h1>
+            {v.by && <p className="text-xs text-muted-foreground">Shared by {v.by}</p>}
+            {v.description && <p className="mt-2 whitespace-pre-line text-sm text-muted-foreground">{v.description}</p>}
+            {v.hashtags.length > 0 && <p className="mt-1 text-sm text-primary">{v.hashtags.join(" ")}</p>}
+            <a href={v.download_url} className="mt-4 inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-sm hover:bg-accent">
+              <Download className="size-4" /> Download
+            </a>
+          </div>
+          <p className="mt-6 text-xs text-muted-foreground">
+            Made with Shorts Studio.{" "}
+            <Link href="/signup" className="text-primary hover:underline">
+              Make your own for free
+            </Link>
+          </p>
+        </div>
+      )}
+    </div>
+  );
+}

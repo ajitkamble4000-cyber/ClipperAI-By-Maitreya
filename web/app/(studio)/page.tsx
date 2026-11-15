@@ -1,5 +1,5 @@
-import { LibraryView } from "@/components/library/library-view";
+import { Dashboard } from "@/components/home/dashboard";
 
-export default function LibraryPage() {
-  return <LibraryView />;
+export default function HomePage() {
+  return <Dashboard />;
 }

@@ -1,7 +1,8 @@
 """Build an ASS subtitle file from word timestamps for one of the caption presets.
 
-Canvas is 1080x1920 (PlayRes), so sizes/positions are in output pixels. Text is kept inside
-the Shorts safe zone: never in the bottom ~25% (title, buttons) and away from the right rail.
+The canvas (PlayRes) equals the output size, so sizes/positions are in output pixels. On 9:16 text is kept
+inside the Shorts safe zone: never in the bottom ~25% (title, buttons) and away from the right rail. Other
+formats (1:1, 4:5, 16:9) use symmetric margins and proportionally scaled text.
 """
 
 from __future__ import annotations
@@ -22,6 +23,59 @@ SAFE_LEFT, SAFE_RIGHT = 70, 950  # right rail (like/comment buttons) starts ~950
 MAX_TEXT_W = SAFE_RIGHT - SAFE_LEFT - 40
 CENTER_X = (SAFE_LEFT + SAFE_RIGHT) // 2  # 510: slightly left of center, clear of the rail
 SAFE_TOP, SAFE_BOTTOM = 230, int(H * 0.76)
+
+ASPECTS: dict[str, tuple[int, int]] = {
+    "9:16": (1080, 1920),
+    "1:1": (1080, 1080),
+    "4:5": (1080, 1350),
+    "16:9": (1920, 1080),
+}
+
+
+@dataclass(frozen=True)
+class Canvas:
+    """Output frame and the area captions may use."""
+
+    w: int = W
+    h: int = H
+
+    @property
+    def vertical(self) -> bool:
+        return self.w * 16 == self.h * 9
+
+    @property
+    def safe_left(self) -> int:
+        return SAFE_LEFT if self.vertical else int(self.w * 0.07)
+
+    @property
+    def safe_right(self) -> int:
+        return SAFE_RIGHT if self.vertical else int(self.w * 0.93)
+
+    @property
+    def safe_top(self) -> int:
+        return SAFE_TOP if self.vertical else int(self.h * 0.08)
+
+    @property
+    def safe_bottom(self) -> int:
+        return SAFE_BOTTOM if self.vertical else int(self.h * 0.9)
+
+    @property
+    def center_x(self) -> int:
+        return (self.safe_left + self.safe_right) // 2
+
+    @property
+    def max_text_w(self) -> int:
+        return self.safe_right - self.safe_left - 40
+
+    @property
+    def scale(self) -> float:
+        """Text scale relative to the 1080x1920 design size."""
+        return 1.0 if self.vertical else max(0.6, min(1.0, self.h / H * 1.35))
+
+
+def canvas_for(aspect: str | None) -> Canvas:
+    w, h = ASPECTS.get(aspect or "9:16", ASPECTS["9:16"])
+    return Canvas(w, h)
 
 
 def ass_color(hex_color: str, alpha: float = 0.0) -> str:
@@ -85,12 +139,29 @@ def chunk_words(words: list[Word], per_line: int, *, max_gap: float = 0.7) -> li
 
 
 class AssBuilder:
-    def __init__(self, style: CaptionStyle, *, seed: int = 7) -> None:
+    def __init__(
+        self,
+        style: CaptionStyle,
+        *,
+        seed: int = 7,
+        canvas: Canvas | None = None,
+        emphasis: bool = False,
+        emphasis_words: list[str] | None = None,
+    ) -> None:
         self.s = style
+        self.c = canvas or Canvas()
         self.events: list[str] = []
         self.rng = random.Random(seed)
-        self.y = int(H * catalog()["positions"][style.position])
-        self.y = max(SAFE_TOP + 80, min(SAFE_BOTTOM - 80, self.y))
+        self.size = max(28, round(style.size * self.c.scale))
+        self.emphasis = emphasis
+        self.emphasis_words = emphasis_words or []
+        self._emph: set[int] = set()
+        frac = catalog()["positions"][style.position]
+        if not self.c.vertical and style.position == "lower":
+            frac = 0.8  # no platform buttons to dodge outside 9:16: sit lower, like broadcast subtitles
+        self.y = int(self.c.h * frac)
+        margin = round(80 * self.c.scale)
+        self.y = max(self.c.safe_top + margin, min(self.c.safe_bottom - margin, self.y))
 
     # ------------------------------------------------------------ helpers
     def _font_for(self, text: str) -> str:
@@ -101,9 +172,9 @@ class AssBuilder:
         return t.upper() if self.s.uppercase and not is_devanagari(t) else t
 
     def _lines(self, tokens: list[str], font: str, size: int) -> list[list[int]]:
-        """Split token indexes into 1–2 lines that fit MAX_TEXT_W."""
+        """Split token indexes into 1–2 lines that fit the canvas text width."""
         idx = list(range(len(tokens)))
-        if text_width(" ".join(tokens), font, size) <= MAX_TEXT_W or len(tokens) < 2:
+        if text_width(" ".join(tokens), font, size) <= self.c.max_text_w or len(tokens) < 2:
             return [idx]
         best, best_cost = 1, float("inf")
         for k in range(1, len(tokens)):
@@ -115,10 +186,13 @@ class AssBuilder:
         return [idx[:best], idx[best:]]
 
     def _fit_size(self, tokens: list[str], font: str) -> int:
-        size = self.s.size
-        while size > 40:
+        size = self.size
+        floor = max(24, round(40 * self.c.scale))
+        while size > floor:
             lines = self._lines(tokens, font, size)
-            if all(text_width(" ".join(tokens[i] for i in ln), font, size) <= MAX_TEXT_W for ln in lines):
+            if all(
+                text_width(" ".join(tokens[i] for i in ln), font, size) <= self.c.max_text_w for ln in lines
+            ):
                 return size
             size -= 4
         return size
@@ -147,7 +221,7 @@ class AssBuilder:
     def _box(
         self, start: float, end: float, w: float, h: float, cy: float, color: str, alpha: float, layer=0
     ) -> None:
-        path = self._rounded_rect(CENTER_X, cy, w, h, 22)
+        path = self._rounded_rect(self.c.center_x, cy, w, h, 22 * self.c.scale)
         self._add(
             start,
             end,
@@ -159,13 +233,30 @@ class AssBuilder:
     def add_words(self, words: list[Word]) -> None:
         if not self.s.enabled or not words:
             return
+        if self.emphasis:
+            from .emphasis import keyword_flags
+
+            self._emph = {
+                id(w) for w, f in zip(words, keyword_flags(words, self.emphasis_words), strict=True) if f
+            }
         for c in chunk_words(words, self.s.words_per_line):
             tokens = [self._word(w) for w in c.words]
             font = self._font_for(" ".join(tokens))
             size = self._fit_size(tokens, font)
             lines = self._lines(tokens, font, size)
-            pos = rf"\an5\pos({CENTER_X},{self.y})\fn{font}\fs{size}"
+            pos = rf"\an5\pos({self.c.center_x},{self.y})\fn{font}\fs{size}"
+            self._chunk = c
             getattr(self, f"_p_{self.s.preset}")(c, tokens, lines, pos, font, size)
+
+    def _is_emph(self, i: int) -> bool:
+        return bool(self._emph) and id(self._chunk.words[i]) in self._emph
+
+    def _emph_tok(self, i: int, t: str) -> str:
+        """Keyword emphasis for a token that isn't the active word: highlight colour, a touch bigger."""
+        if not self._is_emph(i):
+            return t
+        hi, base = ass_color(self.s.highlight), ass_color(self.s.color)
+        return rf"{{\1c{hi}\fscx108\fscy108}}{t}{{\1c{base}\fscx100\fscy100}}"
 
     def _word_spans(self, c: Chunk) -> list[tuple[float, float]]:
         spans = []
@@ -182,7 +273,7 @@ class AssBuilder:
 
             def render(i: int, t: str, k=k) -> str:
                 if i != k:
-                    return t
+                    return self._emph_tok(i, t)
                 return (
                     rf"{{\1c{hi}\fscx100\fscy100\t(0,90,\fscx114\fscy114)}}{t}{{\1c{base}\fscx100\fscy100}}"
                 )
@@ -205,18 +296,18 @@ class AssBuilder:
         self._add(c.start, c.end, "{" + pos + "}" + "".join(parts))
 
     def _p_minimal(self, c: Chunk, tokens, lines, pos, font, size) -> None:
-        self._add(c.start, c.end, "{" + pos + r"\blur0.6}" + self._join(tokens, lines, lambda i, t: t))
+        self._add(c.start, c.end, "{" + pos + r"\blur0.6}" + self._join(tokens, lines, self._emph_tok))
 
     def _p_boxed(self, c: Chunk, tokens, lines, pos, font, size) -> None:
         widths = [text_width(" ".join(tokens[i] for i in ln), font, size) for ln in lines]
-        box_w = max(widths) + 56
-        box_h = len(lines) * size * 1.22 + 34
+        box_w = max(widths) + 56 * self.c.scale
+        box_h = len(lines) * size * 1.22 + 34 * self.c.scale
         self._box(c.start, c.end, box_w, box_h, self.y, self.s.box_color, 1 - self.s.box_opacity)
         hi, base = ass_color(self.s.highlight), ass_color(self.s.color)
         for k, (a, b) in enumerate(self._word_spans(c)):
 
             def render(i: int, t: str, k=k) -> str:
-                return rf"{{\1c{hi}}}{t}{{\1c{base}}}" if i == k else t
+                return rf"{{\1c{hi}}}{t}{{\1c{base}}}" if i == k else self._emph_tok(i, t)
 
             self._add(a, b, "{" + pos + r"\bord0\shad0}" + self._join(tokens, lines, render))
 
@@ -230,11 +321,10 @@ class AssBuilder:
                 rot = self.rng.uniform(-1.8, 1.8)
 
                 def render(i: int, tok: str, k=k) -> str:
-                    return rf"{{\1c{red}}}{tok}{{\1c{white}}}" if i == k else tok
+                    return rf"{{\1c{red}}}{tok}{{\1c{white}}}" if i == k else self._emph_tok(i, tok)
 
-                p = pos.replace(
-                    f"\\pos({CENTER_X},{self.y})", f"\\pos({CENTER_X + dx:.0f},{self.y + dy:.0f})"
-                )
+                cx = self.c.center_x
+                p = pos.replace(f"\\pos({cx},{self.y})", f"\\pos({cx + dx:.0f},{self.y + dy:.0f})")
                 self._add(t, e, "{" + p + rf"\frz{rot:.1f}\blur0.8}}" + self._join(tokens, lines, render))
                 t = e
 
@@ -244,24 +334,24 @@ class AssBuilder:
         if not text:
             return
         font = catalog()["devanagari_font"] if is_devanagari(text) else "Montserrat Black"
-        size = 76
+        size = round(76 * self.c.scale)
         words = text.split()
         lines: list[str] = []
         cur = ""
         for w in words:
             cand = f"{cur} {w}".strip()
-            if cur and text_width(cand, font, size) > MAX_TEXT_W - 60:
+            if cur and text_width(cand, font, size) > self.c.max_text_w - 60:
                 lines.append(cur)
                 cur = w
             else:
                 cur = cand
         lines.append(cur)
         lines = lines[:3]
-        y = int(H * y_frac)
-        bw = max(text_width(ln, font, size) for ln in lines) + 64
-        bh = len(lines) * size * 1.18 + 40
+        y = max(self.c.safe_top, int(self.c.h * y_frac)) if not self.c.vertical else int(self.c.h * y_frac)
+        bw = max(text_width(ln, font, size) for ln in lines) + 64 * self.c.scale
+        bh = len(lines) * size * 1.18 + 40 * self.c.scale
         cy = y + bh / 2
-        path = self._rounded_rect(CENTER_X, cy, bw, bh, 24)
+        path = self._rounded_rect(self.c.center_x, cy, bw, bh, 24 * self.c.scale)
         self._add(
             start,
             start + duration,
@@ -272,7 +362,7 @@ class AssBuilder:
         self._add(
             start,
             start + duration,
-            rf"{{\an5\pos({CENTER_X},{cy:.0f})\fn{font}\fs{size}\fad(120,220)}}" + r"\N".join(lines),
+            rf"{{\an5\pos({self.c.center_x},{cy:.0f})\fn{font}\fs{size}\fad(120,220)}}" + r"\N".join(lines),
             layer=6,
             style="Hook",
         )
@@ -281,22 +371,24 @@ class AssBuilder:
     def render(self) -> str:
         s = self.s
         border_style = 1
+        k = self.c.scale
+        outline, shadow = round(s.outline * k, 1), round(s.shadow * k, 1)
         cap = (
-            f"Style: Cap,{s.font},{s.size},{ass_color(s.color)},{ass_color(s.color)},{ass_color(s.outline_color)},"
-            f"{ass_color('#000000', 0.45)},0,0,0,0,100,100,0,0,{border_style},{s.outline},{s.shadow},5,0,0,0,1"
+            f"Style: Cap,{s.font},{self.size},{ass_color(s.color)},{ass_color(s.color)},{ass_color(s.outline_color)},"
+            f"{ass_color('#000000', 0.45)},0,0,0,0,100,100,0,0,{border_style},{outline},{shadow},5,0,0,0,1"
         )
         if s.preset == "karaoke":
             cap = (
-                f"Style: Cap,{s.font},{s.size},{ass_color(s.highlight)},{ass_color(s.color)},{ass_color(s.outline_color)},"
-                f"{ass_color('#000000', 0.45)},0,0,0,0,100,100,0,0,1,{s.outline},{s.shadow},5,0,0,0,1"
+                f"Style: Cap,{s.font},{self.size},{ass_color(s.highlight)},{ass_color(s.color)},{ass_color(s.outline_color)},"
+                f"{ass_color('#000000', 0.45)},0,0,0,0,100,100,0,0,1,{outline},{shadow},5,0,0,0,1"
             )
-        hook = "Style: Hook,Montserrat Black,76,&H00000000,&H00000000,&H00000000,&H64000000,0,0,0,0,100,100,0,0,1,0,0,5,0,0,0,1"
+        hook = f"Style: Hook,Montserrat Black,{round(76 * k)},&H00000000,&H00000000,&H00000000,&H64000000,0,0,0,0,100,100,0,0,1,0,0,5,0,0,0,1"
         return "\n".join(
             [
                 "[Script Info]",
                 "ScriptType: v4.00+",
-                f"PlayResX: {W}",
-                f"PlayResY: {H}",
+                f"PlayResX: {self.c.w}",
+                f"PlayResY: {self.c.h}",
                 "WrapStyle: 2",
                 "ScaledBorderAndShadow: yes",
                 "YCbCr Matrix: TV.709",
@@ -321,9 +413,17 @@ class AssBuilder:
 
 
 def build_ass(
-    words: list[Word], style: CaptionStyle, path: Path, *, hook: str | None = None, hook_duration: float = 3.0
+    words: list[Word],
+    style: CaptionStyle,
+    path: Path,
+    *,
+    hook: str | None = None,
+    hook_duration: float = 3.0,
+    canvas: Canvas | None = None,
+    emphasis: bool = False,
+    emphasis_words: list[str] | None = None,
 ) -> Path:
-    b = AssBuilder(style)
+    b = AssBuilder(style, canvas=canvas, emphasis=emphasis, emphasis_words=emphasis_words)
     b.add_words(words)
     if hook:
         b.add_hook(hook, hook_duration)

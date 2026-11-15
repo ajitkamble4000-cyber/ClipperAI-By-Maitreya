@@ -15,7 +15,7 @@ test("premium: pick scenes, confirm the estimated cost, Veo clips, render", asyn
   test.setTimeout(600_000);
   await setModels({ video: "veo-3.1-fast-generate-preview" });
   try {
-    const a = await createMember("member");
+    const a = await createMember("member", undefined, { plan_id: "business" }); // premium AI video is a Business feature
     await login(page, a.email);
     await page.goto("/story/new");
     await page.getByLabel("Story idea").fill("What happens if the sun went out");

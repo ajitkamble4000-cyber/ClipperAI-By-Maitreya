@@ -139,6 +139,8 @@ def test_usage_summary_and_budget_levels(client, make_member, restore_settings):
         assert any(u["user_id"] == uid and u["cost"] >= 8.5 for u in s["per_user"])
         assert len(s["per_day"]) == 30 and s["per_day"][-1]["cost"] >= 8.5
         assert client.get("/budget", headers=admin).json()["level"] in ("warn", "blocked")
+        _, _, user = make_member("user")
+        assert client.get("/usage/summary", headers=user).status_code == 403  # other people's spend is private
     finally:
         db.execute("delete from usage_events where model = 'gemini-x'")
 

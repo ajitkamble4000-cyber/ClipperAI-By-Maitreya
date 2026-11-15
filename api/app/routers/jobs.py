@@ -4,10 +4,11 @@ from __future__ import annotations
 
 from fastapi import APIRouter, HTTPException, status
 from pydantic import BaseModel, Field
-from studio_shared import db, jobs
+from studio_shared import db, jobs, tokens
 
 from ..access import job_for
 from ..auth import CurrentMember
+from ..plans import launch, recharge_for_retry
 from ..queue import enqueue
 from ..ratelimit import check_job_rate
 
@@ -34,7 +35,9 @@ def get_job(job_id: str, m: CurrentMember) -> dict:
 @router.post("/{job_id}/cancel")
 def cancel_job(job_id: str, m: CurrentMember) -> dict:
     _get(job_id, m)
-    return {"canceled": jobs.cancel(job_id)}
+    canceled = jobs.cancel(job_id)
+    refunded = tokens.refund_job(job_id, "canceled") if canceled else 0
+    return {"canceled": canceled, "refunded": refunded}
 
 
 @router.post("/{job_id}/retry")
@@ -43,6 +46,7 @@ def retry_job(job_id: str, m: CurrentMember) -> dict:
     if job["status"] not in ("failed", "canceled"):
         raise HTTPException(status.HTTP_409_CONFLICT, "Only failed or canceled jobs can be retried")
     check_job_rate(m.user_id)
+    recharge_for_retry(m, job)
     db.execute(
         "update jobs set status = 'queued', attempts = 0, error = null, finished_at = null, message = 'Queued' "
         "where id = %s",
@@ -59,7 +63,5 @@ class DummyIn(BaseModel):
 
 @router.post("/dummy", status_code=201)
 def dummy(body: DummyIn, m: CurrentMember) -> dict:
-    check_job_rate(m.user_id)
-    job = jobs.create_job("dummy", project_id=None, params=body.model_dump(), user_id=m.user_id)
-    enqueue(job)
+    job = launch(m, "dummy", None, body.model_dump())
     return job

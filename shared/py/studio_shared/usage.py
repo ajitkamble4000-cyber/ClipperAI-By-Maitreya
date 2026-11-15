@@ -28,10 +28,20 @@ class Price:
     audio_out_per_mtok: float = 0
     per_image: float = 0
     per_video_second: float = 0
+    per_1k_chars: float = 0
+    per_audio_minute: float = 0
+
+
+PROVIDER_PREFIXES = ("google", "openai", "anthropic", "openrouter", "compat", "elevenlabs", "replicate")
 
 
 def price_for(model: str) -> Price:
     name = model.removeprefix("models/")
+    head, sep, rest = name.partition(":")
+    if sep and head in PROVIDER_PREFIXES:
+        name = rest  # 'openai:gpt-4.1-mini' -> 'gpt-4.1-mini' ('stability:core' keeps its prefix)
+    if name.startswith(("openai/", "anthropic/", "google/")):
+        name = name.split("/", 1)[1]  # OpenRouter ids such as 'openai/gpt-4o'
     row = db.fetch_one(
         "select * from model_pricing where %s like model || '%%' order by length(model) desc limit 1", [name]
     )
@@ -48,6 +58,8 @@ def estimate_cost(
     images: int = 0,
     seconds: float = 0,
     audio_output: bool = False,
+    characters: int = 0,
+    audio_minutes: float = 0,
 ) -> float:
     p = price_for(model)
     out_rate = p.audio_out_per_mtok if audio_output and p.audio_out_per_mtok else p.output_per_mtok
@@ -56,6 +68,8 @@ def estimate_cost(
         + output_tokens / 1e6 * out_rate
         + images * p.per_image
         + seconds * p.per_video_second
+        + characters / 1000 * p.per_1k_chars
+        + audio_minutes * p.per_audio_minute
     )
 
 
@@ -71,6 +85,8 @@ def record(
     images: int = 0,
     seconds: float = 0,
     meta: dict[str, Any] | None = None,
+    characters: int = 0,
+    audio_minutes: float = 0,
 ) -> float:
     cost = estimate_cost(
         model,
@@ -79,11 +95,13 @@ def record(
         images=images,
         seconds=seconds,
         audio_output=(kind == "tts"),
+        characters=characters,
+        audio_minutes=audio_minutes,
     )
     db.execute(
         """insert into usage_events (model, kind, user_id, project_id, job_id, input_tokens, output_tokens,
-                                     images, seconds, cost_usd, meta)
-           values (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)""",
+                                     images, seconds, cost_usd, meta, provider, characters)
+           values (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)""",
         [
             model.removeprefix("models/"),
             kind,
@@ -96,6 +114,8 @@ def record(
             Decimal(str(round(seconds, 2))),
             Decimal(str(round(cost, 6))),
             meta or {},
+            (meta or {}).get("provider"),
+            characters,
         ],
     )
     return cost

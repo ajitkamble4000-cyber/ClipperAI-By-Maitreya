@@ -58,6 +58,7 @@ def run_job(self: Task, job_id: str) -> None:
             jobs.finish(
                 job_id, "failed", error="Job failed repeatedly (worker crashed or timed out). Try again."
             )
+            _on_failure(job, RuntimeError("Job failed repeatedly"))
             return
         job = jobs.mark_running(job_id)
         if not job:

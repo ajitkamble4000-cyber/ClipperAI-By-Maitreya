@@ -162,7 +162,14 @@ class Overlay:
 
 
 def emoji_overlays(
-    words: list[Word], per_line: int, caption_y: int, workdir: Path, size: int = 140
+    words: list[Word],
+    per_line: int,
+    caption_y: int,
+    workdir: Path,
+    size: int = 140,
+    *,
+    center_x: int = CENTER_X,
+    height: int = H,
 ) -> list[Overlay]:
     out: list[Overlay] = []
     cache: dict[str, Path | None] = {}
@@ -174,8 +181,9 @@ def emoji_overlays(
             cache[e] = render_png(e, workdir / f"emoji_{len(cache)}.png", size)
         png = cache[e]
         if png:
-            y = max(260, caption_y - 120 - size) if caption_y > H * 0.4 else caption_y + 120
-            out.append(Overlay(png, c.start, c.end, CENTER_X - size // 2, int(y)))
+            top = max(40, int(height * 0.135))
+            y = max(top, caption_y - 120 - size) if caption_y > height * 0.4 else caption_y + 120
+            out.append(Overlay(png, c.start, c.end, center_x - size // 2, int(y)))
         if len(out) >= 40:
             break
     return out

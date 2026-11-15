@@ -1,14 +1,15 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Check, Copy, Download, Loader2, Minus, Palette, Plus, RotateCcw, Sparkles } from "lucide-react";
+import { Captions, Check, Copy, Download, Loader2, Minus, Palette, Plus, RotateCcw, Share2, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { CaptionStylePicker } from "@/components/captions/caption-style-picker";
+import { LockedBadge, useGate } from "@/components/plan/locked";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { Input, Textarea } from "@/components/ui/input";
-import { api, signedUrl } from "@/lib/api";
+import { api, downloadFrom, signedUrl } from "@/lib/api";
 import { clipFilename, type CaptionStyle } from "@/lib/presets";
 import { supabaseBrowser } from "@/lib/supabase/client";
 import { cn, formatDuration } from "@/lib/utils";
@@ -25,7 +26,10 @@ export interface Clip {
   hashtags: string[];
   virality_score: number;
   reason: string;
-  mode: "ai" | "basic";
+  mode: "ai" | "basic" | "whole";
+  aspect?: Aspect;
+  words_key?: string | null;
+  language?: string | null;
   reframe: string;
   caption_style: CaptionStyle;
   status: string;
@@ -53,6 +57,14 @@ function CopyButton({ text, label }: { text: string; label: string }) {
   );
 }
 
+export type Aspect = "9:16" | "1:1" | "4:5" | "16:9";
+export const ASPECT_CLASS: Record<Aspect, string> = {
+  "9:16": "aspect-[9/16]",
+  "1:1": "aspect-square",
+  "4:5": "aspect-[4/5]",
+  "16:9": "aspect-video",
+};
+
 function scoreVariant(s: number) {
   return s >= 80 ? "success" : s >= 60 ? "warning" : "secondary";
 }
@@ -67,6 +79,8 @@ export function ClipCard({ clip, locked }: { clip: Clip; locked?: boolean }) {
   const [styleOpen, setStyleOpen] = useState(false);
   const [style, setStyle] = useState<CaptionStyle>(clip.caption_style ?? { preset: "bold_pop" });
   const editing = useRef(false);
+  const gate = useGate();
+  const aspect: Aspect = clip.aspect ?? "9:16";
 
   useEffect(() => {
     if (!clip.video_key) return setSrc(null);
@@ -112,15 +126,44 @@ export function ClipCard({ clip, locked }: { clip: Clip; locked?: boolean }) {
     window.location.href = url;
   };
 
+  const captions = async (fmt: "srt" | "vtt" | "txt") => {
+    try {
+      await downloadFrom(`/clips/${clip.id}/captions.${fmt}`, `captions.${fmt}`);
+    } catch (e) {
+      toast.error((e as Error).message);
+    }
+  };
+
+  const share = async () => {
+    if (!gate.allowed("share_links")) return gate.explain("share_links");
+    try {
+      const r = await api<{ path: string }>(`/clips/${clip.id}/share`, { method: "POST", json: {} });
+      const link = `${window.location.origin}${r.path}`;
+      await navigator.clipboard.writeText(link).catch(() => {});
+      toast.success("Share link copied", { description: link });
+    } catch (e) {
+      toast.error((e as Error).message);
+    }
+  };
+
+  const reformat = (a: Aspect) => {
+    if (a === aspect) return;
+    if (a !== "9:16" && !gate.allowed("output_formats")) return gate.explain("output_formats");
+    rerender({ aspect: a }, `Re-rendering as ${a}`);
+  };
+
   const nudge = (which: "start" | "end", d: number) => {
     if (which === "start") setStart((v) => Math.max(0, Math.min(end - 3, +(v + d).toFixed(2))));
     else setEnd((v) => Math.max(start + 3, +(v + d).toFixed(2)));
   };
 
   return (
-    <article className="grid gap-4 rounded-xl border bg-card p-4 sm:grid-cols-[200px_1fr]" data-testid="clip-card">
-      <div className="relative mx-auto w-full max-w-[240px] sm:max-w-none">
-        <div className="relative aspect-[9/16] overflow-hidden rounded-lg bg-black">
+    <article
+      className={cn("grid gap-4 rounded-xl border bg-card p-4", aspect === "16:9" ? "sm:grid-cols-[320px_1fr]" : "sm:grid-cols-[200px_1fr]")}
+      data-testid="clip-card"
+    >
+      <div className={cn("relative mx-auto w-full sm:max-w-none", aspect === "16:9" ? "max-w-[420px]" : "max-w-[240px]")}>
+        <div className={cn("relative overflow-hidden rounded-lg bg-black", ASPECT_CLASS[aspect])} data-testid="clip-frame" data-aspect={aspect}>
           {src && !busy ? (
             <video key={src.video} src={src.video} poster={src.poster} controls playsInline preload="metadata" className="size-full object-cover" />
           ) : (
@@ -135,9 +178,15 @@ export function ClipCard({ clip, locked }: { clip: Clip; locked?: boolean }) {
               )}
             </div>
           )}
-          <Badge variant={scoreVariant(clip.virality_score)} className="absolute left-2 top-2 bg-black/70 backdrop-blur" data-testid="virality">
-            <Sparkles className="size-3" /> {clip.virality_score}
-          </Badge>
+          {clip.mode === "whole" ? (
+            <Badge variant="secondary" className="absolute left-2 top-2 bg-black/70 backdrop-blur" data-testid="whole-badge">
+              <Captions className="size-3" /> Whole video
+            </Badge>
+          ) : (
+            <Badge variant={scoreVariant(clip.virality_score)} className="absolute left-2 top-2 bg-black/70 backdrop-blur" data-testid="virality">
+              <Sparkles className="size-3" /> {clip.virality_score}
+            </Badge>
+          )}
           {clip.mode === "basic" && (
             <Badge variant="secondary" className="absolute right-2 top-2 bg-black/70">
               basic
@@ -151,7 +200,20 @@ export function ClipCard({ clip, locked }: { clip: Clip; locked?: boolean }) {
           <Button size="sm" variant="secondary" onClick={() => setStyleOpen(true)} disabled={busy || locked} aria-label="Change caption style">
             <Palette />
           </Button>
+          <Button size="sm" variant="secondary" onClick={share} disabled={!clip.video_key || busy} aria-label="Share link" data-testid="share-clip">
+            <Share2 />
+          </Button>
         </div>
+        {clip.words_key && !busy && (
+          <div className="mt-2 flex items-center gap-1 text-xs" data-testid="caption-files">
+            <span className="mr-1 text-muted-foreground">Captions{clip.language ? ` (${clip.language})` : ""}:</span>
+            {(["srt", "vtt", "txt"] as const).map((f) => (
+              <Button key={f} size="sm" variant="ghost" className="h-7 px-2 uppercase" onClick={() => captions(f)} aria-label={`Download ${f.toUpperCase()} captions`}>
+                {f}
+              </Button>
+            ))}
+          </div>
+        )}
       </div>
 
       <div className="grid min-w-0 content-start gap-3">
@@ -225,6 +287,23 @@ export function ClipCard({ clip, locked }: { clip: Clip; locked?: boolean }) {
                 </Button>
               </div>
             ))}
+          </div>
+          <div className="mt-3 flex flex-wrap items-center gap-1" data-testid="format-row">
+            <span className="mr-1 text-xs text-muted-foreground">Format</span>
+            {(Object.keys(ASPECT_CLASS) as Aspect[]).map((a) => (
+              <Button
+                key={a}
+                size="sm"
+                variant={a === aspect ? "default" : "outline"}
+                className="h-7 px-2 text-xs"
+                disabled={busy || locked}
+                onClick={() => reformat(a)}
+                aria-pressed={a === aspect}
+              >
+                {a}
+              </Button>
+            ))}
+            <LockedBadge feature="output_formats" className="ml-1" />
           </div>
           {nudged && (
             <div className="mt-3 flex gap-2">

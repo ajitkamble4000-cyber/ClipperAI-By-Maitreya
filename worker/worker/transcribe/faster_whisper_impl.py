@@ -74,3 +74,19 @@ class FasterWhisperTranscriber:
 
 def get_transcriber(size: str | None = None) -> FasterWhisperTranscriber:
     return FasterWhisperTranscriber(size or "small")
+
+
+def transcriber_from_settings():
+    """The transcriber chosen in Admin → AI providers ('local:<size>' or e.g. 'openai:whisper-1')."""
+    from studio_shared import app_settings
+    from studio_shared.ai.base import parse_model_ref
+
+    row = app_settings.get_row()
+    ref = (row["models"] or {}).get("transcribe")
+    parsed = parse_model_ref(ref) if ref else None
+    if parsed and parsed[0] in ("openai", "compat"):
+        from .api_impl import APITranscriber
+
+        return APITranscriber(*parsed)
+    size = parsed[1] if parsed and parsed[0] == "local" else row["whisper_model"]
+    return get_transcriber(size)
