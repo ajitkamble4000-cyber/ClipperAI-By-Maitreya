@@ -1,6 +1,6 @@
 # Roadmap (planned, not built)
 
-The code and data model are structured for these; none of them is implemented yet.
+The code and data model are structured for these; they aren't built yet. (Templates, batch mode and title/thumbnail variants from the original roadmap are now built.)
 
 ## Publishing to YouTube and Instagram Reels
 
@@ -12,14 +12,19 @@ The code and data model are structured for these; none of them is implemented ye
   - Multiple channels per workspace: one OAuth connection per channel; a channel's tokens can be revoked by its owner at any time, so failures must surface clearly.
   - Instagram Reels need a Business/Creator account linked to a Facebook Page and the Graph API; the video is fetched from a URL (a short-lived signed R2 URL).
 
-## Saved templates
+## Online payments
 
-`templates` table: a full story (or clip) preset (genre, visual style, voice, speaking style, captions, music, motion mode) applied with one click.
+Plans are switched today by the owner/admins approving upgrade requests (Admin → Upgrade requests). To sell online,
+connect a payment provider (e.g. Stripe Checkout + Billing portal): a webhook on "subscription active / canceled"
+calls the same plan change (`members.plan_id` + `tokens.on_plan_change`) that approving a request uses, and token
+packs can be sold as bonus-token grants. Keep the request flow for invoices and custom deals.
 
-## Batch mode
+## Analytics for titles and thumbnails
 
-`batches` table: a template plus a list of topics; creates one story project per topic and runs script generation for each. Media generation stays opt-in per story so costs are reviewed.
+Title/hashtag ideas and designed thumbnails exist today. After publishing is built, pull view/retention stats per
+title/thumbnail variant (YouTube Analytics API) into the library so creators can see which version won.
 
-## A/B titles and analytics
+## Email notifications
 
-Generate 2–3 title/thumbnail variants per Short; after publishing, pull view/retention stats per variant (YouTube Analytics API) into the library.
+In-app notifications exist (the bell). Add optional email for "your video is ready" and upgrade decisions, with a
+per-user switch, sent through the same SMTP provider Supabase Auth uses.

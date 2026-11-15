@@ -29,7 +29,7 @@ def check_job_rate(user_id: str, cost: int = 1) -> None:
 
 
 def check_ip_rate(ip: str, bucket: str, limit: int = 5) -> None:
-    """Fixed-window limit for unauthenticated endpoints (e.g. /setup token guessing)."""
+    """Fixed-window limit for unauthenticated endpoints (e.g. public share links)."""
     key = f"rl:{bucket}:{ip}:{int(time.time() // 60)}"
     pipe = _r().pipeline()
     pipe.incr(key)
