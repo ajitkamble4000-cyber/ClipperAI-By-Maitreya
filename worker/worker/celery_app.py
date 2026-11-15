@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from pathlib import Path
+
 from celery import Celery
 from celery.schedules import crontab
 from kombu import Queue
@@ -28,3 +30,28 @@ app.conf.update(
         "cleanup-sources": {"task": "worker.cleanup_sources", "schedule": crontab(minute=17, hour="*/6")},
     },
 )
+
+
+def _install_test_fakes() -> None:
+    """TEST ONLY: STUDIO_FAKE_GEMINI=1 swaps Gemini for an offline fake (Pillow images, espeak voice).
+    Used by the browser end-to-end tests; never set this in production."""
+    import logging
+    import os
+    import sys
+
+    if os.environ.get("STUDIO_FAKE_GEMINI") != "1":
+        return
+    from studio_shared import gemini as gem_pkg
+
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "tests"))
+    from fakes_story import FakeMediaGemini
+
+    fake = FakeMediaGemini()
+    gem_pkg.factory = lambda ctx: fake
+    import worker.clipper.pipeline as cp
+
+    cp.available = lambda: True
+    logging.getLogger(__name__).warning("STUDIO_FAKE_GEMINI=1: using the offline fake Gemini (test mode)")
+
+
+_install_test_fakes()

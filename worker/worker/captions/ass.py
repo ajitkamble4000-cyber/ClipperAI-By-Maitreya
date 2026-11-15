@@ -239,7 +239,7 @@ class AssBuilder:
                 t = e
 
     # ------------------------------------------------------------ hook text overlay
-    def add_hook(self, text: str, duration: float = 3.0) -> None:
+    def add_hook(self, text: str, duration: float = 3.0, *, start: float = 0.0, y_frac: float = 0.17) -> None:
         text = clean(text).upper()
         if not text:
             return
@@ -257,21 +257,21 @@ class AssBuilder:
                 cur = cand
         lines.append(cur)
         lines = lines[:3]
-        y = int(H * 0.17)
+        y = int(H * y_frac)
         bw = max(text_width(ln, font, size) for ln in lines) + 64
         bh = len(lines) * size * 1.18 + 40
         cy = y + bh / 2
         path = self._rounded_rect(CENTER_X, cy, bw, bh, 24)
         self._add(
-            0,
-            duration,
+            start,
+            start + duration,
             rf"{{\an7\pos(0,0)\p1\bord0\shad3\4a&H80&\1c{ass_color('#FFE500')}\fad(120,220)}}{path}",
             layer=5,
             style="Hook",
         )
         self._add(
-            0,
-            duration,
+            start,
+            start + duration,
             rf"{{\an5\pos({CENTER_X},{cy:.0f})\fn{font}\fs{size}\fad(120,220)}}" + r"\N".join(lines),
             layer=6,
             style="Hook",

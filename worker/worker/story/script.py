@@ -77,7 +77,8 @@ def write_script(ctx: JobContext) -> dict[str, Any]:
         for i, s in enumerate(scenes):
             c.execute(
                 """insert into scenes (project_id, idx, narration, image_prompt, camera_motion, duration_estimate,
-                                       sfx_suggestion, on_screen_text) values (%s,%s,%s,%s,%s,%s,%s,%s)""",
+                                       sfx_suggestion, on_screen_text, characters)
+                   values (%s,%s,%s,%s,%s,%s,%s,%s,%s)""",
                 [
                     ctx.project_id,
                     i,
@@ -87,6 +88,7 @@ def write_script(ctx: JobContext) -> dict[str, Any]:
                     max(1.5, min(15.0, s.duration_estimate)),
                     s.sfx_suggestion.strip()[:80],
                     s.on_screen_text.strip()[:40],
+                    [c.strip()[:60] for c in s.characters][:6],
                 ],
             )
         locked = {

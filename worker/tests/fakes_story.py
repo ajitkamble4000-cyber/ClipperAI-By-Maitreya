@@ -55,3 +55,62 @@ class FakeStoryGemini:
                 first_scene_image_prompt="striking frame",
             )
         raise NotImplementedError(schema)
+
+
+class FakeMediaGemini(FakeStoryGemini):
+    """Adds images (Pillow) and TTS (espeak-ng, 24 kHz PCM) so the whole render pipeline runs offline."""
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.image_calls: list[tuple[str, int]] = []
+        self.tts_calls = 0
+
+    def generate_image(self, prompt, *, refs=None, aspect="9:16", model=None):
+        import io
+        import zlib
+
+        from PIL import Image, ImageDraw
+
+        self.image_calls.append((prompt, len(refs or [])))
+        seed = zlib.crc32(prompt.encode())
+        im = Image.new("RGB", (576, 1024), ((seed >> 16) & 255, (seed >> 8) & 255, seed & 255))
+        d = ImageDraw.Draw(im)
+        for i in range(0, 1024, 64):  # texture so motion is visible
+            d.line([(0, i), (576, i + 300)], fill=(255 - (seed & 255), 200, (seed >> 8) & 255), width=6)
+        d.ellipse((188, 380, 388, 580), fill=(255, 255, 255))
+        out = io.BytesIO()
+        im.save(out, "PNG")
+        return out.getvalue()
+
+    def edit_image(self, image, mime, instruction, aspect="9:16"):
+        return self.generate_image("edited " + instruction)
+
+    def tts(self, text, *, voice, style=None, model=None):
+        import subprocess
+        import tempfile
+
+        self.tts_calls += 1
+        with tempfile.NamedTemporaryFile(suffix=".wav") as f:
+            subprocess.run(
+                ["espeak-ng", "-v", "en-us", "-s", "155", "-w", f.name, text.replace("\n\n", ". ")],
+                check=True,
+            )
+            pcm = subprocess.run(
+                [
+                    "ffmpeg",
+                    "-loglevel",
+                    "error",
+                    "-i",
+                    f.name,
+                    "-f",
+                    "s16le",
+                    "-ar",
+                    "24000",
+                    "-ac",
+                    "1",
+                    "-",
+                ],
+                check=True,
+                capture_output=True,
+            ).stdout
+        return pcm

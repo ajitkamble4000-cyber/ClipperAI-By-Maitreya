@@ -7,7 +7,7 @@ export default async function globalSetup() {
   const worker = spawn(
     `${root}/.venv/bin/celery`,
     ["-A", "worker.celery_app", "worker", "-Q", "media,ai,poll", "--concurrency", "2", "--loglevel", "WARNING"],
-    { cwd: root, env: { ...process.env, PYTHONPATH: `${root}/worker` }, stdio: "inherit" },
+    { cwd: root, env: { ...process.env, PYTHONPATH: `${root}/worker`, STUDIO_FAKE_GEMINI: process.env.STUDIO_FAKE_GEMINI ?? "" }, stdio: "inherit" },
   );
   await new Promise((r) => setTimeout(r, 4000));
   return async () => {
