@@ -1,5 +1,6 @@
 "use client";
 
+import { ExtrasPanel } from "@/components/clipper/extras-panel";
 import { useEffect, useState } from "react";
 import { Clapperboard, Download } from "lucide-react";
 import { toast } from "sonner";
@@ -142,6 +143,15 @@ export function RenderStep(props: StepProps) {
           </Button>
         )}
         <p className="text-xs text-muted-foreground">Re-rendering reuses every image, voice and animated scene; only what changed is redone.</p>
+        {story.render_key && (
+          <ExtrasPanel
+            base={`/story/${story.project_id}`}
+            covers={story.covers}
+            ideas={story.ideas}
+            onUseTitle={(t) => save({ title: t })}
+            onUseHashtags={(h) => save({ hashtags: h })}
+          />
+        )}
       </div>
     </div>
   );

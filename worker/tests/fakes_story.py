@@ -19,7 +19,20 @@ class FakeStoryGemini:
             return FakeGemini().generate_json(contents, schema)
         from worker.captions.translate import CueTranslations
         from worker.clipper.whole import WholeMeta
+        from worker.extras import TitleIdeas
 
+        if schema is TitleIdeas:
+            return TitleIdeas(
+                titles=[
+                    "I tried this for 30 days",
+                    "Nobody talks about this",
+                    "Is this the best trick?",
+                    "5 things I wish I knew",
+                    "This changed everything",
+                ],
+                hashtags=["#shorts", "viral", "#tips", "#howto", "#lifehack", "#fyp", "#learn", "#daily"],
+                description="A quick video worth watching.",
+            )
         if schema is WholeMeta:
             return WholeMeta(
                 title="A quick captioned video",

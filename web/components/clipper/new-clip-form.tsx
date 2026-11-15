@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { CaptionStylePicker } from "@/components/captions/caption-style-picker";
 import { LinkPreview, isUrl, useLinkInfo } from "@/components/clipper/link-inspector";
 import { LockedBadge, useGate } from "@/components/plan/locked";
+import { TemplateBar } from "@/components/plan/template-bar";
 import { UploadDropzone } from "@/components/upload/upload-dropzone";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -222,6 +223,36 @@ export function NewClipForm({ initialUrl = "", initialMode = "auto" }: { initial
     use_brand: useBrand,
   });
 
+  /** Apply a template, skipping anything the plan doesn't include. */
+  const applyTemplate = (t: Record<string, unknown>) => {
+    const locked: string[] = [];
+    const ok = (feature: string, on: boolean) => {
+      if (on && !gate.allowed(feature)) {
+        locked.push(feature);
+        return false;
+      }
+      return true;
+    };
+    if (t.mode) pickMode(t.mode as Mode);
+    if (t.aspect && ok("output_formats", t.aspect !== "9:16")) setAspect(t.aspect as Aspect);
+    if (typeof t.num_clips === "number") setNum(Math.min(t.num_clips, opts?.max_clips ?? 5));
+    if (typeof t.min_len === "number" && typeof t.max_len === "number") setRange([t.min_len, t.max_len]);
+    if (t.content_type) setContentType(String(t.content_type));
+    if (t.reframe) setReframe(String(t.reframe));
+    if (t.caption_style) setStyle(t.caption_style as CaptionStyle);
+    if (t.language) setLanguage(String(t.language ?? "auto"));
+    if ("hook_overlay" in t) setHook(Boolean(t.hook_overlay));
+    if ("progress_bar" in t) setProgressBar(Boolean(t.progress_bar));
+    if (ok("visual_analysis", Boolean(t.visual_analysis))) setVisual(Boolean(t.visual_analysis));
+    if (ok("translation", Boolean(t.translate_to))) setTranslateTo(t.translate_to ? String(t.translate_to) : "none");
+    if (ok("filler_removal", Boolean(t.remove_silence || t.remove_fillers))) {
+      setRemoveSilence(Boolean(t.remove_silence));
+      setRemoveFillers(Boolean(t.remove_fillers));
+    }
+    if (ok("keyword_emphasis", Boolean(t.keyword_emphasis))) setEmphasis(Boolean(t.keyword_emphasis));
+    if (locked.length) gate.explain(locked[0]);
+  };
+
   const submit = async () => {
     setBusy(true);
     try {
@@ -260,6 +291,7 @@ export function NewClipForm({ initialUrl = "", initialMode = "auto" }: { initial
 
   return (
     <div className="grid max-w-4xl gap-6">
+      <TemplateBar kind="clip" onApply={applyTemplate} current={() => options()} />
       <Card>
         <CardHeader>
           <CardTitle>1. Your video</CardTitle>

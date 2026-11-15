@@ -32,10 +32,17 @@ def overview(_: AdminMember) -> dict:
              from members"""
     )
     by_plan = db.fetch_all(
-        "select p.id, p.name, p.price_usd_month, count(m.user_id) as users from plans p "
-        "left join members m on m.plan_id = p.id and m.team is null and m.role = 'user' group by p.id order by p.sort"
+        """select p.id, p.name, p.price_usd_month,
+                  count(m.user_id) filter (where m.team is null) as users,
+                  count(m.user_id) filter (where m.team is null and m.role = 'user') as paying
+             from plans p left join members m on m.plan_id = p.id group by p.id order by p.sort"""
     )
-    mrr = sum(float(p["price_usd_month"] or 0) * int(p["users"]) for p in by_plan)
+    team_row = next((p for p in by_plan if p["id"] == "team"), None)
+    if team_row is not None:  # Staff/Creator members can sit on any plan; count them under Team
+        team_row["users"] = int(users["team"])
+    mrr = sum(
+        float(p["price_usd_month"] or 0) * int(p["paying"]) for p in by_plan
+    )  # owner/admins/team don't pay
     job_stats = db.fetch_one(
         """select count(*) filter (where created_at > now() - interval '1 day') as today,
                   count(*) filter (where status in ('queued','running')) as active,

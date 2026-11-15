@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { Captions, Check, Copy, Download, Loader2, Minus, Palette, Plus, RotateCcw, Share2, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { CaptionStylePicker } from "@/components/captions/caption-style-picker";
+import { ExtrasPanel, type Covers, type Ideas } from "@/components/clipper/extras-panel";
 import { LockedBadge, useGate } from "@/components/plan/locked";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -30,6 +31,8 @@ export interface Clip {
   aspect?: Aspect;
   words_key?: string | null;
   language?: string | null;
+  covers?: Covers | null;
+  ideas?: Ideas | null;
   reframe: string;
   caption_style: CaptionStyle;
   status: string;
@@ -316,6 +319,20 @@ export function ClipCard({ clip, locked }: { clip: Clip; locked?: boolean }) {
             </div>
           )}
         </div>
+        <ExtrasPanel
+          base={`/clips/${clip.id}`}
+          covers={clip.covers}
+          ideas={clip.ideas}
+          disabled={busy || locked || clip.status !== "ready"}
+          onUseTitle={(t) => {
+            setTitle(t);
+            save({ title: t });
+          }}
+          onUseHashtags={(h) => {
+            setTags(h.join(" "));
+            save({ hashtags: h });
+          }}
+        />
       </div>
 
       <Dialog open={styleOpen} onOpenChange={setStyleOpen}>

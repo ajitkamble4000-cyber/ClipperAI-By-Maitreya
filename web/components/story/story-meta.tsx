@@ -30,6 +30,8 @@ export interface Story {
   alignment_key: string | null;
   render_key: string | null;
   thumb_key: string | null;
+  covers?: { youtube?: string; vertical?: string; style?: "frame" | "ai" };
+  ideas?: { titles?: string[]; hashtags?: string[]; description?: string };
   updated_at: string;
 }
 

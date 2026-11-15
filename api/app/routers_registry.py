@@ -12,6 +12,7 @@ def extra_routers() -> list[APIRouter]:
         admin_ops,
         brand,
         clipper,
+        extras,
         library,
         projects,
         settings,
@@ -32,4 +33,5 @@ def extra_routers() -> list[APIRouter]:
         brand.router,
         account.router,
         admin_ops.router,
+        extras.router,
     ]

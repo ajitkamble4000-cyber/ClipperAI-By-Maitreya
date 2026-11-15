@@ -79,3 +79,9 @@ export async function ensureOwner(): Promise<{ id: string; email: string }> {
   const user = await r.json();
   return { id: user.id, email: OWNER };
 }
+
+/** Put a file straight into the local S3 mock (test setup only). */
+export async function putObject(key: string, body: Buffer, contentType: string) {
+  const r = await fetch(`http://127.0.0.1:9090/shorts-studio/${key}`, { method: "PUT", body: new Uint8Array(body), headers: { "Content-Type": contentType } });
+  if (!r.ok) throw new Error(`put ${key}: ${r.status}`);
+}

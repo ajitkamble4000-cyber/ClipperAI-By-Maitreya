@@ -33,7 +33,7 @@ Then continue with the first unchecked phase below.
       token history, brand kit, account (delete), share links, onboarding, locked-feature UI
 - [x] 14. Admin panel: overview analytics, users (plan/team/tokens/suspend/role), admins (owner only),
       plans & token prices, providers & keys (owner only), jobs monitor, audit log, announcements, system health
-- [ ] 15. Creator extras: templates, batch (many links / many story topics), more genres, AI thumbnails,
+- [x] 15. Creator extras: templates, batch (many links / many story topics), more genres, AI thumbnails,
       title & hashtag variants
 - [ ] 16. Docs, full regression, push-ready
 

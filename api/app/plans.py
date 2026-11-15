@@ -29,7 +29,7 @@ FEATURE_LABELS = {
     "no_watermark": "No watermark",
     "priority": "Priority processing",
 }
-LIGHT_KINDS = ("clip_zip", "dummy")  # don't count toward the concurrent-job limit
+LIGHT_KINDS = ("clip_zip", "dummy", "thumbnail", "title_variants")  # quick jobs: not counted toward the limit
 
 
 def plan_for(m: Member) -> dict[str, Any]:

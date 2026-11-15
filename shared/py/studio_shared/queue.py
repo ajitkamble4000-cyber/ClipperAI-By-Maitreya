@@ -18,4 +18,6 @@ JOB_ROUTES: dict[str, tuple[str, str]] = {
     "story_voice": ("worker.run_job", QUEUE_MEDIA),
     "story_veo": ("worker.run_job", QUEUE_POLL),
     "story_render": ("worker.run_job", QUEUE_MEDIA),
+    "thumbnail": ("worker.run_job", QUEUE_AI),
+    "title_variants": ("worker.run_job", QUEUE_AI),
 }

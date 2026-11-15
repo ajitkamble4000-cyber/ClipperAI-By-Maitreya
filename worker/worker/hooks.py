@@ -35,7 +35,14 @@ def on_job_finished(job: dict[str, Any], status: str, result: dict[str, Any]) ->
 
 def _notify(job: dict[str, Any], status: str, error: str | None) -> None:
     """In-app notification for the job's owner (the bell in the app)."""
-    if not job.get("created_by") or job["kind"] in ("dummy", "clip_zip", "story_scene_ai", "story_image_one"):
+    if not job.get("created_by") or job["kind"] in (
+        "dummy",
+        "clip_zip",
+        "story_scene_ai",
+        "story_image_one",
+        "thumbnail",
+        "title_variants",
+    ):
         return
     try:
         title_row = (

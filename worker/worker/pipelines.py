@@ -20,6 +20,8 @@ _REGISTRY: dict[str, str] = {
     "story_voice": "worker.story.voice:build_voice",
     "story_render": "worker.story.render:build_render",
     "story_veo": "worker.story.veo:build_veo",
+    "thumbnail": "worker.extras:build_thumbnail",
+    "title_variants": "worker.extras:build_ideas",
 }
 
 

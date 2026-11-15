@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { LockedBadge, useGate } from "@/components/plan/locked";
+import { TemplateBar } from "@/components/plan/template-bar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Field } from "@/components/ui/field";
@@ -23,7 +25,8 @@ export interface VisualStyle {
 
 export function NewStoryForm() {
   const router = useRouter();
-  const [mode, setMode] = useState<"idea" | "script">("idea");
+  const gate = useGate();
+  const [mode, setMode] = useState<"idea" | "script" | "batch">("idea");
   const [idea, setIdea] = useState("");
   const [genre, setGenre] = useState("what_if");
   const [styles, setStyles] = useState<VisualStyle[]>([]);
@@ -45,12 +48,40 @@ export function NewStoryForm() {
     setSpeaking(GENRES[g].speaking_style);
   };
 
+  const topics = [...new Set(idea.split("\n").map((t) => t.trim()).filter((t) => t.length >= 3))];
+  const settings = () => ({ genre, visual_style: visual, length_s: length, language, voice, speaking_style: speaking });
+  const applyTemplate = (t: Record<string, unknown>) => {
+    if (t.genre && GENRES[String(t.genre)]) pickGenre(String(t.genre));
+    if (t.visual_style) setVisual(String(t.visual_style));
+    if (typeof t.length_s === "number") setLength(t.length_s);
+    if (t.language) setLanguage(String(t.language));
+    if (t.voice) setVoice(String(t.voice));
+    if (t.speaking_style) setSpeaking(String(t.speaking_style));
+  };
+  const pickMode = (v: string) => (v === "batch" && !gate.allowed("batch") ? gate.explain("batch") : setMode(v as typeof mode));
+
   const submit = async () => {
     setBusy(true);
+    if (mode === "batch") {
+      try {
+        const r = await api<{ created: { project_id: string; job_id: string | null }[]; error: { detail: string } | null }>("/story/batch", {
+          method: "POST",
+          json: { ideas: topics, settings: settings() },
+        });
+        const started = r.created.filter((c) => c.job_id).length;
+        if (started) toast.success(`Writing ${started} script${started > 1 ? "s" : ""}. You'll get a notification for each.`);
+        if (r.error) toast.error(r.error.detail);
+        router.push("/story");
+      } catch (e) {
+        toast.error((e as Error).message);
+        setBusy(false);
+      }
+      return;
+    }
     try {
       const r = await api<{ project_id: string }>("/story/projects", {
         method: "POST",
-        json: { idea, input_mode: mode, genre, visual_style: visual, length_s: length, language, voice, speaking_style: speaking },
+        json: { idea, input_mode: mode, ...settings() },
       });
       router.push(`/story/${r.project_id}`);
     } catch (e) {
@@ -61,25 +92,41 @@ export function NewStoryForm() {
 
   return (
     <div className="grid max-w-4xl gap-6">
+      <TemplateBar kind="story" onApply={applyTemplate} current={settings} />
       <Card>
         <CardHeader>
           <CardTitle>1. Idea or script</CardTitle>
           <CardDescription>Nothing is generated except the script until you approve the storyboard.</CardDescription>
         </CardHeader>
         <CardContent className="grid gap-3">
-          <Tabs value={mode} onValueChange={(v) => setMode(v as "idea" | "script")}>
+          <Tabs value={mode} onValueChange={pickMode}>
             <TabsList>
               <TabsTrigger value="idea">Idea</TabsTrigger>
               <TabsTrigger value="script">Paste my script</TabsTrigger>
+              <TabsTrigger value="batch" data-testid="story-batch-tab">
+                Many topics <LockedBadge feature="batch" className="ml-1.5" />
+              </TabsTrigger>
             </TabsList>
           </Tabs>
           <Textarea
-            rows={mode === "idea" ? 3 : 10}
+            rows={mode === "idea" ? 3 : mode === "batch" ? 6 : 10}
             value={idea}
             onChange={(e) => setIdea(e.target.value)}
-            placeholder={mode === "idea" ? GENRES[genre].example : "Paste the narration. It will be split into scenes and given image prompts."}
+            placeholder={
+              mode === "idea"
+                ? GENRES[genre].example
+                : mode === "batch"
+                  ? "One topic per line, e.g.\nWhy do cats purr?\nWhat if the Moon disappeared?\nThe strangest animal in the ocean"
+                  : "Paste the narration. It will be split into scenes and given image prompts."
+            }
             aria-label="Story idea"
           />
+          {mode === "batch" && (
+            <p className="text-xs text-muted-foreground">
+              {topics.length} topic{topics.length === 1 ? "" : "s"}. Each becomes its own story with the settings below; scripts are written in the
+              background and you review each storyboard before anything else is generated.
+            </p>
+          )}
         </CardContent>
       </Card>
       <Card>
@@ -140,8 +187,14 @@ export function NewStoryForm() {
         </CardContent>
       </Card>
       <div className="sticky bottom-20 z-10 flex justify-end md:bottom-4">
-        <Button size="lg" className="shadow-xl" disabled={idea.trim().length < 3 || busy} onClick={submit} data-testid="write-script">
-          {busy ? "Starting…" : "Write the script"}
+        <Button
+          size="lg"
+          className="shadow-xl"
+          disabled={(mode === "batch" ? topics.length === 0 : idea.trim().length < 3) || busy}
+          onClick={submit}
+          data-testid="write-script"
+        >
+          {busy ? "Starting…" : mode === "batch" ? `Write ${topics.length || ""} scripts` : "Write the script"}
         </Button>
       </div>
     </div>

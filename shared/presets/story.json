@@ -5,70 +5,311 @@
       "example": "What happens if you fall into a black hole?",
       "prompt": "A realistic, science-grounded 'what happens if' explainer told in second person ('you'). Escalate step by step: each scene raises the stakes with a vivid, concrete consequence (numbers, sensations, timelines). Calm authority with a sense of awe. End with a mind-blowing final fact or twist.",
       "hook": "Open with the scenario as a direct, dramatic question or a shocking first consequence in the first sentence.",
-      "visual_style": "realistic_3d", "music": "epic", "captions": "bold_pop", "speaking_style": "dramatic", "voice": "Charon"
+      "visual_style": "realistic_3d",
+      "music": "epic",
+      "captions": "bold_pop",
+      "speaking_style": "dramatic",
+      "voice": "Charon"
     },
     "scary": {
       "label": "Scary story",
       "example": "Scary story: the last bus at midnight",
       "prompt": "A short first-person horror story with a slow-burn build, specific sensory details (sounds, cold, smells), rising dread and an unsettling twist ending. Short sentences. Never gory; terrifying through suggestion.",
       "hook": "Start in the middle of something wrong: a strange detail, a rule being broken, or a line like 'I should never have…'.",
-      "visual_style": "dark_horror", "music": "horror", "captions": "horror", "speaking_style": "creepy_whisper", "voice": "Algenib"
+      "visual_style": "dark_horror",
+      "music": "horror",
+      "captions": "horror",
+      "speaking_style": "creepy_whisper",
+      "voice": "Algenib"
     },
     "funny": {
       "label": "Funny story",
       "example": "My grandma accidentally joined a biker gang",
       "prompt": "A funny, absurd short story with escalating chaos, comic timing, a clear running gag and a punchline ending. Light, warm, family-friendly humor.",
       "hook": "Open with the most ridiculous fact of the story stated as if completely normal.",
-      "visual_style": "pixar_3d", "music": "funny", "captions": "bold_pop", "speaking_style": "excited", "voice": "Puck"
+      "visual_style": "pixar_3d",
+      "music": "funny",
+      "captions": "bold_pop",
+      "speaking_style": "excited",
+      "voice": "Puck"
     },
     "facts": {
       "label": "Mind-blowing facts",
       "example": "5 facts about the ocean that sound fake",
       "prompt": "A rapid-fire list of surprising, TRUE facts on one topic. One fact per scene, each with a concrete number or comparison that makes it vivid. Build from interesting to jaw-dropping. Do not invent facts.",
       "hook": "Lead with the single most unbelievable fact, or 'This sounds fake, but…'.",
-      "visual_style": "realistic_3d", "music": "upbeat", "captions": "bold_pop", "speaking_style": "excited", "voice": "Fenrir"
+      "visual_style": "realistic_3d",
+      "music": "upbeat",
+      "captions": "bold_pop",
+      "speaking_style": "excited",
+      "voice": "Fenrir"
     },
     "motivational": {
       "label": "Motivational",
       "example": "Why the first hour of your day decides everything",
       "prompt": "A punchy motivational piece built around one idea, with a short story or example, a turning point and a clear call to action. Direct, second person, no clichés.",
       "hook": "Open with a hard truth or a bold claim that challenges the viewer.",
-      "visual_style": "realistic_3d", "music": "epic", "captions": "bold_pop", "speaking_style": "dramatic", "voice": "Orus"
+      "visual_style": "realistic_3d",
+      "music": "epic",
+      "captions": "bold_pop",
+      "speaking_style": "dramatic",
+      "voice": "Orus"
     },
     "history": {
       "label": "History",
       "example": "The man who sold the Eiffel Tower twice",
       "prompt": "A true historical story told like a thriller: who, where, when, the stakes, the turning point and the outcome. Accurate names and dates; no invented facts.",
       "hook": "Open with the most surprising outcome first, then rewind.",
-      "visual_style": "realistic_3d", "music": "suspense", "captions": "boxed", "speaking_style": "dramatic", "voice": "Iapetus"
+      "visual_style": "realistic_3d",
+      "music": "suspense",
+      "captions": "boxed",
+      "speaking_style": "dramatic",
+      "voice": "Iapetus"
+    },
+    "true_crime": {
+      "label": "True crime mystery",
+      "example": "The heist that was never solved",
+      "prompt": "A gripping true-crime style mystery told like a documentary narrator: set the scene, introduce the case, reveal clues one by one, build suspense, and end on the unsettling open question or the twist that solved it. Keep it factual in tone, never graphic.",
+      "hook": "Open with the single strangest detail of the case as a statement that makes the viewer need to know more.",
+      "visual_style": "dark_horror",
+      "music": "suspense",
+      "captions": "boxed",
+      "speaking_style": "dramatic",
+      "voice": "Charon"
+    },
+    "life_hacks": {
+      "label": "Life hacks & tips",
+      "example": "5 kitchen tricks chefs never tell you",
+      "prompt": "Fast, practical tips. Each scene is one hack: the problem, the trick, and the result, in plain everyday words. Upbeat and useful, no filler. End with the best hack saved for last.",
+      "hook": "Open by naming a common annoying problem and promising a fix that seems too easy.",
+      "visual_style": "pixar_3d",
+      "music": "upbeat",
+      "captions": "bold_pop",
+      "speaking_style": "excited",
+      "voice": "Puck"
+    },
+    "money": {
+      "label": "Money & business lessons",
+      "example": "How a $1 idea became a billion-dollar company",
+      "prompt": "A sharp business or personal-finance story with one clear lesson: the situation, the clever move, the numbers, the outcome. Confident and clear, concrete figures, no financial advice claims. End with the lesson in one punchy line.",
+      "hook": "Open with a surprising number or result, then hint at the simple move behind it.",
+      "visual_style": "realistic_3d",
+      "music": "epic",
+      "captions": "bold_pop",
+      "speaking_style": "dramatic",
+      "voice": "Orus"
+    },
+    "myths": {
+      "label": "Myths & legends",
+      "example": "The legend of the lost city of gold",
+      "prompt": "Retell a myth or legend like a campfire storyteller: vivid setting, a legendary figure, a dramatic turn, and a haunting or wondrous ending. Mention where the legend comes from.",
+      "hook": "Open as if letting the viewer in on an ancient secret people still whisper about.",
+      "visual_style": "anime",
+      "music": "epic",
+      "captions": "boxed",
+      "speaking_style": "dramatic",
+      "voice": "Iapetus"
+    },
+    "sci_fi": {
+      "label": "Sci-fi short story",
+      "example": "The last message from a dying space station",
+      "prompt": "A tight science-fiction micro-story with one big idea: a striking world, a character facing a choice, rising tension, and a twist ending that reframes everything. Cinematic and emotional.",
+      "hook": "Open in the middle of the action with an impossible situation.",
+      "visual_style": "comic",
+      "music": "suspense",
+      "captions": "bold_pop",
+      "speaking_style": "dramatic",
+      "voice": "Fenrir"
+    },
+    "bedtime": {
+      "label": "Bedtime story (kids)",
+      "example": "The little cloud who was afraid of thunder",
+      "prompt": "A gentle, kind bedtime story for young children: a lovable character, a small worry, a friend who helps, and a warm, sleepy ending with a soft lesson. Simple words, soothing rhythm, nothing scary.",
+      "hook": "Open softly with 'Once upon a time' and the character's name.",
+      "visual_style": "pixar_3d",
+      "music": "calm",
+      "captions": "minimal",
+      "speaking_style": "calm",
+      "voice": "Aoede"
     }
   },
   "speaking_styles": {
-    "dramatic": {"label": "Dramatic", "prompt": "Read this like a dramatic movie-trailer narrator: deep, intense, with weighty pauses"},
-    "calm": {"label": "Calm", "prompt": "Read this in a calm, warm, measured documentary narrator voice"},
-    "excited": {"label": "Excited", "prompt": "Read this with high energy and excitement, fast-paced like a viral short"},
-    "creepy_whisper": {"label": "Creepy whisper", "prompt": "Read this as a slow, creepy, breathy whisper, like telling a ghost story in the dark"}
+    "dramatic": {
+      "label": "Dramatic",
+      "prompt": "Read this like a dramatic movie-trailer narrator: deep, intense, with weighty pauses"
+    },
+    "calm": {
+      "label": "Calm",
+      "prompt": "Read this in a calm, warm, measured documentary narrator voice"
+    },
+    "excited": {
+      "label": "Excited",
+      "prompt": "Read this with high energy and excitement, fast-paced like a viral short"
+    },
+    "creepy_whisper": {
+      "label": "Creepy whisper",
+      "prompt": "Read this as a slow, creepy, breathy whisper, like telling a ghost story in the dark"
+    }
   },
   "voices": [
-    {"name": "Charon", "desc": "Informative, deep"}, {"name": "Puck", "desc": "Upbeat"}, {"name": "Kore", "desc": "Firm"},
-    {"name": "Fenrir", "desc": "Excitable"}, {"name": "Orus", "desc": "Firm"}, {"name": "Zephyr", "desc": "Bright"},
-    {"name": "Aoede", "desc": "Breezy"}, {"name": "Leda", "desc": "Youthful"}, {"name": "Enceladus", "desc": "Breathy"},
-    {"name": "Iapetus", "desc": "Clear"}, {"name": "Algenib", "desc": "Gravelly"}, {"name": "Algieba", "desc": "Smooth"},
-    {"name": "Alnilam", "desc": "Firm"}, {"name": "Achernar", "desc": "Soft"}, {"name": "Autonoe", "desc": "Bright"},
-    {"name": "Callirrhoe", "desc": "Easy-going"}, {"name": "Despina", "desc": "Smooth"}, {"name": "Erinome", "desc": "Clear"},
-    {"name": "Gacrux", "desc": "Mature"}, {"name": "Laomedeia", "desc": "Upbeat"}, {"name": "Pulcherrima", "desc": "Forward"},
-    {"name": "Rasalgethi", "desc": "Informative"}, {"name": "Sadachbia", "desc": "Lively"}, {"name": "Sadaltager", "desc": "Knowledgeable"},
-    {"name": "Schedar", "desc": "Even"}, {"name": "Sulafat", "desc": "Warm"}, {"name": "Umbriel", "desc": "Easy-going"},
-    {"name": "Vindemiatrix", "desc": "Gentle"}, {"name": "Zubenelgenubi", "desc": "Casual"}, {"name": "Achird", "desc": "Friendly"}
+    {
+      "name": "Charon",
+      "desc": "Informative, deep"
+    },
+    {
+      "name": "Puck",
+      "desc": "Upbeat"
+    },
+    {
+      "name": "Kore",
+      "desc": "Firm"
+    },
+    {
+      "name": "Fenrir",
+      "desc": "Excitable"
+    },
+    {
+      "name": "Orus",
+      "desc": "Firm"
+    },
+    {
+      "name": "Zephyr",
+      "desc": "Bright"
+    },
+    {
+      "name": "Aoede",
+      "desc": "Breezy"
+    },
+    {
+      "name": "Leda",
+      "desc": "Youthful"
+    },
+    {
+      "name": "Enceladus",
+      "desc": "Breathy"
+    },
+    {
+      "name": "Iapetus",
+      "desc": "Clear"
+    },
+    {
+      "name": "Algenib",
+      "desc": "Gravelly"
+    },
+    {
+      "name": "Algieba",
+      "desc": "Smooth"
+    },
+    {
+      "name": "Alnilam",
+      "desc": "Firm"
+    },
+    {
+      "name": "Achernar",
+      "desc": "Soft"
+    },
+    {
+      "name": "Autonoe",
+      "desc": "Bright"
+    },
+    {
+      "name": "Callirrhoe",
+      "desc": "Easy-going"
+    },
+    {
+      "name": "Despina",
+      "desc": "Smooth"
+    },
+    {
+      "name": "Erinome",
+      "desc": "Clear"
+    },
+    {
+      "name": "Gacrux",
+      "desc": "Mature"
+    },
+    {
+      "name": "Laomedeia",
+      "desc": "Upbeat"
+    },
+    {
+      "name": "Pulcherrima",
+      "desc": "Forward"
+    },
+    {
+      "name": "Rasalgethi",
+      "desc": "Informative"
+    },
+    {
+      "name": "Sadachbia",
+      "desc": "Lively"
+    },
+    {
+      "name": "Sadaltager",
+      "desc": "Knowledgeable"
+    },
+    {
+      "name": "Schedar",
+      "desc": "Even"
+    },
+    {
+      "name": "Sulafat",
+      "desc": "Warm"
+    },
+    {
+      "name": "Umbriel",
+      "desc": "Easy-going"
+    },
+    {
+      "name": "Vindemiatrix",
+      "desc": "Gentle"
+    },
+    {
+      "name": "Zubenelgenubi",
+      "desc": "Casual"
+    },
+    {
+      "name": "Achird",
+      "desc": "Friendly"
+    }
   ],
   "voices_note": "The Gemini API has no endpoint that lists TTS voices; this list follows Google's docs. Admins can edit it here.",
   "languages": {
-    "en": {"label": "English", "instruction": "Write the narration in natural spoken English."},
-    "hi": {"label": "Hindi", "instruction": "Write the narration in natural spoken Hindi using Devanagari script."},
-    "hinglish": {"label": "Hinglish", "instruction": "Write the narration in Hinglish: conversational Hindi mixed with common English words, written in Latin (Roman) script, the way young Indians text and talk."}
+    "en": {
+      "label": "English",
+      "instruction": "Write the narration in natural spoken English."
+    },
+    "hi": {
+      "label": "Hindi",
+      "instruction": "Write the narration in natural spoken Hindi using Devanagari script."
+    },
+    "hinglish": {
+      "label": "Hinglish",
+      "instruction": "Write the narration in Hinglish: conversational Hindi mixed with common English words, written in Latin (Roman) script, the way young Indians text and talk."
+    }
   },
-  "lengths": [30, 45, 60, 90],
+  "lengths": [
+    30,
+    45,
+    60,
+    90
+  ],
   "words_per_second": 2.5,
-  "camera_motions": ["zoom-in", "zoom-out", "pan-left", "pan-right", "shake", "static"],
-  "music_moods": ["suspense", "horror", "upbeat", "epic", "funny", "calm", "emotional"]
+  "camera_motions": [
+    "zoom-in",
+    "zoom-out",
+    "pan-left",
+    "pan-right",
+    "shake",
+    "static"
+  ],
+  "music_moods": [
+    "suspense",
+    "horror",
+    "upbeat",
+    "epic",
+    "funny",
+    "calm",
+    "emotional"
+  ]
 }
