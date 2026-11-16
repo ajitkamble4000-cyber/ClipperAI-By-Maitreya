@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { Captions, Coins, Layers, Link2, Scissors, Sparkles, Upload, Wand2 } from "lucide-react";
 import { toast } from "sonner";
 import { CaptionStylePicker } from "@/components/captions/caption-style-picker";
+import { MUSIC_MOODS } from "@/components/clipper/clip-tools";
 import { LinkPreview, isUrl, useLinkInfo } from "@/components/clipper/link-inspector";
 import { LockedBadge, useGate } from "@/components/plan/locked";
 import { TemplateBar } from "@/components/plan/template-bar";
@@ -145,6 +146,8 @@ export function NewClipForm({ initialUrl = "", initialMode = "auto" }: { initial
   const [emphasisWords, setEmphasisWords] = useState("");
   const [progressBar, setProgressBar] = useState(false);
   const [useBrand, setUseBrand] = useState(false);
+  const [musicMood, setMusicMood] = useState("none");
+  const [musicVolume, setMusicVolume] = useState(0.2);
   const [style, setStyle] = useState<CaptionStyle>({ preset: "bold_pop" });
   const [quote, setQuote] = useState<Quote | null>(null);
   const [busy, setBusy] = useState(false);
@@ -221,6 +224,8 @@ export function NewClipForm({ initialUrl = "", initialMode = "auto" }: { initial
     emphasis_words: emphasis ? emphasisWords.split(/[,\n]+/).map((s) => s.trim()).filter(Boolean) : [],
     progress_bar: progressBar,
     use_brand: useBrand,
+    music_mood: musicMood,
+    music_volume: musicVolume,
   });
 
   /** Apply a template, skipping anything the plan doesn't include. */
@@ -243,6 +248,7 @@ export function NewClipForm({ initialUrl = "", initialMode = "auto" }: { initial
     if (t.language) setLanguage(String(t.language ?? "auto"));
     if ("hook_overlay" in t) setHook(Boolean(t.hook_overlay));
     if ("progress_bar" in t) setProgressBar(Boolean(t.progress_bar));
+    if (t.music_mood) setMusicMood(String(t.music_mood));
     if (ok("visual_analysis", Boolean(t.visual_analysis))) setVisual(Boolean(t.visual_analysis));
     if (ok("translation", Boolean(t.translate_to))) setTranslateTo(t.translate_to ? String(t.translate_to) : "none");
     if (ok("filler_removal", Boolean(t.remove_silence || t.remove_fillers))) {
@@ -445,6 +451,16 @@ export function NewClipForm({ initialUrl = "", initialMode = "auto" }: { initial
             <Toggle label="Hook text" hint="Big text for the first 3 seconds" checked={hook} onChange={setHook} />
             <Toggle label="Progress bar" hint="A thin bar that fills as the video plays" checked={progressBar} onChange={setProgressBar} />
             <Toggle label="My brand kit" hint={brandSaved ? "Your logo and @handle on every video" : "Add your logo first in Account → Brand kit"} checked={useBrand} onChange={gate.guard("brand_kit", (v: boolean) => (v && !brandSaved ? toast.message("Set up your brand kit first", { action: { label: "Open", onClick: () => router.push("/account/brand") } }) : setUseBrand(v)))} feature="brand_kit" />
+          </div>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Field label="Background music" hint="From the music library, automatically quieter while people talk">
+              <Select value={musicMood} onValueChange={setMusicMood} aria-label="Background music" options={MUSIC_MOODS} />
+            </Field>
+            {musicMood !== "none" && (
+              <Field label={`Music volume (${Math.round(musicVolume * 100)}%)`}>
+                <Slider min={0.05} max={0.6} step={0.05} value={[musicVolume]} onValueChange={([v]) => setMusicVolume(v)} aria-label="Music volume" />
+              </Field>
+            )}
           </div>
           {emphasis && (
             <Field label="Always highlight these words (optional)">

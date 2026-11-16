@@ -25,6 +25,7 @@ Reframe = Literal["face", "action", "center", "blur"]
 ContentType = Literal["podcast", "sports", "gaming", "interview", "vlog", "education", "other"]
 Aspect = Literal["9:16", "1:1", "4:5", "16:9"]
 Mode = Literal["auto", "clips", "captions"]
+MusicMood = Literal["none", "auto", "suspense", "horror", "upbeat", "epic", "funny", "calm", "emotional"]
 
 
 class CaptionStyleIn(BaseModel):
@@ -67,6 +68,8 @@ class ClipOptions(BaseModel):
     progress_bar: bool = False
     use_brand: bool = False
     auto_whole_max_s: int = Field(default=90, ge=15, le=180)
+    music_mood: MusicMood = "none"
+    music_volume: float = Field(default=0.2, ge=0.05, le=0.6)
 
     @field_validator("translate_to")
     @classmethod
@@ -141,8 +144,19 @@ def _check_entitlements(m: Member, o: ClipOptions) -> None:
 
 def _params(m: Member, o: ClipOptions) -> dict[str, Any]:
     params: dict[str, Any] = o.model_dump(
-        exclude={"caption_style", "title", "upload_id", "url", "emphasis_words", "use_brand"}
+        exclude={
+            "caption_style",
+            "title",
+            "upload_id",
+            "url",
+            "emphasis_words",
+            "use_brand",
+            "music_mood",
+            "music_volume",
+        }
     )
+    if o.music_mood != "none":
+        params["music"] = {"mood": o.music_mood, "volume": o.music_volume}
     params["caption_style"] = o.caption_style.clean()
     params["language"] = None if o.language == "auto" else o.language
     if o.keyword_emphasis:
@@ -347,6 +361,8 @@ class RerenderIn(BaseModel):
     caption_style: CaptionStyleIn | None = None
     reframe: Reframe | None = None
     aspect: Aspect | None = None
+    music_mood: MusicMood | None = None
+    music_volume: float = Field(default=0.2, ge=0.05, le=0.6)
 
 
 @router.post("/clips/{clip_id}/rerender", status_code=201)
@@ -374,6 +390,8 @@ def rerender_clip(clip_id: str, body: RerenderIn, m: CurrentMember) -> dict:
         params["caption_style"] = body.caption_style.clean()
     if body.reframe:
         params["reframe"] = body.reframe
+    if body.music_mood is not None:
+        params["music"] = {"mood": body.music_mood, "volume": body.music_volume}
     if body.aspect and body.aspect != clip["aspect"]:
         if body.aspect != "9:16":
             require_feature(m, "output_formats")

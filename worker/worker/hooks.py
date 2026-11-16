@@ -51,6 +51,7 @@ def _notify(job: dict[str, Any], status: str, error: str | None) -> None:
         "story_image_one",
         "thumbnail",
         "title_variants",
+        "clip_export",
     ):
         return
     try:

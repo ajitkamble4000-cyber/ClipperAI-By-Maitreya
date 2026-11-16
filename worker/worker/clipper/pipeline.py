@@ -39,6 +39,7 @@ RENDER_OPT_KEYS = (
     "remove_silence",
     "remove_fillers",
     "translate_to",
+    "music",
 )
 
 
@@ -419,6 +420,20 @@ def render_one(
     if words is None:
         words = t.slice(start, end)
     progress(0.6)
+    if (ro.get("music") or {}).get("mood", "none") != "none":
+        from .music import add_music
+
+        proj = db.fetch_one("select meta from projects where id = %s", [pid]) or {}
+        content_type = ((proj.get("meta") or {}).get("options") or {}).get("content_type", "other")
+        base = add_music(
+            base,
+            dur,
+            ro["music"],
+            content_type=content_type,
+            seed=str(clip["id"]),
+            tmp=ctx.tmp,
+            fetch=ctx.fetch,
+        )
     brand = OverlayOptions.from_params(ro, lambda k: ctx.fetch(k, "brand_logo" + Path(k).suffix.lower()))
     final = ctx.tmp / clip["filename"]
     render_final(

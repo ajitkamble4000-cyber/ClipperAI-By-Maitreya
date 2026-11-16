@@ -64,7 +64,7 @@ Panels: 51 notifications · 52 landing page · 53 pricing page · 54 onboarding 
 - [x] 17. Growth: promo codes (bonus tokens or plan trials with auto-expiry), referral program (both sides
       rewarded after the friend's first finished video), owner site controls (sign-ups open/closed,
       maintenance banner, referral rewards)
-- [ ] 18. Editing: fix caption words and re-render, background music on clips (auto-ducked), compilations
+- [x] 18. Editing: fix caption words and re-render, background music on clips (auto-ducked), compilations
       (merge clips into one video), MP3 audio and GIF exports
 - [ ] 19. Repurpose with AI: summary, YouTube chapters, key quotes, blog post, X thread, LinkedIn post and
       newsletter from a video; search what was said across the library

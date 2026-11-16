@@ -22,6 +22,8 @@ _REGISTRY: dict[str, str] = {
     "story_veo": "worker.story.veo:build_veo",
     "thumbnail": "worker.extras:build_thumbnail",
     "title_variants": "worker.extras:build_ideas",
+    "clip_export": "worker.clipper.exports:build_export",
+    "clip_compile": "worker.clipper.exports:build_compile",
 }
 
 

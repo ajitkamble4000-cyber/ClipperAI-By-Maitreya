@@ -72,3 +72,17 @@ def to_txt(items: list[tuple[float, float, str]]) -> str:
 def render_file(words: Iterable[Any], fmt: str) -> str:
     items = cues(words)
     return {"srt": to_srt, "vtt": to_vtt, "txt": to_txt}[fmt](items)
+
+
+def spread(text: str, start: float, end: float) -> list[dict[str, Any]]:
+    """Timed words for an edited caption line: spread across the line's span in proportion to word length."""
+    toks = text.split()
+    if not toks or end <= start:
+        return []
+    total = sum(len(t) + 1 for t in toks)
+    out, t = [], start
+    for tok in toks:
+        d = (end - start) * (len(tok) + 1) / total
+        out.append({"text": tok, "start": round(t, 3), "end": round(t + d, 3)})
+        t += d
+    return out

@@ -417,6 +417,8 @@ def quote(kind: str, p: dict[str, Any]) -> tuple[int, dict[str, int]]:
         items["render"] = price("render")
     elif kind == "story_veo":
         items["veo_per_second"] = price("veo_per_second") * int(p.get("seconds", 0))
+    elif kind == "clip_compile":
+        items["compilation"] = price("compilation")
     elif kind in ("thumbnail", "title_variants"):
         items[kind] = price(kind) * int(p.get("count", 1))
     return sum(items.values()), items

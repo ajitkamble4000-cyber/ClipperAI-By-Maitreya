@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { Captions, Check, Copy, Download, Loader2, Minus, Palette, Plus, RotateCcw, Share2, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { CaptionStylePicker } from "@/components/captions/caption-style-picker";
+import { ClipTools } from "@/components/clipper/clip-tools";
 import { ExtrasPanel, type Covers, type Ideas } from "@/components/clipper/extras-panel";
 import { LockedBadge, useGate } from "@/components/plan/locked";
 import { Badge } from "@/components/ui/badge";
@@ -32,6 +33,7 @@ export interface Clip {
   words_key?: string | null;
   language?: string | null;
   covers?: Covers | null;
+  render_opts?: { music?: { mood?: string; volume?: number } } | null;
   ideas?: Ideas | null;
   reframe: string;
   caption_style: CaptionStyle;
@@ -319,6 +321,7 @@ export function ClipCard({ clip, locked }: { clip: Clip; locked?: boolean }) {
             </div>
           )}
         </div>
+        <ClipTools clipId={clip.id} disabled={busy || locked || clip.status !== "ready"} music={clip.render_opts?.music} />
         <ExtrasPanel
           base={`/clips/${clip.id}`}
           covers={clip.covers}

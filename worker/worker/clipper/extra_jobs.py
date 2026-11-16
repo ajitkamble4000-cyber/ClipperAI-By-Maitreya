@@ -42,6 +42,10 @@ def _rerender(ctx: JobContext) -> dict[str, Any]:
         cut_changed = True
     if p.get("caption_style") is not None:
         updates["caption_style"] = p["caption_style"]
+    if p.get("music") is not None:
+        ro = dict(clip.get("render_opts") or {})
+        ro["music"] = p["music"]
+        updates["render_opts"] = db.jsonb(ro)
     if updates:
         cols = ", ".join(f"{k} = %({k})s" for k in updates)
         db.execute(

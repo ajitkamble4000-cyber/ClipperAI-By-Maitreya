@@ -12,6 +12,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useJob, useProjectJobs } from "@/hooks/use-job";
 import { useProject, useProjectRows } from "@/hooks/use-rows";
 import { api, signedUrl } from "@/lib/api";
+import { CompilationButton } from "@/components/clipper/compilation-dialog";
 import { ClipCard, type Clip } from "./clip-card";
 
 export function ClipProjectView({ projectId }: { projectId: string }) {
@@ -82,6 +83,7 @@ export function ClipProjectView({ projectId }: { projectId: string }) {
           </p>
         </div>
         <div className="flex gap-2">
+          {clips && <CompilationButton projectId={projectId} clips={clips} />}
           <Button onClick={zip} disabled={!readyCount || !!zipJobId} data-testid="zip">
             <FileArchive /> {zipJobId ? `Zipping ${zipJob?.percent ?? 0}%` : "Download all (ZIP)"}
           </Button>
