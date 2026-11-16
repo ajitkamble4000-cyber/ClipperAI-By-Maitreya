@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ChevronRight, Code2, Coins, Download, Link2, LogOut, Palette, Receipt, Trash2 } from "lucide-react";
+import { BarChart3, ChevronRight, Code2, Coins, Download, Link2, LogOut, Palette, Receipt, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { LockedBadge } from "@/components/plan/locked";
 import { PageHeader } from "@/components/shell/page-header";
@@ -129,6 +129,7 @@ export default function AccountPage() {
       <div className="grid gap-3 sm:grid-cols-2">
         {[
           { href: "/account/tokens", icon: Coins, label: "Tokens & history", hint: "Balance, refills and every charge" },
+          { href: "/account/stats", icon: BarChart3, label: "Your stats", hint: "Clips made, minutes processed, tokens by feature" },
           { href: "/account/brand", icon: Palette, label: "Brand kit", hint: "Logo, @handle and colours", feature: "brand_kit" },
           { href: "/pricing", icon: Receipt, label: "Plans & pricing", hint: "What each plan includes" },
           { href: "/account/developer", icon: Code2, label: "Developer API", hint: "API keys and webhooks", feature: "api_access" },

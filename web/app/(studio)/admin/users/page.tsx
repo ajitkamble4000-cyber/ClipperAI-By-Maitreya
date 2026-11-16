@@ -2,11 +2,13 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { Download } from "lucide-react";
+import { toast } from "sonner";
 import { STATUS_COLOR, Table } from "@/components/admin/ui";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
-import { api } from "@/lib/api";
+import { api, downloadFrom } from "@/lib/api";
 import { cn, timeAgo } from "@/lib/utils";
 
 export interface AdminUser {
@@ -54,7 +56,22 @@ export default function AdminUsers() {
         <Select value={role} onValueChange={(v) => (setRole(v), setPage(1))} aria-label="Role" options={[{ value: ALL, label: "Any role" }, { value: "owner", label: "Owner" }, { value: "admin", label: "Admin" }, { value: "user", label: "User" }]} />
         <Select value={state} onValueChange={(v) => (setState(v), setPage(1))} aria-label="Status" options={[{ value: ALL, label: "Any status" }, { value: "active", label: "Active" }, { value: "suspended", label: "Suspended" }]} />
       </div>
-      <p className="text-sm text-muted-foreground">{data ? `${data.total.toLocaleString()} user${data.total === 1 ? "" : "s"}` : "Loading…"}</p>
+      <div className="flex items-center justify-between gap-2">
+        <p className="text-sm text-muted-foreground">{data ? `${data.total.toLocaleString()} user${data.total === 1 ? "" : "s"}` : "Loading…"}</p>
+        <Button
+          size="sm"
+          variant="outline"
+          data-testid="export-users"
+          onClick={() => {
+            const p = new URLSearchParams();
+            if (q.trim()) p.set("q", q.trim());
+            if (plan !== ALL) p.set("plan", plan);
+            downloadFrom(`/admin/users.csv?${p}`, "users.csv").catch((e) => toast.error((e as Error).message));
+          }}
+        >
+          <Download /> Export CSV
+        </Button>
+      </div>
       <Table head={["User", "Plan", "Team", "Role", "Status", "Projects", "Last seen", "Joined"]} testId="users-table">
         {data?.users.map((u) => (
           <tr key={u.user_id} className="hover:bg-muted/30">

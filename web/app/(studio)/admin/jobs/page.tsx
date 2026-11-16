@@ -53,6 +53,18 @@ export default function AdminJobs() {
     }
   };
 
+  const refund = async (j: Job) => {
+    const reason = prompt(`Refund ${j.tokens_charged} tokens to ${j.user_name ?? "this user"}? Optional note for them:`, "");
+    if (reason === null) return;
+    try {
+      const r = await api<{ refunded: number }>(`/admin/jobs/${j.id}/refund`, { method: "POST", json: { reason } });
+      toast.success(`${r.refunded} tokens refunded`);
+      load();
+    } catch (e) {
+      toast.error((e as Error).message);
+    }
+  };
+
   return (
     <div className="grid gap-4">
       <div className="flex flex-col gap-2 sm:flex-row">
@@ -97,11 +109,15 @@ export default function AdminJobs() {
             <td className="px-3 py-2 tabular-nums text-muted-foreground">{Math.round(j.seconds)} s</td>
             <td className="px-3 py-2 text-muted-foreground">{timeAgo(j.created_at)}</td>
             <td className="px-3 py-2">
-              {["queued", "running"].includes(j.status) && (
+              {["queued", "running"].includes(j.status) ? (
                 <Button size="sm" variant="outline" onClick={() => cancel(j)}>
                   Cancel
                 </Button>
-              )}
+              ) : j.tokens_charged > 0 ? (
+                <Button size="sm" variant="outline" onClick={() => refund(j)} data-testid="refund-job">
+                  Refund
+                </Button>
+              ) : null}
             </td>
           </tr>
         ))}
