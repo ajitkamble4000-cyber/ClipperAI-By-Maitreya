@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { api } from "@/lib/api";
 import { cn, timeAgo } from "@/lib/utils";
+import { href } from "@/lib/routes";
 
 interface Req {
   id: string;
@@ -64,7 +65,7 @@ export default function AdminRequests() {
       {rows?.map((r) => (
         <div key={r.id} className="grid gap-3 rounded-xl border p-4" data-testid="upgrade-request">
           <div className="flex flex-wrap items-center gap-2 text-sm">
-            <Link href={`/admin/users/${r.user_id}`} className="font-medium hover:text-primary">
+            <Link href={href(`/admin/users/${r.user_id}`)} className="font-medium hover:text-primary">
               {r.display_name ?? r.email}
             </Link>
             <span className="text-muted-foreground">

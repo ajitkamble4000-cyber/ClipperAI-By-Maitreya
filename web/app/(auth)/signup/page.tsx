@@ -11,6 +11,8 @@ import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { useSiteStatus } from "@/components/shell/site-banner";
 import { supabaseBrowser } from "@/lib/supabase/client";
+import { siteUrl } from "@/lib/routes";
+import { env } from "@/lib/env";
 
 export default function SignupPage() {
   return (
@@ -40,7 +42,7 @@ function Signup() {
     const { data, error } = await supabaseBrowser().auth.signUp({
       email: email.trim().toLowerCase(),
       password,
-      options: { data: { display_name: name.trim(), ...(ref ? { ref } : {}) }, emailRedirectTo: `${window.location.origin}/auth/accept?mode=signup&next=${encodeURIComponent(next)}` },
+      options: { data: { display_name: name.trim(), ...(ref ? { ref } : {}) }, emailRedirectTo: siteUrl(`/auth/accept?mode=signup&next=${encodeURIComponent(next)}`) },
     });
     setBusy(false);
     if (error) return toast.error(/closed/i.test(error.message) || /Database error/i.test(error.message) ? "Sign-ups are closed right now." : error.message);
@@ -105,7 +107,7 @@ function Signup() {
           <Field label="Password" htmlFor="password" hint="At least 10 characters">
             <Input id="password" type="password" autoComplete="new-password" required value={password} onChange={(e) => setPassword(e.target.value)} />
           </Field>
-          <Button type="submit" disabled={busy}>
+          <Button type="submit" disabled={busy || !env.configured}>
             {busy ? "Creating…" : "Create account"}
           </Button>
           <p className="text-center text-sm text-muted-foreground">

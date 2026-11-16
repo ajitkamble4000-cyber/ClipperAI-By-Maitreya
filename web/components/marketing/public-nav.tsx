@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { SiteBanner } from "@/components/shell/site-banner";
 import { supabaseBrowser } from "@/lib/supabase/client";
 import { BrandMark } from "@/components/shell/brand-mark";
+import { NotConnected } from "@/components/shell/not-connected";
 
 /** Top bar for public pages; shows "Open studio" when already signed in. */
 export function PublicNav() {
@@ -17,6 +18,7 @@ export function PublicNav() {
   }, []);
   return (
     <header className="sticky top-0 z-30 border-b bg-background/80 backdrop-blur">
+      <NotConnected />
       <SiteBanner />
       <div className="mx-auto flex max-w-6xl items-center gap-4 px-4 py-3">
         <Link href="/welcome">

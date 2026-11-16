@@ -15,6 +15,7 @@ import { api } from "@/lib/api";
 import { GENRES, LANGUAGES, LENGTHS, SPEAKING_STYLES, VOICES } from "@/lib/story";
 import { cn } from "@/lib/utils";
 import { StyleThumb } from "./style-thumb";
+import { href } from "@/lib/routes";
 
 export interface VisualStyle {
   id: string;
@@ -83,7 +84,7 @@ export function NewStoryForm() {
         method: "POST",
         json: { idea, input_mode: mode, ...settings() },
       });
-      router.push(`/story/${r.project_id}`);
+      router.push(href(`/story/${r.project_id}`));
     } catch (e) {
       toast.error((e as Error).message);
       setBusy(false);

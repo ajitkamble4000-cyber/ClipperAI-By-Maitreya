@@ -1,6 +1,20 @@
-import { ClipProjectView } from "@/components/clipper/clip-project-view";
+import { Suspense } from "react";
+import { PLACEHOLDER } from "@/lib/routes";
+import { ClipRoute } from "./client";
 
-export default async function ClipProjectPage({ params }: { params: Promise<{ id: string }> }) {
+/**
+ * On static hosting this page is built once (placeholder id) and reads the real id from ?id=. On the server build
+ * the placeholder render reads cookies (studio layout), so Next keeps the route dynamic.
+ */
+export function generateStaticParams() {
+  return [{ id: PLACEHOLDER }];
+}
+
+export default async function Page({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  return <ClipProjectView projectId={id} />;
+  return (
+    <Suspense>
+      <ClipRoute id={id} />
+    </Suspense>
+  );
 }

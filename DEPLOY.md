@@ -84,6 +84,30 @@ Updates later: `infra/scripts/deploy.sh` (pull, rebuild, restart). Running jobs 
 3. Deploy, then **Settings → Domains** → add `studio.example.com` and set the DNS record Vercel shows.
 4. A team using this commercially should be on Vercel Pro (Hobby is for non-commercial use).
 
+## 4b. Or: the web app on GitHub Pages (instead of Vercel)
+
+The website can also be served free from GitHub Pages: `.github/workflows/pages.yml` builds a static version of `web/` on every push to `main` and publishes it. **Pages only serves the website files.** The API, the video workers and the database still run on your server (sections 1-3), exactly as with Vercel.
+
+1. **Repository visibility.** GitHub Pages works on public repositories on every plan; on a private repository it needs GitHub Pro, Team or Enterprise. The site itself is public either way.
+2. **Settings → Pages → Build and deployment → Source: GitHub Actions.**
+3. **Settings → Secrets and variables → Actions → Variables** (these end up in the browser, so they are variables, not secrets):
+   - `NEXT_PUBLIC_SUPABASE_URL` = Supabase project URL
+   - `NEXT_PUBLIC_SUPABASE_ANON_KEY` = anon / publishable key
+   - `NEXT_PUBLIC_API_URL` = `https://api.studio.example.com`
+   Then **Actions → Deploy web app to GitHub Pages → Run workflow** (or push to `main`). Until these are set the site still publishes and shows "Opening soon" instead of sign-in.
+4. The site is at `https://<user>.github.io/<repository>/` (the build picks up that sub-path automatically). For your own domain: **Settings → Pages → Custom domain**, add the DNS record GitHub shows, and re-run the workflow.
+5. On the server `.env`: `WEB_ORIGINS=https://<user>.github.io` (the origin only, no path; or your custom domain). Restart the API.
+6. **Supabase → Authentication → URL Configuration:** Site URL `https://<user>.github.io/<repository>/`, and add `https://<user>.github.io/<repository>/**` to the redirect URLs, so confirmation and password-reset emails come back to the site.
+
+How it differs from the server build: pages are checked for sign-in in the browser, and pages with an id use the form `/clipper/_/?id=…` (older `/clipper/<id>` links, e.g. in notifications, are forwarded automatically by the 404 page). To try the static build locally:
+
+```bash
+cd web
+STATIC_EXPORT=1 PAGES_BASE_PATH=/ClipperAI-By-Maitreya npx next build
+node scripts/pages-preview.mjs /ClipperAI-By-Maitreya 3000     # behaves like GitHub Pages
+npx playwright test -c playwright.static.config.ts              # end-to-end check of the static build
+```
+
 ## 5. First run
 
 1. Open `https://studio.example.com/signup` and create the account for `OWNER_EMAIL`; click the confirmation link in the email. When you sign in, the account is the owner (the sidebar shows **Admin**).

@@ -8,6 +8,7 @@ import { api } from "@/lib/api";
 import { supabaseBrowser } from "@/lib/supabase/client";
 import { realtimeAuth } from "@/lib/supabase/realtime";
 import { cn, timeAgo } from "@/lib/utils";
+import { href } from "@/lib/routes";
 
 interface Note {
   id: string;
@@ -122,7 +123,7 @@ export function NotificationBell({ className, align = "right" }: { className?: s
                   </div>
                 );
                 return n.link ? (
-                  <Link key={n.id} href={n.link} onClick={() => setOpen(false)}>
+                  <Link key={n.id} href={href(n.link)} onClick={() => setOpen(false)}>
                     {inner}
                   </Link>
                 ) : (

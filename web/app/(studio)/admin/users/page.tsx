@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { api, downloadFrom } from "@/lib/api";
 import { cn, timeAgo } from "@/lib/utils";
+import { href } from "@/lib/routes";
 
 export interface AdminUser {
   user_id: string;
@@ -76,7 +77,7 @@ export default function AdminUsers() {
         {data?.users.map((u) => (
           <tr key={u.user_id} className="hover:bg-muted/30">
             <td className="px-3 py-2">
-              <Link href={`/admin/users/${u.user_id}`} className="block hover:text-primary">
+              <Link href={href(`/admin/users/${u.user_id}`)} className="block hover:text-primary">
                 <span className="block font-medium">{u.display_name ?? u.email.split("@")[0]}</span>
                 <span className="block text-xs text-muted-foreground">{u.email}</span>
               </Link>

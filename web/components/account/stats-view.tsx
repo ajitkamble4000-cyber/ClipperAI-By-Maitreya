@@ -9,6 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Skeleton } from "@/components/ui/skeleton";
 import { api } from "@/lib/api";
 import { cn } from "@/lib/utils";
+import { href } from "@/lib/routes";
 
 interface Day {
   day: string;
@@ -304,7 +305,7 @@ export function StatsView() {
                   <ol className="grid gap-1.5" data-testid="best-clips">
                     {stats.best_clips.map((c, i) => (
                       <li key={c.id}>
-                        <Link href={`/clipper/${c.project_id}`} className="flex items-center gap-3 rounded-lg border px-3 py-2 text-sm hover:border-primary/50">
+                        <Link href={href(`/clipper/${c.project_id}`)} className="flex items-center gap-3 rounded-lg border px-3 py-2 text-sm hover:border-primary/50">
                           <span className="w-4 text-xs text-muted-foreground">{i + 1}</span>
                           <span className="min-w-0 flex-1 truncate">{c.title || "Untitled clip"}</span>
                           <span className="text-xs text-muted-foreground">{Math.round(c.duration_s)} s</span>

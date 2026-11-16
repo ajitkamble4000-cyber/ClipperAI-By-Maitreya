@@ -1,6 +1,20 @@
-import { StoryEditor } from "@/components/story/story-editor";
+import { Suspense } from "react";
+import { PLACEHOLDER } from "@/lib/routes";
+import { StoryRoute } from "./client";
 
-export default async function StoryProjectPage({ params }: { params: Promise<{ id: string }> }) {
+/**
+ * On static hosting this page is built once (placeholder id) and reads the real id from ?id=. On the server build
+ * the placeholder render reads cookies (studio layout), so Next keeps the route dynamic.
+ */
+export function generateStaticParams() {
+  return [{ id: PLACEHOLDER }];
+}
+
+export default async function Page({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  return <StoryEditor projectId={id} />;
+  return (
+    <Suspense>
+      <StoryRoute id={id} />
+    </Suspense>
+  );
 }

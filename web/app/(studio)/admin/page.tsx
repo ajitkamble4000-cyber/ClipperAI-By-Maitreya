@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Bars, Stat } from "@/components/admin/ui";
 import { Skeleton } from "@/components/ui/skeleton";
 import { api } from "@/lib/api";
+import { href } from "@/lib/routes";
 
 interface Overview {
   users: { total: number; new_7d: number; active_1d: number; active_7d: number; suspended: number; team: number };
@@ -70,7 +71,7 @@ export default function AdminOverview() {
           <p className="mb-3 text-sm font-medium">Top spenders (30 days)</p>
           {o.top_users.length === 0 && <p className="text-sm text-muted-foreground">No spending yet.</p>}
           {o.top_users.map((u) => (
-            <Link key={u.user_id} href={`/admin/users/${u.user_id}`} className="flex justify-between gap-2 py-1 text-sm hover:text-primary">
+            <Link key={u.user_id} href={href(`/admin/users/${u.user_id}`)} className="flex justify-between gap-2 py-1 text-sm hover:text-primary">
               <span className="truncate">{u.name}</span>
               <span className="tabular-nums text-muted-foreground">{n(Number(u.tokens))}</span>
             </Link>

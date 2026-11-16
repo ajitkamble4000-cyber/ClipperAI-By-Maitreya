@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { hasFeature, useMe } from "@/components/shell/member-context";
 import { FEATURES } from "@/lib/features";
 import { cn } from "@/lib/utils";
+import { go } from "@/lib/routes";
 
 /** Small "Pro" / "Business" badge with a lock, shown next to options the user's plan doesn't include. */
 export function LockedBadge({ feature, className }: { feature: string; className?: string }) {
@@ -30,7 +31,7 @@ export function useGate() {
     toast.message(`${f?.label ?? "This"} is part of ${f?.plan ?? "Pro"}`, {
       id: `locked-${feature}`, // one toast per feature, even if a control fires twice
       description: "Upgrade to unlock it, or keep going with the free options.",
-      action: { label: "See plans", onClick: () => (window.location.href = "/pricing") },
+      action: { label: "See plans", onClick: () => go("/pricing") },
     });
   };
   /** Wraps a setter so locked options explain themselves instead of turning on. */

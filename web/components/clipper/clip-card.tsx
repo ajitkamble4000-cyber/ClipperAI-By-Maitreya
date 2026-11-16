@@ -15,6 +15,7 @@ import { api, downloadFrom, signedUrl } from "@/lib/api";
 import { clipFilename, type CaptionStyle } from "@/lib/presets";
 import { supabaseBrowser } from "@/lib/supabase/client";
 import { cn, formatDuration } from "@/lib/utils";
+import { siteUrl } from "@/lib/routes";
 
 export interface Clip {
   id: string;
@@ -143,7 +144,7 @@ export function ClipCard({ clip, locked, readOnly }: { clip: Clip; locked?: bool
     if (!gate.allowed("share_links")) return gate.explain("share_links");
     try {
       const r = await api<{ path: string }>(`/clips/${clip.id}/share`, { method: "POST", json: {} });
-      const link = `${window.location.origin}${r.path}`;
+      const link = siteUrl(r.path);
       await navigator.clipboard.writeText(link).catch(() => {});
       toast.success("Share link copied", { description: link });
     } catch (e) {

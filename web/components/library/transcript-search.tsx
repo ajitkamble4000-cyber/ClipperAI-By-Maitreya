@@ -5,6 +5,7 @@ import Link from "next/link";
 import { MessageSquareQuote } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { api } from "@/lib/api";
+import { href } from "@/lib/routes";
 
 interface Hit {
   project_id: string;
@@ -52,7 +53,7 @@ export function TranscriptSearch() {
         <div className="grid gap-1.5">
           {hits.length === 0 && <p className="text-sm text-muted-foreground">Nobody said that in your videos yet.</p>}
           {hits.map((h) => (
-            <Link key={h.project_id} href={`/${h.type === "clip" ? "clipper" : "story"}/${h.project_id}`} className="rounded-lg border p-2.5 text-sm hover:border-primary/50" data-testid="transcript-hit">
+            <Link key={h.project_id} href={href(`/${h.type === "clip" ? "clipper" : "story"}/${h.project_id}`)} className="rounded-lg border p-2.5 text-sm hover:border-primary/50" data-testid="transcript-hit">
               <span className="flex items-center justify-between gap-2">
                 <span className="truncate font-medium">{h.title}</span>
                 {h.at !== null && <span className="shrink-0 text-xs tabular-nums text-primary">at {fmt(h.at)}</span>}

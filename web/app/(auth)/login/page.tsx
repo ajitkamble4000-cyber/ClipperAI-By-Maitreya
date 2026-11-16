@@ -9,6 +9,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { supabaseBrowser } from "@/lib/supabase/client";
+import { siteUrl } from "@/lib/routes";
+import { env } from "@/lib/env";
 
 function LoginForm() {
   const router = useRouter();
@@ -31,7 +33,7 @@ function LoginForm() {
   const forgot = async () => {
     if (!email) return toast.error("Enter your email first");
     const { error } = await supabaseBrowser().auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/auth/accept?mode=reset`,
+      redirectTo: siteUrl("/auth/accept?mode=reset"),
     });
     if (error) toast.error(error.message);
     else toast.success("If that email has an account, a reset link is on its way.");
@@ -57,7 +59,7 @@ function LoginForm() {
           <Field label="Password" htmlFor="password">
             <Input id="password" type="password" autoComplete="current-password" required value={password} onChange={(e) => setPassword(e.target.value)} />
           </Field>
-          <Button type="submit" disabled={busy}>
+          <Button type="submit" disabled={busy || !env.configured}>
             {busy ? "Signing in…" : "Sign in"}
           </Button>
           <button type="button" onClick={forgot} className="text-sm text-muted-foreground hover:text-foreground">

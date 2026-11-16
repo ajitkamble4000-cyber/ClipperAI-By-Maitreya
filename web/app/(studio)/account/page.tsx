@@ -15,6 +15,7 @@ import { Input } from "@/components/ui/input";
 import { api, downloadFrom } from "@/lib/api";
 import { supabaseBrowser } from "@/lib/supabase/client";
 import { timeAgo } from "@/lib/utils";
+import { siteUrl } from "@/lib/routes";
 
 interface Req {
   id: string;
@@ -184,7 +185,7 @@ export default function AccountPage() {
                       <button
                         type="button"
                         className="text-xs text-primary hover:underline"
-                        onClick={() => navigator.clipboard.writeText(`${window.location.origin}/s/${l.token}`).then(() => toast.success("Link copied"))}
+                        onClick={() => navigator.clipboard.writeText(siteUrl(`/s/${l.token}`)).then(() => toast.success("Link copied"))}
                       >
                         Copy
                       </button>

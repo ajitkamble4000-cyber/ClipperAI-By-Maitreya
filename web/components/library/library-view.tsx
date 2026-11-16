@@ -15,6 +15,7 @@ import { realtimeAuth } from "@/lib/supabase/realtime";
 import { timeAgo } from "@/lib/utils";
 import { ProjectThumb } from "./project-thumb";
 import { TranscriptSearch } from "./transcript-search";
+import { href } from "@/lib/routes";
 
 interface Row {
   id: string;
@@ -159,7 +160,7 @@ export function LibraryView({ fixedType }: { fixedType?: "clip" | "story" } = {}
       ) : (
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5" data-testid="library-grid">
           {filtered.map((r) => (
-            <Link key={r.id} href={r.type === "clip" ? `/clipper/${r.id}` : `/story/${r.id}`} className="group">
+            <Link key={r.id} href={href(r.type === "clip" ? `/clipper/${r.id}` : `/story/${r.id}`)} className="group">
               <ProjectThumb thumbKey={r.thumbnail_key} type={r.type} />
               <div className="mt-2 flex items-start justify-between gap-2">
                 <p className="line-clamp-2 text-sm font-medium group-hover:text-primary">{r.title}</p>

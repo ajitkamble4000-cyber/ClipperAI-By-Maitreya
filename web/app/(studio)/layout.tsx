@@ -1,10 +1,13 @@
 import { redirect } from "next/navigation";
 import { AppShell } from "@/components/shell/app-shell";
+import { ClientStudio } from "@/components/shell/client-studio";
 import type { Me } from "@/components/shell/member-context";
 import { env } from "@/lib/env";
+import { STATIC } from "@/lib/routes";
 import { supabaseServer } from "@/lib/supabase/server";
 
 export default async function StudioLayout({ children }: { children: React.ReactNode }) {
+  if (STATIC) return <ClientStudio>{children}</ClientStudio>; // static hosting: checked in the browser
   const sb = await supabaseServer();
   const {
     data: { user },

@@ -27,7 +27,7 @@ const PLATFORMS = ["YouTube", "TikTok", "Instagram", "X", "Facebook", "Vimeo", "
 const FEATURES = [
   { icon: Wand2, title: "Paste any link", body: "YouTube, TikTok, Instagram, X and more. Auto mode captions short videos and clips long ones." },
   { icon: Scissors, title: "AI clip finder", body: "Finds the moments worth posting, writes titles, hooks and hashtags, and scores each clip." },
-  { icon: Captions, title: "Captions that pop", body: "Word-by-word animated captions in 6 styles, with emoji and keyword highlights." },
+  { icon: Captions, title: "Captions that pop", body: "Word-by-word animated captions in 8 styles, with emoji and keyword highlights." },
   { icon: Crop, title: "Smart framing", body: "Follows faces or the action. Export 9:16, 1:1, 4:5 or 16:9." },
   { icon: Gauge, title: "Tighter pacing", body: "Removes silences and filler words automatically, captions re-timed to match." },
   { icon: Languages, title: "Captions in 24 languages", body: "Translate the captions while keeping perfect timing. SRT, VTT and TXT files included." },

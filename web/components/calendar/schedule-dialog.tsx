@@ -9,6 +9,7 @@ import { Field } from "@/components/ui/field";
 import { Input, Textarea } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { api } from "@/lib/api";
+import { go } from "@/lib/routes";
 
 export const PLATFORMS = [
   { value: "youtube", label: "YouTube Shorts", color: "bg-red-500" },
@@ -41,7 +42,7 @@ export function ScheduleButton({ clipId, projectId, defaultCaption, size = "sm" 
         method: "POST",
         json: { clip_id: clipId, project_id: clipId ? undefined : projectId, platform, scheduled_at: new Date(when).toISOString(), caption, remind_minutes: Number(remind) },
       });
-      toast.success("Added to your calendar", { action: { label: "Open", onClick: () => (window.location.href = "/calendar") } });
+      toast.success("Added to your calendar", { action: { label: "Open", onClick: () => go("/calendar") } });
       setOpen(false);
     } catch (e) {
       toast.error((e as Error).message);

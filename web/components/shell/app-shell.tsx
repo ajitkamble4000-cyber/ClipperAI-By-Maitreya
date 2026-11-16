@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { BarChart3, CalendarDays, Home, LayoutGrid, LogOut, Scissors, Settings, Shield, Sparkles, UserRound } from "lucide-react";
 import { supabaseBrowser } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
@@ -10,6 +10,7 @@ import { TokenChip } from "./token-chip";
 import { isAdmin, MemberProvider, type Me } from "./member-context";
 import { NotificationBell } from "./notification-bell";
 import { SiteBanner } from "./site-banner";
+import { go } from "@/lib/routes";
 import { BrandMark } from "./brand-mark";
 
 type NavItem = { href: string; label: string; icon: typeof Home; admin?: boolean; owner?: boolean };
@@ -29,13 +30,11 @@ const MOBILE = ["/", "/clipper", "/story", "/library", "/account"];
 
 export function AppShell({ me, children }: { me: Me; children: React.ReactNode }) {
   const path = usePathname();
-  const router = useRouter();
   const active = (href: string) => (href === "/" ? path === "/" : path.startsWith(href));
   const nav = NAV.filter((n) => !n.admin || isAdmin(me));
   const signOut = async () => {
     await supabaseBrowser().auth.signOut();
-    router.replace("/login");
-    router.refresh();
+    go("/login"); // full reload: clears everything held in memory for this account
   };
   return (
     <MemberProvider me={me}>
@@ -44,7 +43,7 @@ export function AppShell({ me, children }: { me: Me; children: React.ReactNode }
         <aside className="sticky top-0 flex h-dvh flex-col p-4">
           <div className="mb-8 flex items-center justify-between gap-2 px-2">
             <Link href="/" className="min-w-0">
-              <BrandMark />
+              <BrandMark stacked />
             </Link>
             <NotificationBell align="left" />
           </div>

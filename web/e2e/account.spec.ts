@@ -61,7 +61,7 @@ test("notifications bell, upgrade request, token history", async ({ page }) => {
 
   const dl = page.waitForEvent("download");
   await page.getByTestId("export-data").click();
-  expect((await dl).suggestedFilename()).toBe("shorts-studio-my-data.json");
+  expect((await dl).suggestedFilename()).toBe("clipperai-my-data.json");
 
   await page.goto("/account/tokens");
   await expect(page.getByTestId("tokens-total")).toHaveText("1,000");

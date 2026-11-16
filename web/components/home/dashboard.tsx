@@ -13,6 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { api } from "@/lib/api";
 import { cn, timeAgo } from "@/lib/utils";
+import { href } from "@/lib/routes";
 
 interface Recent {
   id: string;
@@ -195,7 +196,7 @@ export function Dashboard() {
         ) : (
           <div className="grid grid-cols-2 gap-4 sm:grid-cols-4 lg:grid-cols-6" data-testid="recent">
             {data.recent.map((r) => (
-              <Link key={r.id} href={`/${r.type === "clip" ? "clipper" : "story"}/${r.id}`} className="group">
+              <Link key={r.id} href={href(`/${r.type === "clip" ? "clipper" : "story"}/${r.id}`)} className="group">
                 <ProjectThumb thumbKey={r.thumbnail_key} type={r.type} />
                 <p className="mt-2 truncate text-sm font-medium">{r.title}</p>
                 <p className="flex items-center gap-1 text-xs text-muted-foreground">

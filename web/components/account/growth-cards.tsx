@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { api } from "@/lib/api";
+import { siteUrl } from "@/lib/routes";
 
 export function RedeemCard({ onDone }: { onDone?: () => void }) {
   const [code, setCode] = useState("");
@@ -58,7 +59,7 @@ export function ReferralCard() {
     api<Referrals>("/referrals").then(setR).catch(() => {});
   }, []);
   if (!r) return null;
-  const link = typeof window !== "undefined" ? `${window.location.origin}${r.path}` : r.path;
+  const link = typeof window !== "undefined" ? siteUrl(r.path) : r.path;
   return (
     <Card data-testid="referral-card">
       <CardHeader>

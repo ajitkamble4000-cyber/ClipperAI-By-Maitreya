@@ -11,6 +11,7 @@ import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/compone
 import { Input } from "@/components/ui/input";
 import { api } from "@/lib/api";
 import { cn } from "@/lib/utils";
+import { href } from "@/lib/routes";
 
 interface Item {
   id: string;
@@ -160,7 +161,7 @@ export default function CalendarPage() {
                   Copy text
                 </Button>
                 <Button size="sm" variant="outline" asChild>
-                  <Link href={`/${open.project_type === "clip" ? "clipper" : "story"}/${open.project_id}`}>
+                  <Link href={href(`/${open.project_type === "clip" ? "clipper" : "story"}/${open.project_id}`)}>
                     <ExternalLink /> Open video
                   </Link>
                 </Button>

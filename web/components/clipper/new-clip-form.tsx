@@ -23,6 +23,7 @@ import { api } from "@/lib/api";
 import type { CaptionStyle } from "@/lib/presets";
 import type { UploadInfo } from "@/lib/upload";
 import { cn } from "@/lib/utils";
+import { href } from "@/lib/routes";
 
 type Mode = "auto" | "clips" | "captions";
 type Aspect = "9:16" | "1:1" | "4:5" | "16:9";
@@ -280,7 +281,7 @@ export function NewClipForm({ initialUrl = "", initialMode = "auto" }: { initial
           ...options(),
         },
       });
-      router.push(`/clipper/${r.project_id}`);
+      router.push(href(`/clipper/${r.project_id}`));
     } catch (e) {
       toast.error((e as Error).message);
       setBusy(false);

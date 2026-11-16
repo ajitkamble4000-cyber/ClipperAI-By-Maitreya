@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { api } from "@/lib/api";
 import { cn, timeAgo } from "@/lib/utils";
+import { href } from "@/lib/routes";
 
 interface Job {
   id: string;
@@ -93,7 +94,7 @@ export default function AdminJobs() {
             <td className="px-3 py-2">{j.user_name ?? "–"}</td>
             <td className="max-w-48 px-3 py-2">
               {j.project_id ? (
-                <Link href={`/${j.project_type === "story" ? "story" : "clipper"}/${j.project_id}`} className="line-clamp-1 hover:text-primary">
+                <Link href={href(`/${j.project_type === "story" ? "story" : "clipper"}/${j.project_id}`)} className="line-clamp-1 hover:text-primary">
                   {j.project_title ?? "Project"}
                 </Link>
               ) : (

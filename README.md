@@ -106,4 +106,4 @@ What the media tests verify (not just "it ran"): 1080x1920 at 30 fps, H.264/AAC,
 | Privacy | Download all your data as JSON; delete your account and files |
 | Cost control | Every AI call logged with estimated cost per provider/model; monthly budget with 80% warning and 100% pause |
 
-See [DEPLOY.md](DEPLOY.md) for production and [docs/ROADMAP.md](docs/ROADMAP.md) for planned features.
+The website can run on Vercel or as a static site on **GitHub Pages** (workflow included). See [DEPLOY.md](DEPLOY.md) for production and [docs/ROADMAP.md](docs/ROADMAP.md) for planned features.
