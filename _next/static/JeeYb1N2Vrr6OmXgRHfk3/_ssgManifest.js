@@ -1,0 +1,1 @@
+self.__SSG_MANIFEST=new Set(["\u002Fadmin\u002Fusers\u002F[id]","\u002Fclipper\u002F[id]","\u002Fs\u002F[token]","\u002Fstory\u002F[id]"]);self.__SSG_MANIFEST_CB&&self.__SSG_MANIFEST_CB()

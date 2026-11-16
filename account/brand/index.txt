@@ -1,0 +1,24 @@
+1:"$Sreact.fragment"
+2:I[9766,[],""]
+3:I[98924,[],""]
+4:I[33293,["4909","static/chunks/4909-64796d901b595af7.js","2619","static/chunks/2619-04bc32f026a0d946.js","4345","static/chunks/app/not-found-85fc04b0d36c2570.js"],"default"]
+5:I[18720,["8720","static/chunks/8720-0dd80b3ba1e14a54.js","7177","static/chunks/app/layout-b147ec9e246849c8.js"],"Toaster"]
+7:I[81959,[],"ClientPageRoot"]
+8:I[94612,["5730","static/chunks/44530001-608230481555e316.js","4909","static/chunks/4909-64796d901b595af7.js","4048","static/chunks/4048-1eb69522963335bb.js","2619","static/chunks/2619-04bc32f026a0d946.js","8720","static/chunks/8720-0dd80b3ba1e14a54.js","4605","static/chunks/4605-c191fd5f73010335.js","9223","static/chunks/9223-72d105b226861b90.js","1640","static/chunks/1640-9dfa47f9b94a6a10.js","4236","static/chunks/4236-065610a81e996bce.js","9399","static/chunks/9399-1e3efb8c8e88dc20.js","6364","static/chunks/app/(studio)/account/brand/page-31e4da3717b484d0.js"],"default"]
+b:I[24431,[],"OutletBoundary"]
+d:I[15278,[],"AsyncMetadataOutlet"]
+f:I[24431,[],"ViewportBoundary"]
+11:I[24431,[],"MetadataBoundary"]
+12:"$Sreact.suspense"
+14:I[57150,[],""]
+:HL["/ClipperAI-By-Maitreya/_next/static/css/e78546c91a128326.css","style"]
+0:{"P":null,"b":"JeeYb1N2Vrr6OmXgRHfk3","p":"/ClipperAI-By-Maitreya","c":["","account","brand",""],"i":false,"f":[[["",{"children":["(studio)",{"children":["account",{"children":["brand",{"children":["__PAGE__",{}]}]}]}]},"$undefined","$undefined",true],["",["$","$1","c",{"children":[[["$","link","0",{"rel":"stylesheet","href":"/ClipperAI-By-Maitreya/_next/static/css/e78546c91a128326.css","precedence":"next","crossOrigin":"$undefined","nonce":"$undefined"}]],["$","html",null,{"lang":"en","className":"dark","children":["$","body",null,{"children":[["$","$L2",null,{"parallelRouterKey":"children","error":"$undefined","errorStyles":"$undefined","errorScripts":"$undefined","template":["$","$L3",null,{}],"templateStyles":"$undefined","templateScripts":"$undefined","notFound":[["$","$L4",null,{}],[]],"forbidden":"$undefined","unauthorized":"$undefined"}],["$","$L5",null,{"theme":"dark","position":"top-center","richColors":true}]]}]}]]}],{"children":["(studio)",["$","$1","c",{"children":[null,"$L6"]}],{"children":["account",["$","$1","c",{"children":[null,["$","$L2",null,{"parallelRouterKey":"children","error":"$undefined","errorStyles":"$undefined","errorScripts":"$undefined","template":["$","$L3",null,{}],"templateStyles":"$undefined","templateScripts":"$undefined","notFound":"$undefined","forbidden":"$undefined","unauthorized":"$undefined"}]]}],{"children":["brand",["$","$1","c",{"children":[null,["$","$L2",null,{"parallelRouterKey":"children","error":"$undefined","errorStyles":"$undefined","errorScripts":"$undefined","template":["$","$L3",null,{}],"templateStyles":"$undefined","templateScripts":"$undefined","notFound":"$undefined","forbidden":"$undefined","unauthorized":"$undefined"}]]}],{"children":["__PAGE__",["$","$1","c",{"children":[["$","$L7",null,{"Component":"$8","searchParams":{},"params":{},"promises":["$@9","$@a"]}],null,["$","$Lb",null,{"children":["$Lc",["$","$Ld",null,{"promise":"$@e"}]]}]]}],{},null,false]},null,false]},null,false]},null,false]},null,false],["$","$1","h",{"children":[null,[["$","$Lf",null,{"children":"$L10"}],null],["$","$L11",null,{"children":["$","div",null,{"hidden":true,"children":["$","$12",null,{"fallback":null,"children":"$L13"}]}]}]]}],false]],"m":"$undefined","G":["$14",[]],"s":false,"S":true}
+15:I[50165,["5730","static/chunks/44530001-608230481555e316.js","4909","static/chunks/4909-64796d901b595af7.js","4048","static/chunks/4048-1eb69522963335bb.js","2619","static/chunks/2619-04bc32f026a0d946.js","3158","static/chunks/3158-349267100410296e.js","8757","static/chunks/app/(studio)/layout-f60736bf49afd8f5.js"],"ClientStudio"]
+6:["$","$L15",null,{"children":["$","$L2",null,{"parallelRouterKey":"children","error":"$undefined","errorStyles":"$undefined","errorScripts":"$undefined","template":["$","$L3",null,{}],"templateStyles":"$undefined","templateScripts":"$undefined","notFound":"$undefined","forbidden":"$undefined","unauthorized":"$undefined"}]}]
+9:{}
+a:"$0:f:0:1:2:children:2:children:2:children:2:children:1:props:children:0:props:params"
+10:[["$","meta","0",{"charSet":"utf-8"}],["$","meta","1",{"name":"viewport","content":"width=device-width, initial-scale=1"}],["$","meta","2",{"name":"theme-color","content":"#14121c"}]]
+c:null
+16:I[80622,[],"IconMark"]
+e:{"metadata":[["$","title","0",{"children":"ClipperAI by Maitreya"}],["$","meta","1",{"name":"description","content":"Paste any video link and get captioned Shorts, or turn an idea into an animated AI story."}],["$","meta","2",{"name":"application-name","content":"ClipperAI by Maitreya"}],["$","link","3",{"rel":"icon","href":"/ClipperAI-By-Maitreya/favicon.ico","type":"image/x-icon","sizes":"16x16"}],["$","$L16","4",{}]],"error":null,"digest":"$undefined"}
+13:"$e:metadata"

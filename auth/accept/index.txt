@@ -1,0 +1,22 @@
+1:"$Sreact.fragment"
+2:I[9766,[],""]
+3:I[98924,[],""]
+4:I[33293,["4909","static/chunks/4909-64796d901b595af7.js","2619","static/chunks/2619-04bc32f026a0d946.js","4345","static/chunks/app/not-found-85fc04b0d36c2570.js"],"default"]
+5:I[18720,["8720","static/chunks/8720-0dd80b3ba1e14a54.js","7177","static/chunks/app/layout-b147ec9e246849c8.js"],"Toaster"]
+6:I[81959,[],"ClientPageRoot"]
+7:I[94562,["5730","static/chunks/44530001-608230481555e316.js","4909","static/chunks/4909-64796d901b595af7.js","4048","static/chunks/4048-1eb69522963335bb.js","8720","static/chunks/8720-0dd80b3ba1e14a54.js","9422","static/chunks/app/auth/accept/page-b7c656a48ba0f93c.js"],"default"]
+a:I[24431,[],"OutletBoundary"]
+c:I[15278,[],"AsyncMetadataOutlet"]
+e:I[24431,[],"ViewportBoundary"]
+10:I[24431,[],"MetadataBoundary"]
+11:"$Sreact.suspense"
+13:I[57150,[],""]
+:HL["/ClipperAI-By-Maitreya/_next/static/css/e78546c91a128326.css","style"]
+0:{"P":null,"b":"JeeYb1N2Vrr6OmXgRHfk3","p":"/ClipperAI-By-Maitreya","c":["","auth","accept",""],"i":false,"f":[[["",{"children":["auth",{"children":["accept",{"children":["__PAGE__",{}]}]}]},"$undefined","$undefined",true],["",["$","$1","c",{"children":[[["$","link","0",{"rel":"stylesheet","href":"/ClipperAI-By-Maitreya/_next/static/css/e78546c91a128326.css","precedence":"next","crossOrigin":"$undefined","nonce":"$undefined"}]],["$","html",null,{"lang":"en","className":"dark","children":["$","body",null,{"children":[["$","$L2",null,{"parallelRouterKey":"children","error":"$undefined","errorStyles":"$undefined","errorScripts":"$undefined","template":["$","$L3",null,{}],"templateStyles":"$undefined","templateScripts":"$undefined","notFound":[["$","$L4",null,{}],[]],"forbidden":"$undefined","unauthorized":"$undefined"}],["$","$L5",null,{"theme":"dark","position":"top-center","richColors":true}]]}]}]]}],{"children":["auth",["$","$1","c",{"children":[null,["$","$L2",null,{"parallelRouterKey":"children","error":"$undefined","errorStyles":"$undefined","errorScripts":"$undefined","template":["$","$L3",null,{}],"templateStyles":"$undefined","templateScripts":"$undefined","notFound":"$undefined","forbidden":"$undefined","unauthorized":"$undefined"}]]}],{"children":["accept",["$","$1","c",{"children":[null,["$","$L2",null,{"parallelRouterKey":"children","error":"$undefined","errorStyles":"$undefined","errorScripts":"$undefined","template":["$","$L3",null,{}],"templateStyles":"$undefined","templateScripts":"$undefined","notFound":"$undefined","forbidden":"$undefined","unauthorized":"$undefined"}]]}],{"children":["__PAGE__",["$","$1","c",{"children":[["$","$L6",null,{"Component":"$7","searchParams":{},"params":{},"promises":["$@8","$@9"]}],null,["$","$La",null,{"children":["$Lb",["$","$Lc",null,{"promise":"$@d"}]]}]]}],{},null,false]},null,false]},null,false]},null,false],["$","$1","h",{"children":[null,[["$","$Le",null,{"children":"$Lf"}],null],["$","$L10",null,{"children":["$","div",null,{"hidden":true,"children":["$","$11",null,{"fallback":null,"children":"$L12"}]}]}]]}],false]],"m":"$undefined","G":["$13",[]],"s":false,"S":true}
+8:{}
+9:"$0:f:0:1:2:children:2:children:2:children:1:props:children:0:props:params"
+f:[["$","meta","0",{"charSet":"utf-8"}],["$","meta","1",{"name":"viewport","content":"width=device-width, initial-scale=1"}],["$","meta","2",{"name":"theme-color","content":"#14121c"}]]
+b:null
+14:I[80622,[],"IconMark"]
+d:{"metadata":[["$","title","0",{"children":"ClipperAI by Maitreya"}],["$","meta","1",{"name":"description","content":"Paste any video link and get captioned Shorts, or turn an idea into an animated AI story."}],["$","meta","2",{"name":"application-name","content":"ClipperAI by Maitreya"}],["$","link","3",{"rel":"icon","href":"/ClipperAI-By-Maitreya/favicon.ico","type":"image/x-icon","sizes":"16x16"}],["$","$L14","4",{}]],"error":null,"digest":"$undefined"}
+12:"$d:metadata"
