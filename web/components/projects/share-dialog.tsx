@@ -169,7 +169,8 @@ export function ShareButton({
           : `Share${access.members.length ? ` (${access.members.length})` : ""}`}
       </Button>
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent>
+        {/* one column pinned to the dialog width so long emails truncate instead of widening it */}
+        <DialogContent className="grid-cols-[minmax(0,1fr)]">
           <DialogTitle>
             {manager ? "Share this project" : "Shared with you"}
           </DialogTitle>
@@ -182,7 +183,7 @@ export function ShareButton({
           {manager && (
             <form
               onSubmit={invite}
-              className="grid gap-2 sm:grid-cols-[1fr_130px_auto]"
+              className="grid min-w-0 gap-2 sm:grid-cols-[minmax(0,1fr)_130px_auto]"
             >
               <Input
                 type="email"
@@ -208,14 +209,12 @@ export function ShareButton({
             </form>
           )}
 
-          <ul className="grid gap-1.5" data-testid="share-list">
+          <ul className="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-1.5" data-testid="share-list">
             {access.owner && (
-              <li className="flex items-center justify-between gap-2 rounded-md border px-3 py-2 text-sm">
-                <span className="min-w-0 truncate">
-                  {name(access.owner)}{" "}
-                  <span className="text-muted-foreground">
-                    · {access.owner.email}
-                  </span>
+              <li className="flex min-w-0 items-center justify-between gap-2 rounded-md border px-3 py-2 text-sm">
+                <span className="min-w-0">
+                  <span className="block truncate">{name(access.owner)}</span>
+                  <span className="block truncate text-xs text-muted-foreground">{access.owner.email}</span>
                 </span>
                 <Badge variant="secondary">Owner</Badge>
               </li>
@@ -223,15 +222,15 @@ export function ShareButton({
             {access.members.map((p) => (
               <li
                 key={p.user_id}
-                className="flex items-center justify-between gap-2 rounded-md border px-3 py-2 text-sm"
+                className="flex min-w-0 items-center justify-between gap-2 rounded-md border px-3 py-2 text-sm"
                 data-testid="share-person"
               >
-                <span className="min-w-0 truncate">
-                  {name(p)}{" "}
-                  <span className="text-muted-foreground">· {p.email}</span>
-                  {p.user_id === me.user_id && (
-                    <span className="text-muted-foreground"> (you)</span>
-                  )}
+                <span className="min-w-0">
+                  <span className="block truncate">
+                    {name(p)}
+                    {p.user_id === me.user_id && <span className="text-muted-foreground"> (you)</span>}
+                  </span>
+                  <span className="block truncate text-xs text-muted-foreground">{p.email}</span>
                 </span>
                 <span className="flex shrink-0 items-center gap-1">
                   {manager ? (
@@ -239,6 +238,7 @@ export function ShareButton({
                       value={p.role ?? "viewer"}
                       onValueChange={(v) => change(p, v)}
                       options={ROLE_OPTIONS}
+                      className="h-8 w-28 text-xs"
                       aria-label={`Access for ${p.email}`}
                     />
                   ) : (

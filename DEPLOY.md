@@ -58,6 +58,7 @@ Fill `.env`:
 - AI keys (optional here): `GEMINI_API_KEY`, `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, `OPENROUTER_API_KEY`, `ELEVENLABS_API_KEY`, `REPLICATE_API_TOKEN`, `STABILITY_API_KEY`. Or leave them empty and add keys in the app.
 - `WEB_ORIGINS=https://studio.example.com`
 - `API_DOMAIN=api.studio.example.com`
+- `PUBLIC_API_URL=https://api.studio.example.com`: the API's public address; calendar subscription links (the `.ics` feed people add to Google/Apple calendar) are built from it
 - Worker sizing: `WORKER_MEDIA_CONCURRENCY` ≈ vCPUs / 3 (each render uses several cores), `WORKER_AI_CONCURRENCY=8`
 
 DNS: an **A record** `api.studio.example.com → <vps-ip>` (if it's on Cloudflare, keep the proxy **off/grey** at first so Caddy can get its certificate).
@@ -98,6 +99,8 @@ Updates later: `infra/scripts/deploy.sh` (pull, rebuild, restart). Running jobs 
 
 - **Admin → Promo codes** (owner): codes that add bonus tokens or unlock Pro/Business for N days (trials switch back automatically), with optional limits and expiry.
 - **Admin → Site & referrals** (owner): close sign-ups (only invites can join), pause new jobs for maintenance, show a banner on every page, set the referral reward (both people get it when the invited friend finishes their first video) and a monthly cap.
+- **Calendar**: reminders are sent by the scheduler (the `beat` service in `infra/compose.prod.yml`) a few minutes before each planned post. Calendar feed links are private per user and can be reset on the Calendar page.
+- **Refunds**: **Admin → Jobs** has *Refund* on finished jobs (for a poor result), on top of *Cancel* for running ones; the user is notified. **Admin → Users → Export CSV** downloads the filtered user list (exports are audited).
 - **Developer API** (Business): users create API keys and webhooks on **Account → Developer API**. Webhooks only call public `https://` URLs; `WEBHOOK_ALLOW_PRIVATE=1` exists for local development and tests only, never set it in production.
 
 ### Plans, tokens and upgrades
@@ -120,4 +123,4 @@ YouTube (and Instagram, Facebook, LinkedIn, Threads) frequently answer datacente
 - Scale workers: raise `WORKER_*_CONCURRENCY`, or add a second VPS running only the worker services pointed at the same Redis/DB/R2 (expose Redis privately, e.g. over a WireGuard/Tailscale network, never publicly).
 - Backups: Supabase handles Postgres backups (Pro); R2 holds media; keep `.env` (especially `APP_ENCRYPTION_KEY`) in a password manager.
 - Storage: uploaded/downloaded sources are deleted after the retention period (Settings). Finished clips and stories are kept until a project is deleted.
-- Security checklist: email confirmation **on** (owner is recognised by verified email); RLS on every table and every project private to its creator (Staff/Creator teams share a team library); only the API holds secrets and AI keys (encrypted at rest); CORS limited to `WEB_ORIGINS`; job creation rate-limited per user and capped per plan; uploads validated by type and size; links sanitized (no private/loopback addresses); share links are unguessable, expire, and can be turned off; admin actions are audited.
+- Security checklist: email confirmation **on** (owner is recognised by verified email); RLS on every table and every project private to its creator unless they share it (viewers can't change anything, checked by the API and by the database rules; Staff/Creator teams share a team library); only the API holds secrets and AI keys (encrypted at rest); CORS limited to `WEB_ORIGINS`; job creation rate-limited per user and capped per plan; uploads validated by type and size; links sanitized (no private/loopback addresses); share links are unguessable, expire, and can be turned off; admin actions are audited.

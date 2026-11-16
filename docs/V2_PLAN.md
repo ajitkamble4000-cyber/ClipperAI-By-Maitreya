@@ -77,4 +77,4 @@ Panels: 51 notifications · 52 landing page · 53 pricing page · 54 onboarding 
 - [x] 23. Content calendar: schedule clips/stories per platform, reminders, mark as posted, calendar feed (.ics)
 - [x] 24. Project sharing: share a project with another account as viewer or editor; "Shared with me"
 - [x] 25. Insights: personal stats page; admin extras (refund a job, export users as CSV)
-- [ ] 26. Full regression + docs
+- [x] 26. Full regression + docs

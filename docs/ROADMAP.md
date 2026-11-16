@@ -1,9 +1,10 @@
 # Roadmap (planned, not built)
 
-The code and data model are structured for these; they aren't built yet. (Templates, batch mode and title/thumbnail variants from the original roadmap are now built.)
+The code and data model are structured for these; they aren't built yet. (Templates, batch mode, title/thumbnail variants, a content calendar, project sharing and personal stats are now built.)
 
 ## Publishing to YouTube and Instagram Reels
 
+- The **content calendar** already exists (planned posts per platform, reminders, mark as posted, .ics feed). Publishing would post planned calendar items automatically and fill in the post link.
 - Data model: `channels` (OAuth tokens stored encrypted, server-only), `publish_queue` (scheduled uploads), migration `20261115000006_later_features.sql`.
 - Code: `worker/worker/publish/base.py` defines the `Publisher` interface (quota check + publish).
 - **Re-check the platforms' current rules before building.** Known constraints to design around:

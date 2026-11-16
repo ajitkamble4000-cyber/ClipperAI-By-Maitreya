@@ -87,18 +87,21 @@ What the media tests verify (not just "it ran"): 1080x1920 at 30 fps, H.264/AAC,
 | Area | What you get |
 |---|---|
 | Any link | Platform detection for 20 sites (with login-wall help), title/length preview, auto / clips / captions modes, batch links (Business) |
-| Clipper | 1–20 clips, 15–180 s; content types (podcast, interview, sports, gaming, education, vlog); AI moments with structured JSON + validation; visual analysis; loudness peaks; basic mode without AI; face/action/center/blur reframe; clip cards with edit, nudge, restyle, re-format, share, ZIP |
+| Clipper | 1–20 clips, 15–180 s; content types (podcast, interview, sports, gaming, education, vlog); AI moments with structured JSON + validation; visual analysis; loudness peaks; basic mode without AI; face/action/center/blur reframe, split screen for two speakers; clip cards with edit, nudge, restyle, re-format, share, ZIP |
 | Formats | 9:16, 1:1, 4:5, 16:9 (Pro) with format-aware caption layout and safe areas |
-| Captions | Bold Pop, Karaoke, Minimal, Boxed, Horror; fonts incl. Noto Sans Devanagari; size/colours/outline/caps/words-per-line/position/emoji; keyword emphasis; translated captions in 24 languages; SRT / VTT / TXT files |
+| Captions | Bold Pop, Karaoke, Minimal, Boxed, Horror, Neon, Typewriter, Bounce; fonts incl. Noto Sans Devanagari; size/colours/outline/caps/words-per-line/position/emoji; keyword emphasis; translated captions in 24 languages; SRT / VTT / TXT files |
 | Polish | Silence and filler-word removal with re-timed captions, progress bar, hook text, brand kit (logo, @handle, colour), free-plan watermark |
 | Story Studio | 12 genres, visual styles (admins add more), 30/45/60/90 s, English/Hindi/Hinglish, voices + preview, upload your own voiceover; storyboard editor with autosave and AI rewrites; consistent characters; per-scene image redo/edit/upload; Ken Burns motion; AI video per scene; music with auto-ducking; SFX; batch topics (Business) |
 | Creator extras | Built-in and saved templates, designed thumbnails (YouTube 16:9 + vertical cover, frame or AI background), title & hashtag ideas, public share links |
 | Accounts | Sign-up, Home dashboard with quick paste and getting-started checklist, notifications, token history, plan & pricing pages, upgrade requests, account deletion |
 | Business | Free / Pro / Business / Team plans with features and limits, daily tokens + bonus tokens, editable token prices, refunds on failure, Staff & Creator teams free and unlimited |
-| Admin | Overview analytics, users (plan, team, tokens, allowance, suspend, admin role), upgrade requests, jobs monitor with cancel + refund, announcements, audit log, system health, plan & price editor, token gifts |
+| Admin | Overview analytics, users (plan, team, tokens, allowance, suspend, admin role), upgrade requests, jobs monitor with cancel and refund (running or finished jobs), users CSV export, announcements, audit log, system health, plan & price editor, token gifts |
 | Editing | Fix caption words and re-render, background music on clips (ducked under speech), compilations of several clips, MP3 and GIF exports |
 | Repurpose | One click turns a video into a summary, YouTube chapters, quotes, blog post, X thread, LinkedIn post and newsletter; search what was said across your library |
 | Growth | Promo codes (bonus tokens or plan trials that end automatically), referral links that reward both people, owner site controls (close sign-ups, pause jobs, banner) |
+| Calendar | Plan posts per platform (YouTube, TikTok, Instagram…) from any clip or story, reminders before posting time, mark as posted with the link, subscribe from Google/Apple/Outlook calendar (.ics feed) |
+| Sharing | Share a project with another account as viewer (watch, download) or editor (change and re-render on their own tokens); read-only view; "Shared with me" in the Library; enforced by both the API and database rules (Pro) |
+| Insights | Personal stats: clips made, minutes processed, stories, tokens by feature after refunds, day-by-day chart, best clips, streak |
 | Developer API | Business: personal API keys, signed webhooks with retries and delivery log, clips listing with download links, examples on the Developers page |
 | Privacy | Download all your data as JSON; delete your account and files |
 | Cost control | Every AI call logged with estimated cost per provider/model; monthly budget with 80% warning and 100% pause |
