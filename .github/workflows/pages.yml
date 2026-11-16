@@ -1,12 +1,13 @@
 # Publishes the web app (static build) to GitHub Pages on every push to main.
 # The API, workers and database run on your server; Pages only serves the website files.
 #
-# Two ways to publish (see DEPLOY.md, "Web app on GitHub Pages"):
-#   A) This repository is public: Settings → Pages → Source: GitHub Actions.
-#   B) Keep THIS repository private: only the built website goes to a separate public repository.
-#      Variable PAGES_REPO = owner/name of that repository (e.g. you/you.github.io),
-#      secret PAGES_DEPLOY_TOKEN = a fine-grained token with Contents: read & write on it.
-#      Then in that repository: Settings → Pages → Deploy from a branch → main / (root).
+# Where it publishes (see DEPLOY.md, "Web app on GitHub Pages"):
+#   A) Default: the `gh-pages` branch of this repository.
+#      If the site doesn't appear: Settings → Pages → Deploy from a branch → gh-pages / (root).
+#   B) Keep THIS repository private: set variable PAGES_REPO = owner/name of a separate public repository
+#      (e.g. you/you.github.io) and secret PAGES_DEPLOY_TOKEN = a fine-grained token with Contents: read & write
+#      on it. Then in that repository: Settings → Pages → Deploy from a branch → main / (root).
+# Optional variable PAGES_DOMAIN = your own domain (e.g. app.example.com) once it's set up in Settings → Pages.
 # Server addresses (Settings → Secrets and variables → Actions → Variables):
 #   NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY, NEXT_PUBLIC_API_URL
 name: Deploy web app to GitHub Pages
@@ -18,19 +19,15 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
-  pages: write
-  id-token: write
+  contents: write # to update the gh-pages branch
 
 concurrency:
   group: pages
   cancel-in-progress: false
 
 jobs:
-  build:
+  deploy:
     runs-on: ubuntu-latest
-    outputs:
-      pages: ${{ steps.pages.outcome }}
     defaults:
       run:
         working-directory: web
@@ -41,24 +38,18 @@ jobs:
           node-version: 22
           cache: npm
           cache-dependency-path: web/package-lock.json
-      - id: pages
-        if: vars.PAGES_REPO == ''
-        uses: actions/configure-pages@v5
-        continue-on-error: true # Pages not switched on yet: still build (as a check), skip publishing
-      - if: vars.PAGES_REPO == '' && steps.pages.outcome != 'success'
-        run: echo "::warning title=GitHub Pages is off::Turn it on in Settings → Pages → Source → GitHub Actions (or set PAGES_REPO, see the top of this file), then re-run this workflow. The site was built but not published."
       - id: base
         name: Where the site will live
         env:
           PAGES_REPO: ${{ vars.PAGES_REPO }}
-          FROM_PAGES: ${{ steps.pages.outputs.base_path }}
+          PAGES_DOMAIN: ${{ vars.PAGES_DOMAIN }}
           REPO_NAME: ${{ github.event.repository.name }}
         run: |
-          if [ -n "$PAGES_REPO" ]; then
+          if [ -n "$PAGES_DOMAIN" ]; then
+            echo "path=" >> "$GITHUB_OUTPUT"
+          elif [ -n "$PAGES_REPO" ]; then
             name="${PAGES_REPO#*/}"
             case "$name" in *.github.io) echo "path=" >> "$GITHUB_OUTPUT" ;; *) echo "path=/$name" >> "$GITHUB_OUTPUT" ;; esac
-          elif [ -n "$FROM_PAGES" ]; then
-            echo "path=$FROM_PAGES" >> "$GITHUB_OUTPUT"
           else
             echo "path=/$REPO_NAME" >> "$GITHUB_OUTPUT"
           fi
@@ -72,35 +63,30 @@ jobs:
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ vars.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
           NEXT_PUBLIC_API_URL: ${{ vars.NEXT_PUBLIC_API_URL }}
           NEXT_TELEMETRY_DISABLED: "1"
-      - run: touch out/.nojekyll
-      - if: vars.PAGES_REPO == '' && steps.pages.outcome == 'success'
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: web/out
-      - name: Publish to the website repository (source stays private)
-        if: vars.PAGES_REPO != ''
+      - name: Prepare files
+        env:
+          PAGES_DOMAIN: ${{ vars.PAGES_DOMAIN }}
+        run: |
+          touch out/.nojekyll
+          if [ -n "$PAGES_DOMAIN" ]; then echo "$PAGES_DOMAIN" > out/CNAME; fi
+          printf 'Built website files of ClipperAI by Maitreya. All rights reserved.\n' > out/README.md
+      - name: Publish
         env:
           TOKEN: ${{ secrets.PAGES_DEPLOY_TOKEN }}
           PAGES_REPO: ${{ vars.PAGES_REPO }}
+          GH_TOKEN: ${{ github.token }}
         run: |
-          if [ -z "$TOKEN" ]; then echo "::error::Add the PAGES_DEPLOY_TOKEN secret (see the top of this file)"; exit 1; fi
           cd out
-          printf 'Built website files only. All rights reserved; see the source owner.\n' > README.md
           git init -q -b main
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add -A
           git commit -qm "Deploy ${GITHUB_SHA::7}"
-          git push -qf "https://x-access-token:${TOKEN}@github.com/${PAGES_REPO}.git" main
-          echo "::notice::Published to https://github.com/${PAGES_REPO}"
-
-  deploy:
-    needs: build
-    if: needs.build.outputs.pages == 'success'
-    runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
-      - id: deployment
-        uses: actions/deploy-pages@v4
+          if [ -n "$PAGES_REPO" ]; then
+            if [ -z "$TOKEN" ]; then echo "::error::Add the PAGES_DEPLOY_TOKEN secret (see the top of this file)"; exit 1; fi
+            git push -qf "https://x-access-token:${TOKEN}@github.com/${PAGES_REPO}.git" main
+            echo "::notice::Published to https://github.com/${PAGES_REPO}"
+          else
+            git push -qf "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" main:gh-pages
+            echo "::notice::Published to the gh-pages branch. If the site isn't live: Settings → Pages → Deploy from a branch → gh-pages."
+          fi

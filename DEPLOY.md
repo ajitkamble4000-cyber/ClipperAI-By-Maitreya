@@ -91,13 +91,13 @@ The website can also be served free from GitHub Pages: `.github/workflows/pages.
 1. **Repository visibility.** GitHub Pages works on public repositories on every plan; on a private repository it needs GitHub Pro, Team or Enterprise. The site itself is public either way. Two ways to publish:
    - **A. Public source repository:** anyone can *read* the code (the proprietary LICENSE forbids reusing it, but can't stop people seeing it). Then do step 2.
    - **B. Keep the source private (recommended):** create a separate **public** repository just for the website, e.g. `<user>.github.io` (the site is then at `https://<user>.github.io/`). Create a fine-grained token (GitHub → Settings → Developer settings → Fine-grained tokens) with access to that repository only and **Contents: Read and write**. In this (private) repository add the secret `PAGES_DEPLOY_TOKEN` and the variable `PAGES_REPO` = `<user>/<user>.github.io`. In the website repository: **Settings → Pages → Deploy from a branch → main / (root)**. Only the built, minified website files are published there; skip step 2.
-2. **Settings → Pages → Build and deployment → Source: GitHub Actions.**
+2. The workflow publishes the built site to the **`gh-pages`** branch. If the site doesn't appear on its own: **Settings → Pages → Build and deployment → Source: Deploy from a branch → `gh-pages` / (root)**.
 3. **Settings → Secrets and variables → Actions → Variables** (these end up in the browser, so they are variables, not secrets):
    - `NEXT_PUBLIC_SUPABASE_URL` = Supabase project URL
    - `NEXT_PUBLIC_SUPABASE_ANON_KEY` = anon / publishable key
    - `NEXT_PUBLIC_API_URL` = `https://api.studio.example.com`
    Then **Actions → Deploy web app to GitHub Pages → Run workflow** (or push to `main`). Until these are set the site still publishes and shows "Opening soon" instead of sign-in.
-4. The site is at `https://<user>.github.io/<repository>/` (the build picks up that sub-path automatically). For your own domain: **Settings → Pages → Custom domain**, add the DNS record GitHub shows, and re-run the workflow.
+4. The site is at `https://<user>.github.io/<repository>/` (the build picks up that sub-path automatically). For your own domain: **Settings → Pages → Custom domain**, add the DNS record GitHub shows, set the repository variable `PAGES_DOMAIN` to that domain, and re-run the workflow.
 5. On the server `.env`: `WEB_ORIGINS=https://<user>.github.io` (the origin only, no path; or your custom domain). Restart the API.
 6. **Supabase → Authentication → URL Configuration:** Site URL `https://<user>.github.io/<repository>/`, and add `https://<user>.github.io/<repository>/**` to the redirect URLs, so confirmation and password-reset emails come back to the site.
 
