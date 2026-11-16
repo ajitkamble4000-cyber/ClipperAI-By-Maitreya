@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { BarChart3, ChevronRight, Code2, Coins, Download, Link2, LogOut, Palette, Receipt, Trash2 } from "lucide-react";
 import { toast } from "sonner";
+import { BillingHistory, PlanTerm, useMyBilling } from "@/components/account/billing-card";
 import { LockedBadge } from "@/components/plan/locked";
 import { PageHeader } from "@/components/shell/page-header";
 import { hasFeature, useMe } from "@/components/shell/member-context";
@@ -40,6 +41,7 @@ export default function AccountPage() {
   const [reqs, setReqs] = useState<Req[]>([]);
   const [links, setLinks] = useState<ShareLink[]>([]);
   const [confirm, setConfirm] = useState("");
+  const billing = useMyBilling();
 
   const load = () => {
     api<Req[]>("/billing/upgrade-request").then(setReqs).catch(() => {});
@@ -101,12 +103,7 @@ export default function AccountPage() {
               </Button>
             )}
           </div>
-          {me.trial_ends_at && (
-            <p className="text-sm text-primary" data-testid="trial-note">
-              Trial: {me.plan.name} until {new Date(me.trial_ends_at).toLocaleDateString(undefined, { day: "numeric", month: "long" })}, then back to your
-              previous plan.
-            </p>
-          )}
+          <PlanTerm billing={billing} />
           {pending && (
             <p className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground" data-testid="pending-request">
               You asked for {pending.plan_name} {timeAgo(pending.created_at)}. We'll notify you when it's approved.
@@ -126,6 +123,8 @@ export default function AccountPage() {
           )}
         </CardContent>
       </Card>
+
+      <BillingHistory billing={billing} />
 
       <div className="grid gap-3 sm:grid-cols-2">
         {[

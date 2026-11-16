@@ -174,6 +174,8 @@ class PlanIn(BaseModel):
     daily_tokens: int | None = Field(default=None, ge=0, le=100_000_000)
     unlimited: bool | None = None
     price_usd_month: float | None = Field(default=None, ge=0, le=100_000)
+    price_inr_month: int | None = Field(default=None, ge=0, le=10_000_000)  # 0 = not sold online
+    price_inr_year: int | None = Field(default=None, ge=0, le=10_000_000)
     features: list[str] | None = None
     limits: dict[str, int | bool] | None = None
     public: bool | None = None

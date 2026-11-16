@@ -317,6 +317,18 @@ def on_plan_change(user_id: str, *, actor_id: str | None = None) -> Wallet:
         return _wallet_obj(p, w)
 
 
+def purchase(user_id: str, amount: int, *, payment_ref: str) -> Wallet:
+    """Bought token pack: bonus tokens (they never expire)."""
+    with db.transaction() as c:
+        p, w = _locked_wallet(c, user_id)
+        w = c.execute(
+            "update wallets set bonus_balance = bonus_balance + %s, updated_at = now() where user_id = %s returning *",
+            [int(amount), user_id],
+        ).fetchone()
+        _ledger(c, user_id, int(amount), "bonus", "purchase", w, meta={"payment": payment_ref})
+        return _wallet_obj(p, w)
+
+
 def grant(user_id: str, amount: int, *, actor_id: str | None, note: str = "") -> Wallet:
     """Admin grant (positive) or revoke (negative) of bonus tokens. Revokes never go below zero."""
     with db.transaction() as c:

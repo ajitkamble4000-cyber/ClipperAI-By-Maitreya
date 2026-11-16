@@ -95,6 +95,7 @@ What the media tests verify (not just "it ran"): 1080x1920 at 30 fps, H.264/AAC,
 | Creator extras | Built-in and saved templates, designed thumbnails (YouTube 16:9 + vertical cover, frame or AI background), title & hashtag ideas, public share links |
 | Accounts | Sign-up, Home dashboard with quick paste and getting-started checklist, notifications, token history, plan & pricing pages, upgrade requests, account deletion |
 | Business | Free / Pro / Business / Team plans with features and limits, daily tokens + bonus tokens, editable token prices, refunds on failure, Staff & Creator teams free and unlimited |
+| Payments | Razorpay (UPI, cards, net banking, wallets): buy a plan monthly or yearly in ₹, renewals add time, reminder before it ends, token packs; signed webhook; payments and revenue in Admin → Payments; owner pastes the keys in the app |
 | Admin | Overview analytics, users (plan, team, tokens, allowance, suspend, admin role), upgrade requests, jobs monitor with cancel and refund (running or finished jobs), users CSV export, announcements, audit log, system health, plan & price editor, token gifts |
 | Editing | Fix caption words and re-render, background music on clips (ducked under speech), compilations of several clips, MP3 and GIF exports |
 | Repurpose | One click turns a video into a summary, YouTube chapters, quotes, blog post, X thread, LinkedIn post and newsletter; search what was said across your library |
@@ -110,4 +111,5 @@ The website can run on Vercel or as a static site on **GitHub Pages** (workflow 
 
 ## License
 
-MIT, see [LICENSE](LICENSE).
+**Proprietary. All rights reserved.** This code is published for viewing only. No permission is given to copy,
+modify, deploy, sell or reuse any part of it, or to use the ClipperAI by Maitreya name or logo. See [LICENSE](LICENSE).

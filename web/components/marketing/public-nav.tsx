@@ -7,6 +7,7 @@ import { SiteBanner } from "@/components/shell/site-banner";
 import { supabaseBrowser } from "@/lib/supabase/client";
 import { BrandMark } from "@/components/shell/brand-mark";
 import { NotConnected } from "@/components/shell/not-connected";
+import { BRAND } from "@/lib/brand";
 
 /** Top bar for public pages; shows "Open studio" when already signed in. */
 export function PublicNav() {
@@ -60,6 +61,9 @@ export function PublicFooter() {
           Create account
         </Link>
         <span className="ml-auto text-xs">Use only videos you have the rights to.</span>
+        <p className="w-full text-xs" data-testid="copyright">
+          © {new Date().getFullYear()} {BRAND}. All rights reserved. The ClipperAI by Maitreya name, logo, design and software may not be copied or reused.
+        </p>
       </div>
     </footer>
   );

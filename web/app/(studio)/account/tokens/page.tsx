@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { ArrowDownRight, Coins, Gift, Infinity as InfinityIcon, RefreshCcw, RotateCcw } from "lucide-react";
 import { RedeemCard, ReferralCard } from "@/components/account/growth-cards";
+import { TokenPacks } from "@/components/account/token-packs";
 import { PageHeader } from "@/components/shell/page-header";
 import { useMe } from "@/components/shell/member-context";
 import { useWallet } from "@/components/shell/token-chip";
@@ -41,6 +42,7 @@ const REASON: Record<string, { label: string; icon: typeof Coins }> = {
   revoke: { label: "Removed by the team", icon: ArrowDownRight },
   daily_refill: { label: "Daily refill", icon: RefreshCcw },
   plan_change: { label: "New plan allowance", icon: RefreshCcw },
+  purchase: { label: "Bought", icon: Coins },
   waived: { label: "Free for your team", icon: InfinityIcon },
 };
 
@@ -103,6 +105,7 @@ export default function TokensPage() {
           </CardContent>
         </Card>
       </div>
+      {!me.unlimited && <TokenPacks onBought={loadLedger} />}
       {!me.unlimited && (
         <p className="text-sm text-muted-foreground">
           Need more every day?{" "}

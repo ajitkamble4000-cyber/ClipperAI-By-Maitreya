@@ -40,6 +40,12 @@ class Settings(BaseSettings):
     webhook_allow_private: bool = False  # dev/tests only: allow http and private addresses for webhooks
     web_origins: str = "http://localhost:3000,http://127.0.0.1:3000"
     gemini_api_key: SecretStr | None = None  # optional env override for the admin-set key
+    # Razorpay (optional: the owner can also set these in Admin → Payments; env wins)
+    razorpay_key_id: str | None = None
+    razorpay_key_secret: SecretStr | None = None
+    razorpay_webhook_secret: SecretStr | None = None
+    razorpay_api: str = "https://api.razorpay.com/v1"
+    studio_fake_razorpay: bool = False  # tests only: orders are created locally, no network
     max_upload_bytes: int = 4 * 1024**3
     jobs_per_user_per_minute: int = 10
 

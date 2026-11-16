@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/input";
 import { api } from "@/lib/api";
 import { env } from "@/lib/env";
 import { FEATURES } from "@/lib/features";
+import { type BillingCatalog, inr, payWithRazorpay } from "@/lib/razorpay";
 import { supabaseBrowser } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
 
@@ -38,7 +39,7 @@ interface Pending {
   status: string;
 }
 
-const BASE = ["Paste any link or upload", "AI clips with titles & hashtags", "Animated captions, 6 styles", "AI story videos", "SRT / VTT / TXT caption files"];
+const BASE = ["Paste any link or upload", "AI clips with titles & hashtags", "Animated captions, 8 styles", "AI story videos", "SRT / VTT / TXT caption files"];
 const COMPARE: { label: string; get: (p: PublicPlan) => string | boolean }[] = [
   { label: "Tokens every day", get: (p) => (p.daily_tokens == null ? "Unlimited" : p.daily_tokens.toLocaleString()) },
   { label: "Clips per video", get: (p) => `up to ${p.limits.max_clips_per_job ?? 5}` },
@@ -59,8 +60,34 @@ export default function PricingPage() {
   const [pending, setPending] = useState<Pending | null>(null);
   const [asking, setAsking] = useState<string | null>(null);
   const [note, setNote] = useState("");
+  const [billing, setBilling] = useState<BillingCatalog | null>(null);
+  const [period, setPeriod] = useState<"month" | "year">("month");
+  const [paying, setPaying] = useState<string | null>(null);
+
+  const sale = (id: string) => (billing?.enabled ? billing.plans.find((x) => x.id === id) : undefined);
+  const salePrice = (id: string) => {
+    const s = sale(id);
+    return s ? (period === "month" ? s.price_inr_month : s.price_inr_year) : 0;
+  };
+
+  const buy = async (p: PublicPlan) => {
+    setPaying(p.id);
+    try {
+      const r = await payWithRazorpay({ kind: "plan", plan_id: p.id, period });
+      const until = r.until ? new Date(r.until).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" }) : "";
+      toast.success(`You're on ${p.name}${until ? ` until ${until}` : ""}. Thank you!`);
+      setMe((m) => (m ? { ...m, plan_id: p.id } : m));
+    } catch (e) {
+      const msg = (e as Error).message;
+      if (msg === "Payment cancelled") toast.message(msg);
+      else toast.error(msg);
+    } finally {
+      setPaying(null);
+    }
+  };
 
   useEffect(() => {
+    fetch(`${env.apiUrl}/public/billing`).then((r) => r.json()).then(setBilling).catch(() => {});
     fetch(`${env.apiUrl}/plans`).then((r) => r.json()).then(setPlans).catch(() => setPlans([]));
     fetch(`${env.apiUrl}/public/token-prices`).then((r) => r.json()).then(setPrices).catch(() => {});
     supabaseBrowser()
@@ -95,6 +122,23 @@ export default function PricingPage() {
       );
     }
     if (me.unlimited) return <p className="text-center text-sm text-muted-foreground">Your team account has everything.</p>;
+    if (salePrice(p.id) > 0) {
+      const current = me.plan_id === p.id;
+      return (
+        <div className="grid gap-2">
+          {current && <p className="rounded-lg border py-2 text-center text-sm font-medium" data-testid="current-plan">Your plan</p>}
+          <Button
+            className="w-full"
+            variant={current ? "outline" : p.highlight ? "default" : "outline"}
+            onClick={() => buy(p)}
+            disabled={!!paying}
+            data-testid={`buy-${p.id}`}
+          >
+            {paying === p.id ? "Opening Razorpay…" : current ? `Renew for ${inr(salePrice(p.id))}` : `Buy ${p.name}`}
+          </Button>
+        </div>
+      );
+    }
     if (me.plan_id === p.id) return <p className="rounded-lg border py-2 text-center text-sm font-medium" data-testid="current-plan">Your plan</p>;
     if (pending?.plan_id === p.id) return <p className="rounded-lg border border-primary/40 py-2 text-center text-sm text-primary">Request sent</p>;
     if (!p.price_usd_month) return null;
@@ -110,6 +154,21 @@ export default function PricingPage() {
       <div className="text-center">
         <h1 className="text-4xl font-bold tracking-tight">Simple pricing</h1>
         <p className="mt-3 text-muted-foreground">Every plan gets fresh tokens every day. Failed jobs are always refunded.</p>
+        {billing?.enabled && (
+          <div className="mt-6 inline-flex rounded-lg border p-0.5" role="group" aria-label="Billing period">
+            {(["month", "year"] as const).map((x) => (
+              <button
+                key={x}
+                type="button"
+                aria-pressed={period === x}
+                onClick={() => setPeriod(x)}
+                className={cn("rounded-md px-4 py-1.5 text-sm font-medium", period === x ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground")}
+              >
+                {x === "month" ? "Monthly" : "Yearly (2 months free)"}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
       <div className="mt-10 grid gap-4 md:grid-cols-3">
@@ -124,9 +183,20 @@ export default function PricingPage() {
               {p.highlight && <span className="rounded-full bg-primary/15 px-2 py-0.5 text-xs font-medium text-primary">Most popular</span>}
             </div>
             <p className="mt-1 min-h-10 text-sm text-muted-foreground">{p.description}</p>
-            <p className="mt-4">
-              <span className="text-4xl font-bold">${p.price_usd_month}</span>
-              <span className="text-sm text-muted-foreground"> / month</span>
+            <p className="mt-4" data-testid={`price-${p.id}`}>
+              {billing?.enabled && sale(p.id) ? (
+                <>
+                  <span className="text-4xl font-bold">{inr(salePrice(p.id))}</span>
+                  <span className="text-sm text-muted-foreground"> / {period}</span>
+                </>
+              ) : billing?.enabled && !p.price_usd_month ? (
+                <span className="text-4xl font-bold">{inr(0)}</span>
+              ) : (
+                <>
+                  <span className="text-4xl font-bold">${p.price_usd_month}</span>
+                  <span className="text-sm text-muted-foreground"> / month</span>
+                </>
+              )}
             </p>
             <p className="mt-1 flex items-center gap-1.5 text-sm">
               <Coins className="size-4 text-primary" />
@@ -158,6 +228,13 @@ export default function PricingPage() {
           </div>
         ))}
       </div>
+
+      {billing?.enabled && (
+        <p className="mt-4 text-center text-xs text-muted-foreground">
+          Secure payments by Razorpay: UPI, cards, net banking and wallets. A plan runs for the period you pay for; renewing adds time on top.
+          Need more tokens? Buy a token pack in Account → Tokens.
+        </p>
+      )}
 
       {plans && plans.length > 0 && (
         <div className="mt-14 overflow-x-auto">

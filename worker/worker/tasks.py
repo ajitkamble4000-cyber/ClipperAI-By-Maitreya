@@ -155,9 +155,11 @@ def cleanup_sources() -> int:
 
 @app.task(name="worker.expire_trials")
 def expire_trials() -> int:
-    """Plan trials from promo codes end on time even for people who don't sign in."""
+    """Trials and paid periods end on time even for people who don't sign in; renewal reminders go out."""
     from studio_shared.growth import expire_trials as run
+    from studio_shared.payments import remind_renewals
 
+    remind_renewals()
     return run()
 
 

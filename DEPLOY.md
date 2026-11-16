@@ -88,7 +88,9 @@ Updates later: `infra/scripts/deploy.sh` (pull, rebuild, restart). Running jobs 
 
 The website can also be served free from GitHub Pages: `.github/workflows/pages.yml` builds a static version of `web/` on every push to `main` and publishes it. **Pages only serves the website files.** The API, the video workers and the database still run on your server (sections 1-3), exactly as with Vercel.
 
-1. **Repository visibility.** GitHub Pages works on public repositories on every plan; on a private repository it needs GitHub Pro, Team or Enterprise. The site itself is public either way.
+1. **Repository visibility.** GitHub Pages works on public repositories on every plan; on a private repository it needs GitHub Pro, Team or Enterprise. The site itself is public either way. Two ways to publish:
+   - **A. Public source repository:** anyone can *read* the code (the proprietary LICENSE forbids reusing it, but can't stop people seeing it). Then do step 2.
+   - **B. Keep the source private (recommended):** create a separate **public** repository just for the website, e.g. `<user>.github.io` (the site is then at `https://<user>.github.io/`). Create a fine-grained token (GitHub → Settings → Developer settings → Fine-grained tokens) with access to that repository only and **Contents: Read and write**. In this (private) repository add the secret `PAGES_DEPLOY_TOKEN` and the variable `PAGES_REPO` = `<user>/<user>.github.io`. In the website repository: **Settings → Pages → Deploy from a branch → main / (root)**. Only the built, minified website files are published there; skip step 2.
 2. **Settings → Pages → Build and deployment → Source: GitHub Actions.**
 3. **Settings → Secrets and variables → Actions → Variables** (these end up in the browser, so they are variables, not secrets):
    - `NEXT_PUBLIC_SUPABASE_URL` = Supabase project URL
@@ -130,7 +132,20 @@ npx playwright test -c playwright.static.config.ts              # end-to-end che
 ### Plans, tokens and upgrades
 
 - Every user gets a daily token allowance that refills at 00:00 UTC; bonus tokens (gifts) never expire. Tokens are charged when a job starts and refunded automatically if it fails or is canceled.
-- Online card payments aren't connected yet. Users click **Upgrade** on `/pricing`, which sends an upgrade request; the owner/admins approve it in **Admin → Upgrade requests** (the user is notified and gets the new allowance the same day). To sell online later, connect a payment provider's webhook to the same plan change.
+- Until online payments are switched on, users click **Upgrade** on `/pricing`, which sends an upgrade request; the owner/admins approve it in **Admin → Upgrade requests** (the user is notified and gets the new allowance the same day).
+
+### Payments with Razorpay
+
+Once the keys are in, `/pricing` shows ₹ prices with **Buy** buttons (monthly or yearly) and **Account → Tokens** sells token packs. People pay with UPI, cards, net banking or wallets in Razorpay Checkout.
+
+1. Create a Razorpay account. While it's being activated you can use **Test mode** (no real money; Razorpay's test cards/UPI work).
+2. Razorpay Dashboard → **Account & Settings → API keys** → generate a key. In the app: **Admin → Payments → Razorpay**, paste the **Key ID** (`rzp_test_…` or `rzp_live_…`) and **Key secret**, Save, then **Test keys**. (Or set `RAZORPAY_KEY_ID` / `RAZORPAY_KEY_SECRET` in the server `.env`.)
+3. Razorpay Dashboard → **Webhooks → Add new webhook**: the URL shown on Admin → Payments (`https://api.studio.example.com/billing/razorpay/webhook`, built from `PUBLIC_API_URL`), events **payment.captured**, **order.paid** and **payment.failed**, and a secret of your choice. Paste the same secret as **Webhook secret** in Admin → Payments. The webhook applies payments even if someone closes the tab right after paying.
+4. Keep **automatic capture** on (Razorpay's default) so payments are captured right away.
+5. Set your prices on **Admin → Payments → Prices** (whole rupees; 0 stops selling that item). Defaults: Pro ₹1,499 / month or ₹14,990 / year, Business ₹3,999 / ₹39,990, token packs from ₹199.
+6. When your Razorpay account is activated, generate **Live** keys and replace the test ones (add a webhook in Live mode too).
+
+How it works: the API creates the order and checks Razorpay's signature (and the amount) before anything is applied; each payment is applied exactly once, whether the browser or the webhook reports it first. A paid plan runs for the period bought (renewing adds time on top), a reminder goes out 3 days before it ends, and afterwards the account returns to its previous plan. Token packs add bonus tokens that never expire. Payments are listed on **Admin → Payments** (with revenue) and on each user's **Account** page. Refunds are made in the Razorpay Dashboard.
 - **Admin → Users** lets the owner/admins give or take bonus tokens, set a custom daily allowance, change plans, suspend accounts and see each user's activity and token history. Everything is recorded in **Admin → Audit log**.
 
 ## YouTube downloads from a VPS

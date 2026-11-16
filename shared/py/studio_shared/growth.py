@@ -104,22 +104,24 @@ def maybe_reward_referral(user_id: str) -> int:
 
 # ---------------------------------------------------------------- trials
 def expire_trial(user_id: str) -> bool:
-    """End an expired trial: back to the plan they had before. Returns True if one ended."""
+    """End an expired trial or paid period: back to the plan they had before. Returns True if one ended."""
     row = db.fetch_one(
-        """update members set plan_id = coalesce(plan_before_trial, 'free'), plan_expires_at = null,
-                  plan_before_trial = null
-            where user_id = %s and plan_expires_at is not null and plan_expires_at <= now()
-        returning plan_id""",
-        [user_id],
+        """with old as (select plan_source, plan_id as ended from members where user_id = %(u)s)
+           update members set plan_id = coalesce(plan_before_trial, 'free'), plan_expires_at = null,
+                  plan_before_trial = null, plan_source = null, renewal_reminded_at = null
+            where user_id = %(u)s and plan_expires_at is not null and plan_expires_at <= now()
+        returning plan_id, (select plan_source from old) as source, (select ended from old) as ended""",
+        {"u": user_id},
     )
     if not row:
         return False
-    notify(
-        user_id,
-        "Your trial has ended",
-        f"You're back on the {row['plan_id'].title()} plan. Upgrade any time on Pricing.",
-        link="/pricing",
-    )
+    if row["source"] == "paid":
+        title = f"Your {row['ended'].title()} plan has ended"
+        body = f"You're back on the {row['plan_id'].title()} plan. Renew any time on Pricing."
+    else:
+        title = "Your trial has ended"
+        body = f"You're back on the {row['plan_id'].title()} plan. Upgrade any time on Pricing."
+    notify(user_id, title, body, link="/pricing")
     return True
 
 
@@ -150,7 +152,8 @@ def redeem(user_id: str, raw_code: str) -> dict[str, Any]:
         ).fetchone():
             raise UserError("You've already used this code")
         m = c.execute(
-            "select role, team, plan_id, plan_expires_at from members where user_id = %s", [user_id]
+            "select role, team, plan_id, plan_expires_at, plan_source from members where user_id = %s",
+            [user_id],
         ).fetchone()
         if p["kind"] == "trial":
             if m["role"] in ("owner", "admin") or m["team"] is not None:
@@ -158,10 +161,15 @@ def redeem(user_id: str, raw_code: str) -> dict[str, Any]:
             if PLAN_RANK.get(m["plan_id"], 0) >= PLAN_RANK.get(p["plan_id"], 0):
                 raise UserError("You're already on this plan or a bigger one")
             if m["plan_expires_at"] is not None:
-                raise UserError("You already have a trial running")
+                raise UserError(
+                    "You already have a paid plan running"
+                    if m["plan_source"] == "paid"
+                    else "You already have a trial running"
+                )
             until = datetime.now(UTC) + timedelta(days=int(p["trial_days"]))
             c.execute(
-                "update members set plan_before_trial = plan_id, plan_id = %s, plan_expires_at = %s where user_id = %s",
+                "update members set plan_before_trial = plan_id, plan_id = %s, plan_expires_at = %s, "
+                "plan_source = 'trial' where user_id = %s",
                 [p["plan_id"], until, user_id],
             )
         c.execute("insert into promo_redemptions (code, user_id) values (%s, %s)", [code, user_id])
