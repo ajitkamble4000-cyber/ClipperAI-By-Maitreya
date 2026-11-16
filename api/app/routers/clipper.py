@@ -21,7 +21,7 @@ from .uploads import take_completed_upload
 
 router = APIRouter(tags=["clipper"])
 
-Reframe = Literal["face", "action", "center", "blur"]
+Reframe = Literal["face", "action", "center", "blur", "split"]
 ContentType = Literal["podcast", "sports", "gaming", "interview", "vlog", "education", "other"]
 Aspect = Literal["9:16", "1:1", "4:5", "16:9"]
 Mode = Literal["auto", "clips", "captions"]
@@ -29,7 +29,9 @@ MusicMood = Literal["none", "auto", "suspense", "horror", "upbeat", "epic", "fun
 
 
 class CaptionStyleIn(BaseModel):
-    preset: Literal["bold_pop", "karaoke", "minimal", "boxed", "horror", "none"] = "bold_pop"
+    preset: Literal[
+        "bold_pop", "karaoke", "minimal", "boxed", "horror", "neon", "typewriter", "bounce", "none"
+    ] = "bold_pop"
     font: str | None = Field(default=None, max_length=60)
     size: int | None = Field(default=None, ge=36, le=160)
     color: str | None = Field(default=None, pattern=r"^#[0-9a-fA-F]{6}$")

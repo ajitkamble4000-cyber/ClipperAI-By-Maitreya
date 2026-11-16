@@ -9,7 +9,7 @@ import numpy as np
 from ...media import ffmpeg
 from ...media.ffmpeg import FPS, OUT_H, OUT_W, Probe
 
-MODES = ("face", "action", "center", "blur")
+MODES = ("face", "action", "center", "blur", "split")
 Size = tuple[int, int]
 VERTICAL: Size = (OUT_W, OUT_H)
 
@@ -81,4 +81,30 @@ def dynamic_filter(p: Probe, path_centers: np.ndarray, cmd_file: Path, size: Siz
     return (
         f"fps={FPS},sendcmd=f='{ffmpeg.escape_filter_path(cmd_file)}',"
         f"crop@rf=w={cw}:h={h}:x={xs[0]}:y=0,scale={ow}:{oh},setsar=1"
+    )
+
+
+def split_filter(p: Probe, speakers, size: Size = VERTICAL) -> str:
+    """Two speakers, one panel each: stacked top/bottom for tall formats, side by side for 16:9."""
+    ow, oh = size
+    w, h = p.display_size
+    stacked = oh >= ow
+    pw, ph = (ow, oh // 2) if stacked else (ow // 2, oh)
+    aspect = pw / ph
+    panels = []
+    for sp in speakers:
+        # Frame the face in the upper part of its panel, with room around it.
+        ch = min(h, max(int(sp.size * h * 3.2), int(h * 0.45)))
+        cw = min(w // 2 * 2, int(ch * aspect) // 2 * 2)
+        ch = min(h, int(cw / aspect)) // 2 * 2
+        x = int(min(max(sp.cx * w - cw / 2, 0), w - cw))
+        y = int(min(max(sp.cy * h - ch * 0.42, 0), h - ch))
+        panels.append((cw, ch, x, y))
+    (c1, c2) = panels
+    stack = "vstack" if stacked else "hstack"
+    return (
+        f"split=2[spa][spb];"
+        f"[spa]crop={c1[0]}:{c1[1]}:{c1[2]}:{c1[3]},scale={pw}:{ph},setsar=1[sp1];"
+        f"[spb]crop={c2[0]}:{c2[1]}:{c2[2]}:{c2[3]},scale={pw}:{ph},setsar=1[sp2];"
+        f"[sp1][sp2]{stack}=inputs=2,setsar=1"
     )

@@ -63,6 +63,7 @@ const REFRAME = [
   { value: "action", label: "Follow action", hint: "Tracks the area with the most motion" },
   { value: "center", label: "Center crop", hint: "Static crop of the middle" },
   { value: "blur", label: "Fit + blur", hint: "Whole frame on a blurred background" },
+  { value: "split", label: "Split screen", hint: "Two people talking: one on top, one below" },
 ];
 
 const ASPECT_BOX: Record<Aspect, string> = { "9:16": "h-8 w-[18px]", "1:1": "size-7", "4:5": "h-8 w-[26px]", "16:9": "h-[18px] w-8" };
@@ -475,9 +476,9 @@ export function NewClipForm({ initialUrl = "", initialMode = "auto" }: { initial
           <CardTitle>4. Framing</CardTitle>
           <CardDescription>How the picture is fitted into the {aspect} frame.</CardDescription>
         </CardHeader>
-        <CardContent className="grid gap-2 sm:grid-cols-4">
+        <CardContent className="grid gap-2 sm:grid-cols-5">
           {REFRAME.map((r) => (
-            <Choice key={r.value} active={reframe === r.value} onClick={() => setReframe(r.value)}>
+            <Choice key={r.value} active={reframe === r.value} onClick={() => setReframe(r.value)} testId={`reframe-${r.value}`}>
               <p className="text-sm font-medium">{r.label}</p>
               <p className="mt-0.5 text-xs text-muted-foreground">{r.hint}</p>
             </Choice>

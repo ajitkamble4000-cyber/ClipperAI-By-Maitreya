@@ -176,3 +176,38 @@ def motion_track(
         i = int(np.argmax(sums))
         out.append((t, (i + win / 2) / len(col)))
     return out
+
+
+@dataclass
+class Speaker:
+    cx: float  # normalized face center
+    cy: float
+    size: float  # normalized face height
+
+
+def two_speakers(path: Path, start: float, end: float, fps: float = 3.0) -> tuple[Speaker, Speaker] | None:
+    """Two people side by side (a podcast/interview shot): their typical positions, or None if that's not the shot.
+    Needs two faces in at least 40% of sampled frames, clearly apart horizontally."""
+    det = face_detector()
+    pairs: list[tuple[Box, Box]] = []
+    n = 0
+    for _, frame in sample_frames(path, start, end, fps, width=960):
+        n += 1
+        boxes = sorted((b for b in det.detect(frame) if b.score >= 0.5), key=lambda b: -b.w * b.h)[:2]
+        if len(boxes) == 2 and abs(boxes[0].cx - boxes[1].cx) > 0.2:
+            left, right = sorted(boxes, key=lambda b: b.cx)
+            pairs.append((left, right))
+    if n == 0 or len(pairs) < max(2, 0.4 * n):
+        return None
+
+    def median(vals: list[float]) -> float:
+        v = sorted(vals)
+        return v[len(v) // 2]
+
+    left = Speaker(
+        median([p[0].cx for p in pairs]), median([p[0].cy for p in pairs]), median([p[0].h for p in pairs])
+    )
+    right = Speaker(
+        median([p[1].cx for p in pairs]), median([p[1].cy for p in pairs]), median([p[1].h for p in pairs])
+    )
+    return left, right

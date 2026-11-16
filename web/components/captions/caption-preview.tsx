@@ -81,13 +81,23 @@ export function CaptionPreview({
           style={{ left: "6.5%", top: `${POSITIONS[s.position] * 100}%`, transform: "translateY(-50%)" }}
         >
           <span
-            className={cn("inline-block leading-[1.15]", s.preset === "horror" && "animate-[shake_0.18s_infinite]")}
+            key={s.preset === "bounce" ? `b-${chunk}` : undefined}
+            className={cn(
+              "inline-block leading-[1.15]",
+              s.preset === "horror" && "animate-[shake_0.18s_infinite]",
+              s.preset === "bounce" && "animate-[bounce-in_0.22s_ease-out]",
+            )}
             style={{
               fontFamily: font.css,
               fontWeight: font.weight,
               fontSize,
               color: s.color,
-              textShadow: s.preset === "boxed" ? undefined : textShadow,
+              textShadow:
+                s.preset === "boxed"
+                  ? undefined
+                  : s.preset === "neon"
+                    ? `0 0 6px ${s.outline_color}, 0 0 14px ${s.outline_color}, 0 0 24px ${s.outline_color}`
+                    : textShadow,
               textTransform: s.uppercase ? "uppercase" : "none",
               background: s.preset === "boxed" ? hexA(s.box_color ?? "#000000", s.box_opacity ?? 0.72) : undefined,
               padding: s.preset === "boxed" ? "4px 10px" : undefined,
@@ -104,6 +114,7 @@ export function CaptionPreview({
                     style={{
                       color: on || karaokeDone ? s.highlight : undefined,
                       transform: on && s.preset === "bold_pop" ? "scale(1.14)" : undefined,
+                      visibility: s.preset === "typewriter" && i > active ? "hidden" : undefined,
                     }}
                   >
                     {w}

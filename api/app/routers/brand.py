@@ -48,7 +48,10 @@ class BrandIn(BaseModel):
     logo_opacity: float | None = Field(default=None, ge=0.2, le=1)
     handle: str | None = Field(default=None, max_length=40, pattern=r"^[@#\w.\- ]*$")
     primary_color: str | None = Field(default=None, pattern=r"^#[0-9a-fA-F]{6}$")
-    caption_preset: Literal["bold_pop", "karaoke", "minimal", "boxed", "horror", "none"] | None = None
+    caption_preset: (
+        Literal["bold_pop", "karaoke", "minimal", "boxed", "horror", "neon", "typewriter", "bounce", "none"]
+        | None
+    ) = None
     progress_bar: bool | None = None
 
 

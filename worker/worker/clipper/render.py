@@ -33,6 +33,11 @@ def reframe_filter(
     dur = end - start
     if mode == "blur":
         return rf.blur_filter(size)
+    if mode == "split":
+        speakers = detect.two_speakers(src, start, end)
+        if speakers:
+            return rf.split_filter(pr, speakers, size)
+        mode = "face"  # not a two-person shot: follow the main speaker instead
     if mode == "center" or rf.fits(pr, size):
         return rf.center_filter(pr, size)
     w, h = pr.display_size

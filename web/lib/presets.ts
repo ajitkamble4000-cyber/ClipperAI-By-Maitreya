@@ -1,6 +1,6 @@
 import catalog from "./presets/captions.json";
 
-export type PresetId = "bold_pop" | "karaoke" | "minimal" | "boxed" | "horror";
+export type PresetId = "bold_pop" | "karaoke" | "minimal" | "boxed" | "horror" | "neon" | "typewriter" | "bounce";
 export type Position = "top" | "middle" | "lower";
 
 export interface CaptionStyle {

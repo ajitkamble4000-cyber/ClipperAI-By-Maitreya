@@ -73,7 +73,7 @@ Panels: 51 notifications · 52 landing page · 53 pricing page · 54 onboarding 
 
 ## V4 batch
 
-- [ ] 22. Look: split-screen reframe for two-person podcasts; caption presets Neon, Typewriter, Bounce
+- [x] 22. Look: split-screen reframe for two-person podcasts; caption presets Neon, Typewriter, Bounce
 - [ ] 23. Content calendar: schedule clips/stories per platform, reminders, mark as posted, calendar feed (.ics)
 - [ ] 24. Project sharing: share a project with another account as viewer or editor; "Shared with me"
 - [ ] 25. Insights: personal stats page; admin extras (refund a job, export users as CSV)

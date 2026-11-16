@@ -328,6 +328,44 @@ class AssBuilder:
                 self._add(t, e, "{" + p + rf"\frz{rot:.1f}\blur0.8}}" + self._join(tokens, lines, render))
                 t = e
 
+    def _p_neon(self, c: Chunk, tokens, lines, pos, font, size) -> None:
+        """A soft glow layer (blurred, wide outline in the glow colour) under crisp text; the spoken word lights up."""
+        hi, base, glow = ass_color(self.s.highlight), ass_color(self.s.color), ass_color(self.s.outline_color)
+        k_out = max(2.0, self.s.outline * self.c.scale)
+        for k, (a, b) in enumerate(self._word_spans(c)):
+
+            def render(i: int, t: str, k=k) -> str:
+                return rf"{{\1c{hi}}}{t}{{\1c{base}}}" if i == k else self._emph_tok(i, t)
+
+            text = self._join(tokens, lines, render)
+            self._add(
+                a, b, "{" + pos + rf"\1a&HFF&\3c{glow}\bord{k_out * 2.5:.1f}\blur9\shad0}}" + text, layer=0
+            )
+            self._add(a, b, "{" + pos + rf"\3c{glow}\bord{k_out * 0.5:.1f}\blur1\shad0}}" + text, layer=1)
+
+    def _p_typewriter(self, c: Chunk, tokens, lines, pos, font, size) -> None:
+        """Words appear as they're spoken; later words are present but invisible so the layout never jumps."""
+        hi, base = ass_color(self.s.highlight), ass_color(self.s.color)
+        for k, (a, b) in enumerate(self._word_spans(c)):
+
+            def render(i: int, t: str, k=k) -> str:
+                if i > k:
+                    return rf"{{\alpha&HFF&}}{t}{{\alpha&H00&}}"
+                return rf"{{\1c{hi}}}{t}{{\1c{base}}}" if i == k else self._emph_tok(i, t)
+
+            self._add(a, b, "{" + pos + "}" + self._join(tokens, lines, render))
+
+    def _p_bounce(self, c: Chunk, tokens, lines, pos, font, size) -> None:
+        """Each phrase pops in with an overshoot, then the spoken word changes colour."""
+        hi, base = ass_color(self.s.highlight), ass_color(self.s.color)
+        for k, (a, b) in enumerate(self._word_spans(c)):
+
+            def render(i: int, t: str, k=k) -> str:
+                return rf"{{\1c{hi}}}{t}{{\1c{base}}}" if i == k else self._emph_tok(i, t)
+
+            anim = r"\fscx60\fscy60\t(0,110,\fscx116\fscy116)\t(110,200,\fscx100\fscy100)" if k == 0 else ""
+            self._add(a, b, "{" + pos + anim + "}" + self._join(tokens, lines, render))
+
     # ------------------------------------------------------------ hook text overlay
     def add_hook(self, text: str, duration: float = 3.0, *, start: float = 0.0, y_frac: float = 0.17) -> None:
         text = clean(text).upper()

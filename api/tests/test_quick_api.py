@@ -221,3 +221,16 @@ def test_brand_kit(client, make_member):
     )
     assert client.delete("/brand/logo", headers=pro).json()["logo_key"] is None
     assert not storage.exists(key)
+
+
+@pytest.mark.parametrize("preset", ["neon", "typewriter", "bounce"])
+def test_new_caption_presets_and_split_screen(client, make_member, no_queue, preset):
+    _, _, hdr = make_member(plan="free")
+    r = client.post(
+        "/clipper/projects",
+        headers=hdr,
+        json={"url": URL, "reframe": "split", "caption_style": {"preset": preset}},
+    )
+    assert r.status_code == 201, r.text
+    p = _job(r.json()["job_id"])["params"]
+    assert p["reframe"] == "split" and p["caption_style"]["preset"] == preset
