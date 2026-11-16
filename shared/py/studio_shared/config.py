@@ -36,6 +36,7 @@ class Settings(BaseSettings):
     # App
     app_encryption_key: SecretStr = SecretStr("")  # Fernet key (base64, 32 bytes)
     owner_email: str | None = None  # the single owner/founder account (must be a verified email)
+    public_api_url: str = "http://127.0.0.1:8000"  # how browsers/calendar apps reach the API (feed links)
     webhook_allow_private: bool = False  # dev/tests only: allow http and private addresses for webhooks
     web_origins: str = "http://localhost:3000,http://127.0.0.1:3000"
     gemini_api_key: SecretStr | None = None  # optional env override for the admin-set key

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { BarChart3, Clapperboard, Home, LayoutGrid, LogOut, Scissors, Settings, Shield, Sparkles, UserRound } from "lucide-react";
+import { BarChart3, CalendarDays, Clapperboard, Home, LayoutGrid, LogOut, Scissors, Settings, Shield, Sparkles, UserRound } from "lucide-react";
 import { supabaseBrowser } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
 import { BudgetBanner } from "./budget-banner";
@@ -18,6 +18,7 @@ const NAV: NavItem[] = [
   { href: "/clipper", label: "Clipper", icon: Scissors },
   { href: "/story", label: "Story Studio", icon: Sparkles },
   { href: "/library", label: "Library", icon: LayoutGrid },
+  { href: "/calendar", label: "Calendar", icon: CalendarDays },
   { href: "/account", label: "Account", icon: UserRound },
   { href: "/admin", label: "Admin", icon: Shield, admin: true },
   { href: "/usage", label: "Usage", icon: BarChart3, admin: true },

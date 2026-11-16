@@ -1,5 +1,6 @@
 "use client";
 
+import { ScheduleButton } from "@/components/calendar/schedule-dialog";
 import { ExtrasPanel } from "@/components/clipper/extras-panel";
 import { RepurposePanel } from "@/components/projects/repurpose-panel";
 import { useEffect, useState } from "react";
@@ -144,6 +145,9 @@ export function RenderStep(props: StepProps) {
           </Button>
         )}
         <p className="text-xs text-muted-foreground">Re-rendering reuses every image, voice and animated scene; only what changed is redone.</p>
+        {story.render_key && (
+          <ScheduleButton projectId={story.project_id} defaultCaption={[story.title, story.description, (story.hashtags ?? []).join(" ")].filter(Boolean).join("\n\n")} size="default" />
+        )}
         {story.render_key && <RepurposePanel projectId={story.project_id} title={story.title || "story"} />}
         {story.render_key && (
           <ExtrasPanel

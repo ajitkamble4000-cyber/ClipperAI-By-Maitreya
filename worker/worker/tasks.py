@@ -174,3 +174,10 @@ def deliver_webhook(self, hook_id: str, event: str, data: dict, attempt: int = 1
             queue=self.request.delivery_info.get("routing_key") or "ai",
         )
     return res
+
+
+@app.task(name="worker.calendar_reminders")
+def calendar_reminders() -> int:
+    from studio_shared.calendar_reminders import send_due
+
+    return send_due()

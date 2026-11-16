@@ -11,6 +11,7 @@ def extra_routers() -> list[APIRouter]:
         admin,
         admin_ops,
         brand,
+        calendar,
         clipper,
         developer,
         editing,
@@ -42,4 +43,5 @@ def extra_routers() -> list[APIRouter]:
         editing.router,
         repurpose.router,
         developer.router,
+        calendar.router,
     ]

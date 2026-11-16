@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { FileAudio, ImagePlay, Music, PencilLine } from "lucide-react";
 import { toast } from "sonner";
+import { ScheduleButton } from "@/components/calendar/schedule-dialog";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -31,7 +32,17 @@ interface Cue {
 const fmt = (t: number) => `${Math.floor(t / 60)}:${(t % 60).toFixed(1).padStart(4, "0")}`;
 
 /** Fix caption words, export MP3/GIF, set background music: the editing tools on a finished clip. */
-export function ClipTools({ clipId, disabled, music }: { clipId: string; disabled?: boolean; music?: { mood?: string; volume?: number } }) {
+export function ClipTools({
+  clipId,
+  disabled,
+  music,
+  caption,
+}: {
+  clipId: string;
+  disabled?: boolean;
+  music?: { mood?: string; volume?: number };
+  caption?: string;
+}) {
   const [open, setOpen] = useState(false);
   const [cues, setCues] = useState<Cue[] | null>(null);
   const [exportJob, setExportJob] = useState<string | null>(null);
@@ -98,6 +109,7 @@ export function ClipTools({ clipId, disabled, music }: { clipId: string; disable
       <Button size="sm" variant="outline" onClick={() => exportAs("gif")} disabled={disabled || !!exportJob} data-testid="export-gif">
         <ImagePlay /> GIF
       </Button>
+      <ScheduleButton clipId={clipId} defaultCaption={caption} />
       <span className="inline-flex items-center gap-1">
         <Music className="size-4 text-muted-foreground" />
         <Select value={mood} onValueChange={setMusic} disabled={disabled} className="h-8 w-44 text-xs" aria-label="Background music" options={MUSIC_MOODS} />

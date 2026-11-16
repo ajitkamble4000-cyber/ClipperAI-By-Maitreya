@@ -321,7 +321,12 @@ export function ClipCard({ clip, locked }: { clip: Clip; locked?: boolean }) {
             </div>
           )}
         </div>
-        <ClipTools clipId={clip.id} disabled={busy || locked || clip.status !== "ready"} music={clip.render_opts?.music} />
+        <ClipTools
+          clipId={clip.id}
+          disabled={busy || locked || clip.status !== "ready"}
+          music={clip.render_opts?.music}
+          caption={[title, description, tags].filter(Boolean).join("\n\n")}
+        />
         <ExtrasPanel
           base={`/clips/${clip.id}`}
           covers={clip.covers}

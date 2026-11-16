@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowRight, Captions, CheckCircle2, Circle, Coins, Infinity as InfinityIcon, Loader2, Megaphone, Scissors, Sparkles, Wand2 } from "lucide-react";
+import { ArrowRight, CalendarDays, Captions, CheckCircle2, Circle, Coins, Infinity as InfinityIcon, Loader2, Megaphone, Scissors, Sparkles, Wand2 } from "lucide-react";
 import { ProjectThumb } from "@/components/library/project-thumb";
 import { useMe } from "@/components/shell/member-context";
 import { useWallet, type Wallet } from "@/components/shell/token-chip";
@@ -99,6 +99,11 @@ export function Dashboard() {
             <Button variant="outline" size="sm" asChild>
               <Link href="/story/new">
                 <Sparkles /> AI story
+              </Link>
+            </Button>
+            <Button variant="outline" size="sm" asChild>
+              <Link href="/calendar">
+                <CalendarDays /> Calendar
               </Link>
             </Button>
           </div>
