@@ -111,3 +111,24 @@ def test_share_links(client, make_member):
     )
     assert client.get(f"/public/share/{r.json()['token']}").status_code == 404
     assert client.get("/public/share/short").status_code == 404
+
+
+def test_download_my_data(client, make_member):
+    import json as _json
+
+    uid, email, hdr = make_member(plan="pro")
+    other, _, _ = make_member()
+    _ready_clip(uid)
+    _ready_clip(other)
+    client.get("/referrals", headers=hdr)
+    r = client.get("/me/export", headers=hdr)
+    assert (
+        r.status_code == 200 and 'filename="shorts-studio-my-data.json"' in r.headers["content-disposition"]
+    )
+    data = _json.loads(r.text)
+    assert data["profile"]["email"] == email and data["wallet"]["daily_allowance"] == 5000
+    assert len(data["projects"]) == 1 and data["projects"][0]["clips"][0]["video_url"].startswith("http")
+    text = r.text
+    assert other not in text and "key_hash" not in text and "secret_enc" not in text
+    key = client.post("/api-keys", headers=hdr, json={"name": "k"})  # Pro has no API: 403, fine either way
+    assert key.status_code in (201, 403)

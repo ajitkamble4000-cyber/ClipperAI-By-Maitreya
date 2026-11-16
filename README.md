@@ -96,6 +96,11 @@ What the media tests verify (not just "it ran"): 1080x1920 at 30 fps, H.264/AAC,
 | Accounts | Sign-up, Home dashboard with quick paste and getting-started checklist, notifications, token history, plan & pricing pages, upgrade requests, account deletion |
 | Business | Free / Pro / Business / Team plans with features and limits, daily tokens + bonus tokens, editable token prices, refunds on failure, Staff & Creator teams free and unlimited |
 | Admin | Overview analytics, users (plan, team, tokens, allowance, suspend, admin role), upgrade requests, jobs monitor with cancel + refund, announcements, audit log, system health, plan & price editor, token gifts |
+| Editing | Fix caption words and re-render, background music on clips (ducked under speech), compilations of several clips, MP3 and GIF exports |
+| Repurpose | One click turns a video into a summary, YouTube chapters, quotes, blog post, X thread, LinkedIn post and newsletter; search what was said across your library |
+| Growth | Promo codes (bonus tokens or plan trials that end automatically), referral links that reward both people, owner site controls (close sign-ups, pause jobs, banner) |
+| Developer API | Business: personal API keys, signed webhooks with retries and delivery log, clips listing with download links, examples on the Developers page |
+| Privacy | Download all your data as JSON; delete your account and files |
 | Cost control | Every AI call logged with estimated cost per provider/model; monthly budget with 80% warning and 100% pause |
 
 See [DEPLOY.md](DEPLOY.md) for production and [docs/ROADMAP.md](docs/ROADMAP.md) for planned features.

@@ -59,6 +59,10 @@ test("notifications bell, upgrade request, token history", async ({ page }) => {
   await expect(page.getByTestId("account-plan")).toHaveText("Free");
   await expect(page.getByTestId("pending-request")).toContainText("You asked for Pro");
 
+  const dl = page.waitForEvent("download");
+  await page.getByTestId("export-data").click();
+  expect((await dl).suggestedFilename()).toBe("shorts-studio-my-data.json");
+
   await page.goto("/account/tokens");
   await expect(page.getByTestId("tokens-total")).toHaveText("1,000");
   await expect(page.getByTestId("ledger")).toContainText("Daily refill");

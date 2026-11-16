@@ -94,6 +94,12 @@ Updates later: `infra/scripts/deploy.sh` (pull, rebuild, restart). Running jobs 
 7. Make admins: **Admin → Users → (user) → Make admin** (owner only). Put staff and content creators on the **Staff** or **Content creator** team there: they get everything free and unlimited.
 8. **Admin → System health** should be all green; run a test job from **Settings → Diagnostics** to confirm the queue, Realtime and R2 CORS.
 
+### Growth and the developer API
+
+- **Admin → Promo codes** (owner): codes that add bonus tokens or unlock Pro/Business for N days (trials switch back automatically), with optional limits and expiry.
+- **Admin → Site & referrals** (owner): close sign-ups (only invites can join), pause new jobs for maintenance, show a banner on every page, set the referral reward (both people get it when the invited friend finishes their first video) and a monthly cap.
+- **Developer API** (Business): users create API keys and webhooks on **Account → Developer API**. Webhooks only call public `https://` URLs; `WEBHOOK_ALLOW_PRIVATE=1` exists for local development and tests only, never set it in production.
+
 ### Plans, tokens and upgrades
 
 - Every user gets a daily token allowance that refills at 00:00 UTC; bonus tokens (gifts) never expire. Tokens are charged when a job starts and refunded automatically if it fails or is canceled.

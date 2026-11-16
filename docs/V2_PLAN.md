@@ -69,4 +69,4 @@ Panels: 51 notifications · 52 landing page · 53 pricing page · 54 onboarding 
 - [x] 19. Repurpose with AI: summary, YouTube chapters, key quotes, blog post, X thread, LinkedIn post and
       newsletter from a video; search what was said across the library
 - [x] 20. Developer API (Business): personal API keys, webhooks when jobs finish (signed), developer docs page
-- [ ] 21. Account: download my data (export); full regression + docs
+- [x] 21. Account: download my data (export); full regression + docs

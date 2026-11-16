@@ -6,13 +6,13 @@ import secrets
 from datetime import UTC, datetime, timedelta
 from typing import Any
 
-from fastapi import APIRouter, HTTPException, Request, status
+from fastapi import APIRouter, HTTPException, Request, Response, status
 from pydantic import BaseModel, Field
 from studio_shared import db, storage, tokens
 from studio_shared.notify import notify, notify_admins
 
 from ..access import clip_for, project_for
-from ..auth import AdminMember, CurrentMember, Member, audit
+from ..auth import AdminMember, CurrentMember, Member, SessionMember, audit
 from ..plans import has_feature, require_feature
 from ..ratelimit import check_ip_rate
 
@@ -304,3 +304,103 @@ def view_share(token: str, request: Request) -> dict:
         "download_url": storage.presign_get(st["render_key"], expires=3600, filename="story.mp4"),
         "by": owner.get("display_name"),
     }
+
+
+# ---------------------------------------------------------------- download my data
+@router.get("/me/export")
+def export_my_data(m: SessionMember) -> Response:
+    """Everything stored about you, as JSON, with download links (valid 24 hours) for your videos."""
+    import json as _json
+
+    from studio_shared import storage as _storage
+
+    uid = m.user_id
+    sign = lambda k, name=None: _storage.presign_get(k, expires=86400, filename=name) if k else None  # noqa: E731
+    projects = db.fetch_all(
+        "select id, type, title, status, created_at, updated_at, repurpose from projects where created_by = %s order by created_at",
+        [uid],
+    )
+    for p in projects:
+        if p["type"] == "clip":
+            p["clips"] = [
+                {
+                    **{
+                        k: c[k]
+                        for k in (
+                            "id",
+                            "idx",
+                            "title",
+                            "description",
+                            "hashtags",
+                            "duration_s",
+                            "aspect",
+                            "language",
+                        )
+                    },
+                    "video_url": sign(c["video_key"], c["filename"]),
+                }
+                for c in db.fetch_all("select * from clips where project_id = %s order by idx", [p["id"]])
+            ]
+        else:
+            st = db.fetch_one(
+                "select idea, genre, title, description, hashtags, render_key from stories where project_id = %s",
+                [p["id"]],
+            )
+            if st:
+                p["story"] = {
+                    **{k: st[k] for k in ("idea", "genre", "title", "description", "hashtags")},
+                    "video_url": sign(st["render_key"], "story.mp4"),
+                }
+                p["scenes"] = db.fetch_all(
+                    "select idx, narration, image_prompt from scenes where project_id = %s order by idx",
+                    [p["id"]],
+                )
+    data = {
+        "exported_at": datetime.now(UTC).isoformat(),
+        "profile": db.fetch_one(
+            "select user_id, email, display_name, role, plan_id, team, created_at, referral_code from members where user_id = %s",
+            [uid],
+        ),
+        "wallet": tokens.get_wallet(uid).to_json(),
+        "token_history": db.fetch_all(
+            "select ts, delta, bucket, reason, action, meta from token_ledger where user_id = %s order by id",
+            [uid],
+        ),
+        "projects": projects,
+        "brand_kit": db.fetch_one(
+            "select logo_position, handle, primary_color, caption_preset, progress_bar from brand_kits where user_id = %s",
+            [uid],
+        ),
+        "templates": db.fetch_all(
+            "select kind, name, settings, created_at from templates where user_id = %s", [uid]
+        ),
+        "share_links": db.fetch_all(
+            "select token, project_id, clip_id, views, expires_at, revoked_at, created_at from share_links where created_by = %s",
+            [uid],
+        ),
+        "upgrade_requests": db.fetch_all(
+            "select plan_id, note, status, reply, created_at from upgrade_requests where user_id = %s", [uid]
+        ),
+        "promo_codes_used": db.fetch_all(
+            "select code, redeemed_at from promo_redemptions where user_id = %s", [uid]
+        ),
+        "referrals": db.fetch_all(
+            "select status, reward, created_at, rewarded_at from referrals where referrer_id = %s", [uid]
+        ),
+        "notifications": db.fetch_all(
+            "select kind, title, body, created_at, read_at from notifications where user_id = %s", [uid]
+        ),
+        "api_keys": db.fetch_all(
+            "select name, prefix, created_at, last_used_at, revoked_at from api_keys where user_id = %s",
+            [uid],
+        ),
+        "webhooks": db.fetch_all(
+            "select url, events, active, created_at from webhooks where user_id = %s", [uid]
+        ),
+    }
+    body = _json.dumps(data, default=str, indent=2)
+    return Response(
+        body,
+        media_type="application/json",
+        headers={"Content-Disposition": 'attachment; filename="shorts-studio-my-data.json"'},
+    )

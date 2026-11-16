@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ChevronRight, Code2, Coins, Link2, LogOut, Palette, Receipt, Trash2 } from "lucide-react";
+import { ChevronRight, Code2, Coins, Download, Link2, LogOut, Palette, Receipt, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { LockedBadge } from "@/components/plan/locked";
 import { PageHeader } from "@/components/shell/page-header";
@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { api } from "@/lib/api";
+import { api, downloadFrom } from "@/lib/api";
 import { supabaseBrowser } from "@/lib/supabase/client";
 import { timeAgo } from "@/lib/utils";
 
@@ -199,9 +199,18 @@ export default function AccountPage() {
         </Card>
       )}
 
-      <Button variant="outline" onClick={signOut} className="justify-self-start" data-testid="account-sign-out">
-        <LogOut /> Sign out
-      </Button>
+      <div className="flex flex-wrap gap-2">
+        <Button variant="outline" onClick={signOut} data-testid="account-sign-out">
+          <LogOut /> Sign out
+        </Button>
+        <Button
+          variant="outline"
+          data-testid="export-data"
+          onClick={() => downloadFrom("/me/export", "shorts-studio-my-data.json").catch((e) => toast.error((e as Error).message))}
+        >
+          <Download /> Download my data
+        </Button>
+      </div>
 
       {me.role !== "owner" && (
         <Card className="border-destructive/40">
