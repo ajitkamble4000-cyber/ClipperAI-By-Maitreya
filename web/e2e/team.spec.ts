@@ -63,12 +63,12 @@ test("library: filters, search, and the shared team library", async ({ page }) =
   ]);
   await login(page, a.email);
   await page.goto("/library");
-  await page.getByLabel("Search").fill(String(stamp));
+  await page.getByLabel("Search titles").fill(String(stamp));
   await expect(page.getByTestId("library-grid").getByRole("link")).toHaveCount(2);
-  await page.getByLabel("Search").fill(`Beta story ${stamp}`);
+  await page.getByLabel("Search titles").fill(`Beta story ${stamp}`);
   await expect(page.getByTestId("library-grid").getByRole("link")).toHaveCount(1);
   await page.goto("/clipper");
-  await page.getByLabel("Search").fill(String(stamp));
+  await page.getByLabel("Search titles").fill(String(stamp));
   await expect(page.getByTestId("library-grid").getByRole("link")).toHaveCount(1);
   await expect(page.getByText(`Alpha clip ${stamp}`)).toBeVisible();
 });

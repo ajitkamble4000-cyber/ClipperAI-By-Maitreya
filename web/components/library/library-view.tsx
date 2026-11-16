@@ -114,7 +114,7 @@ export function LibraryView({ fixedType }: { fixedType?: "clip" | "story" } = {}
       <div className="mb-5 grid gap-2 sm:grid-cols-[1fr_repeat(3,minmax(0,160px))]">
         <div className="relative">
           <Search className="absolute left-3 top-3 size-4 text-muted-foreground" />
-          <Input placeholder="Search titles" value={q} onChange={(e) => setQ(e.target.value)} className="pl-9" aria-label="Search" />
+          <Input placeholder="Search titles" value={q} onChange={(e) => setQ(e.target.value)} className="pl-9" aria-label="Search titles" />
         </div>
         {!fixedType && <Select
           value={type}
