@@ -44,7 +44,8 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=get_settings().origins,
     allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE"],
-    allow_headers=["authorization", "content-type"],
+    allow_headers=["authorization", "content-type", "x-api-key"],
+    expose_headers=["content-disposition"],  # so downloads keep their real file names
     max_age=600,
 )
 

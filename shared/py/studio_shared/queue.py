@@ -22,4 +22,5 @@ JOB_ROUTES: dict[str, tuple[str, str]] = {
     "title_variants": ("worker.run_job", QUEUE_AI),
     "clip_export": ("worker.run_job", QUEUE_MEDIA),
     "clip_compile": ("worker.run_job", QUEUE_MEDIA),
+    "repurpose": ("worker.run_job", QUEUE_AI),
 }

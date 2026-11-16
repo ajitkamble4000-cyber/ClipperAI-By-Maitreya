@@ -24,6 +24,7 @@ _REGISTRY: dict[str, str] = {
     "title_variants": "worker.extras:build_ideas",
     "clip_export": "worker.clipper.exports:build_export",
     "clip_compile": "worker.clipper.exports:build_compile",
+    "repurpose": "worker.repurpose:build_repurpose",
 }
 
 

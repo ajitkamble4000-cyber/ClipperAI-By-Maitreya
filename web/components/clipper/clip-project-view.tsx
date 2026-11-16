@@ -13,6 +13,7 @@ import { useJob, useProjectJobs } from "@/hooks/use-job";
 import { useProject, useProjectRows } from "@/hooks/use-rows";
 import { api, signedUrl } from "@/lib/api";
 import { CompilationButton } from "@/components/clipper/compilation-dialog";
+import { RepurposePanel } from "@/components/projects/repurpose-panel";
 import { ClipCard, type Clip } from "./clip-card";
 
 export function ClipProjectView({ projectId }: { projectId: string }) {
@@ -38,7 +39,7 @@ export function ClipProjectView({ projectId }: { projectId: string }) {
   }, [zipJob]);
 
   const generating = liveMain && (liveMain.status === "queued" || liveMain.status === "running");
-  const meta = (project?.meta ?? {}) as { mode?: string; options?: Record<string, unknown> };
+  const meta = (project?.meta ?? {}) as { mode?: string; options?: Record<string, unknown>; transcript_key?: string };
   const basicReason = liveMain?.result?.basic_reason as string | undefined;
   const readyCount = clips?.filter((c) => c.status === "ready").length ?? 0;
 
@@ -96,6 +97,7 @@ export function ClipProjectView({ projectId }: { projectId: string }) {
       </div>
 
       {liveMain && (generating || liveMain.status === "failed") && <JobProgress job={liveMain} />}
+      {!generating && meta.transcript_key ? <RepurposePanel projectId={projectId} title={String(project.title ?? "video")} /> : null}
       {meta.mode === "basic" && !generating && (
         <div className="flex gap-2 rounded-xl border border-warning/40 bg-warning/10 p-3 text-sm">
           <Info className="mt-0.5 size-4 shrink-0 text-warning" />

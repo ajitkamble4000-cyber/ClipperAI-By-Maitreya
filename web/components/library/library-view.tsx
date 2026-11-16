@@ -13,6 +13,7 @@ import { supabaseBrowser } from "@/lib/supabase/client";
 import { realtimeAuth } from "@/lib/supabase/realtime";
 import { timeAgo } from "@/lib/utils";
 import { ProjectThumb } from "./project-thumb";
+import { TranscriptSearch } from "./transcript-search";
 
 interface Row {
   id: string;
@@ -105,6 +106,11 @@ export function LibraryView({ fixedType }: { fixedType?: "clip" | "story" } = {}
           </div>
         }
       />
+      {!fixedType && (
+        <div className="mb-4">
+          <TranscriptSearch />
+        </div>
+      )}
       <div className="mb-5 grid gap-2 sm:grid-cols-[1fr_repeat(3,minmax(0,160px))]">
         <div className="relative">
           <Search className="absolute left-3 top-3 size-4 text-muted-foreground" />

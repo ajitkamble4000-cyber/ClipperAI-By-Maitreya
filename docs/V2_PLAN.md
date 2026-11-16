@@ -66,7 +66,7 @@ Panels: 51 notifications · 52 landing page · 53 pricing page · 54 onboarding 
       maintenance banner, referral rewards)
 - [x] 18. Editing: fix caption words and re-render, background music on clips (auto-ducked), compilations
       (merge clips into one video), MP3 audio and GIF exports
-- [ ] 19. Repurpose with AI: summary, YouTube chapters, key quotes, blog post, X thread, LinkedIn post and
+- [x] 19. Repurpose with AI: summary, YouTube chapters, key quotes, blog post, X thread, LinkedIn post and
       newsletter from a video; search what was said across the library
 - [ ] 20. Developer API (Business): personal API keys, webhooks when jobs finish (signed), developer docs page
 - [ ] 21. Account: download my data (export); full regression + docs

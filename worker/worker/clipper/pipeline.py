@@ -125,6 +125,12 @@ def step_moments(ctx: JobContext) -> dict[str, Any]:
             f"Captions mode works on videos up to {CAPTIONS_MAX_S // 60} minutes (this one is "
             f"{duration / 60:.0f}). Use Clips mode for long videos. Your tokens were refunded."
         )
+    try:  # searchable copy of what was said
+        from ..repurpose import index_transcript
+
+        index_transcript(ctx.project_id, t)
+    except Exception:  # noqa: BLE001 - search is a bonus, never fail the job for it
+        pass
     if o["mode"] == "captions" or (o["mode"] == "auto" and duration <= o["auto_whole_max_s"]):
         return _whole(ctx, o, t, meta, duration)
     if duration < min_len:

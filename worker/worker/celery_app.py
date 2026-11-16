@@ -54,9 +54,11 @@ def _install_test_fakes() -> None:
     gem_pkg.factory = lambda ctx: fake
     import worker.clipper.pipeline as cp
     import worker.extras as ex
+    import worker.repurpose as rp
 
     cp.available = lambda: True
     ex.available = lambda: True
+    rp.available = lambda: True
     logging.getLogger(__name__).warning("STUDIO_FAKE_GEMINI=1: using the offline fake Gemini (test mode)")
 
 

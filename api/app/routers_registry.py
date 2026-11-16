@@ -17,6 +17,7 @@ def extra_routers() -> list[APIRouter]:
         growth,
         library,
         projects,
+        repurpose,
         settings,
         story,
         story_media,
@@ -38,4 +39,5 @@ def extra_routers() -> list[APIRouter]:
         extras.router,
         growth.router,
         editing.router,
+        repurpose.router,
     ]

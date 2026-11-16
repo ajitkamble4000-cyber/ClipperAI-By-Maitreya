@@ -20,6 +20,27 @@ class FakeStoryGemini:
         from worker.captions.translate import CueTranslations
         from worker.clipper.whole import WholeMeta
         from worker.extras import TitleIdeas
+        from worker.repurpose import Chapter, Repurposed
+
+        if schema is Repurposed:
+            return Repurposed(
+                summary="A short talk about getting started.",
+                chapters=[
+                    Chapter(time=3, title="Intro"),
+                    Chapter(time=20, title="The main idea"),
+                    Chapter(time=55, title="Wrap up"),
+                ],
+                quotes=['"Start before you are ready."', "Small steps add up."],
+                blog_post="# Getting started\n\nIt all begins with one step.\n\n## Why it matters\n\nMomentum.",
+                x_thread=[
+                    "1/ Getting started is the hardest part.",
+                    "2/ Small steps add up.",
+                    "3/ Start today.",
+                ],
+                linkedin_post="Getting started is the hardest part.\n\nHere's what helped me.",
+                newsletter="Subject: Start before you're ready\n\nThis week: momentum.",
+                keywords=["#motivation", "habits", "productivity"],
+            )
 
         if schema is TitleIdeas:
             return TitleIdeas(
