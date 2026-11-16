@@ -1,0 +1,43 @@
+# Render Blueprint: the ClipperAI API server (free plan) + Redis (free).
+# One click: https://render.com/deploy?repo=https://github.com/ajitkamble4000-cyber/ClipperAI-By-Maitreya
+# Render asks for the values marked `sync: false` (paste them only there). See DEPLOY.md → "Free hosting".
+#
+# Video processing needs the worker too (it uses more memory than the free plan has). When you're ready,
+# add it in the Render dashboard as a Background Worker (Starter plan or bigger) from this repository with
+# Dockerfile path ./infra/docker/worker.Dockerfile and the same environment variables.
+services:
+  - type: web
+    name: clipperai-api
+    runtime: docker
+    plan: free
+    region: singapore
+    dockerfilePath: ./infra/docker/api.Dockerfile
+    dockerContext: .
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      - key: PORT
+        value: "8000"
+      - key: WEB_ORIGINS # the website's origin (no path)
+        value: https://ajitkamble4000-cyber.github.io
+      - key: OWNER_EMAIL # your owner/founder email (sign up with it on the site)
+        sync: false
+      - key: DATABASE_URL # Supabase → Connect → Session pooler connection string (with your DB password)
+        sync: false
+      - key: SUPABASE_URL # Supabase → Project Settings → API → Project URL
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY # Supabase → Project Settings → API keys → service_role / secret key
+        sync: false
+      - key: APP_ENCRYPTION_KEY # encrypts the AI and Razorpay keys you add in the app; keep it forever
+        generateValue: true
+      - key: REDIS_URL
+        fromService:
+          type: keyvalue
+          name: clipperai-redis
+          property: connectionString
+
+  - type: keyvalue
+    name: clipperai-redis
+    plan: free
+    region: singapore
+    ipAllowList: [] # only reachable from your Render services

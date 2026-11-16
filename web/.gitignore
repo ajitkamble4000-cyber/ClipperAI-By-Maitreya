@@ -40,3 +40,5 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 !.env.example
+# public values only (Supabase URL + anon key, API URL); used by the GitHub Pages build
+!.env.production

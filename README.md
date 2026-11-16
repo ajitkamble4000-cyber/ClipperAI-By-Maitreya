@@ -109,6 +109,10 @@ What the media tests verify (not just "it ran"): 1080x1920 at 30 fps, H.264/AAC,
 
 The website can run on Vercel or as a static site on **GitHub Pages** (workflow included). See [DEPLOY.md](DEPLOY.md) for production and [docs/ROADMAP.md](docs/ROADMAP.md) for planned features.
 
+**Go live on free plans** (Supabase + Render + GitHub Pages, about 20 minutes): follow [docs/GO-LIVE.md](docs/GO-LIVE.md).
+
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/ajitkamble4000-cyber/ClipperAI-By-Maitreya)
+
 ## License
 
 **Proprietary. All rights reserved.** This code is published for viewing only. No permission is given to copy,

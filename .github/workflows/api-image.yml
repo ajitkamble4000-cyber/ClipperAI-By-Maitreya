@@ -1,0 +1,31 @@
+# Builds the API server image (the one Render deploys) and checks the app starts inside it.
+name: API image
+
+on:
+  push:
+    branches: [main]
+    paths: ["api/**", "shared/**", "infra/docker/**", "uv.lock", "pyproject.toml", "render.yaml", ".github/workflows/api-image.yml"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build
+        env:
+          DOCKER_BUILDKIT: "1"
+        run: docker build -f infra/docker/api.Dockerfile -t clipperai-api .
+      - name: App loads inside the image
+        run: |
+          docker run --rm -e APP_ENCRYPTION_KEY=ci-generated-secret-value-0123456789abcdef clipperai-api \
+            python -c "from app.main import app; from studio_shared import crypto; assert crypto.decrypt(crypto.encrypt('ok')) == 'ok'; print('routes:', len(app.routes))"
+      - name: Server answers
+        run: |
+          docker run -d --name api -p 8000:8000 -e PORT=8000 clipperai-api
+          for i in $(seq 1 30); do curl -s -o /dev/null http://127.0.0.1:8000/docs && break; sleep 1; done
+          curl -sf http://127.0.0.1:8000/docs > /dev/null && echo "server is up"
+          docker logs api | tail -5

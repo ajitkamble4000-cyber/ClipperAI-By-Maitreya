@@ -2,6 +2,9 @@
 
 from __future__ import annotations
 
+import base64
+import hashlib
+
 from cryptography.fernet import Fernet, InvalidToken
 
 from .config import get_settings
@@ -15,7 +18,13 @@ def _fernet() -> Fernet:
     key = get_settings().app_encryption_key.get_secret_value()
     if not key:
         raise CryptoError("APP_ENCRYPTION_KEY is not set")
-    return Fernet(key.encode())
+    try:
+        return Fernet(key.encode())  # a proper Fernet key (as generated in DEPLOY.md)
+    except ValueError:
+        if len(key) < 32:
+            raise CryptoError("APP_ENCRYPTION_KEY is too short (use at least 32 random characters)") from None
+        # any other long random secret (e.g. one a hosting provider generated): derive a Fernet key from it
+        return Fernet(base64.urlsafe_b64encode(hashlib.sha256(key.encode()).digest()))
 
 
 def encrypt(plaintext: str) -> str:

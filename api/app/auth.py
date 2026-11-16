@@ -2,11 +2,14 @@
 
 from __future__ import annotations
 
+import hashlib
 import os
+import time
 from dataclasses import dataclass, field
 from functools import lru_cache
 from typing import Annotated, Any
 
+import httpx
 import jwt
 from fastapi import Depends, HTTPException, Request, status
 from studio_shared import db
@@ -50,13 +53,46 @@ def _jwks() -> jwt.PyJWKClient:
     return jwt.PyJWKClient(f"{get_settings().supabase_url}/auth/v1/.well-known/jwks.json", cache_keys=True)
 
 
+_CHECKED: dict[str, tuple[float, dict[str, Any]]] = {}  # token hash → (valid until, claims)
+
+
+def _ask_supabase(token: str) -> dict[str, Any]:
+    """Projects that still sign with the legacy shared secret: when SUPABASE_JWT_SECRET isn't configured, let
+    Supabase Auth confirm the session instead (cached for a minute, so it isn't a call per request)."""
+    h = hashlib.sha256(token.encode()).hexdigest()
+    hit = _CHECKED.get(h)
+    if hit and hit[0] > time.time():
+        return hit[1]
+    s = get_settings()
+    try:
+        r = httpx.get(
+            f"{s.supabase_url}/auth/v1/user",
+            headers={
+                "apikey": s.supabase_service_role_key.get_secret_value(),
+                "Authorization": f"Bearer {token}",
+            },
+            timeout=10,
+        )
+    except httpx.HTTPError as e:
+        raise HTTPException(status.HTTP_503_SERVICE_UNAVAILABLE, "Couldn't reach the sign-in service") from e
+    if r.status_code != 200:
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Invalid or expired session")
+    u = r.json()
+    exp = jwt.decode(token, options={"verify_signature": False}).get("exp", time.time() + 60)
+    claims = {"sub": u["id"], "email": u.get("email"), "exp": exp, "role": u.get("role", "authenticated")}
+    if len(_CHECKED) > 5000:
+        _CHECKED.clear()
+    _CHECKED[h] = (min(time.time() + 60, float(exp)), claims)
+    return claims
+
+
 def verify_token(token: str) -> dict[str, Any]:
     s = get_settings()
     try:
         alg = jwt.get_unverified_header(token).get("alg", "")
         if alg == "HS256":
-            if not s.supabase_jwt_secret:
-                raise jwt.InvalidTokenError("HS256 token but SUPABASE_JWT_SECRET is not configured")
+            if not s.supabase_jwt_secret or not s.supabase_jwt_secret.get_secret_value():
+                return _ask_supabase(token)
             key: Any = s.supabase_jwt_secret.get_secret_value()
         else:
             key = _jwks().get_signing_key_from_jwt(token).key
