@@ -1,1 +1,1 @@
-"""Shorts Studio HTTP API."""
+"""ClipperAI by Maitreya HTTP API."""

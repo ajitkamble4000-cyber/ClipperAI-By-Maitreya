@@ -122,9 +122,7 @@ def test_download_my_data(client, make_member):
     _ready_clip(other)
     client.get("/referrals", headers=hdr)
     r = client.get("/me/export", headers=hdr)
-    assert (
-        r.status_code == 200 and 'filename="shorts-studio-my-data.json"' in r.headers["content-disposition"]
-    )
+    assert r.status_code == 200 and 'filename="clipperai-my-data.json"' in r.headers["content-disposition"]
     data = _json.loads(r.text)
     assert data["profile"]["email"] == email and data["wallet"]["daily_allowance"] == 5000
     assert len(data["projects"]) == 1 and data["projects"][0]["clips"][0]["video_url"].startswith("http")

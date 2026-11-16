@@ -7,7 +7,7 @@ from typing import Literal
 
 from fastapi import APIRouter, HTTPException, status
 from pydantic import BaseModel, Field
-from studio_shared import apikeys, crypto, db, storage, webhooks
+from studio_shared import apikeys, brand, crypto, db, storage, webhooks
 
 from ..access import project_for
 from ..auth import CurrentMember, SessionMember, audit
@@ -157,7 +157,7 @@ def delete_hook(hook_id: str, m: SessionMember) -> dict:
 def test_hook(hook_id: str, m: SessionMember) -> dict:
     """Send a `ping` event right now and report what the URL answered."""
     _own_hook(hook_id, m)
-    return webhooks.deliver(hook_id, "ping", {"message": "Webhook test from Shorts Studio"})
+    return webhooks.deliver(hook_id, "ping", {"message": f"Webhook test from {brand.NAME}"})
 
 
 # ---------------------------------------------------------------- handy for automations

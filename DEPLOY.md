@@ -1,4 +1,4 @@
-# Deploying Shorts Studio
+# Deploying ClipperAI by Maitreya
 
 Production layout:
 

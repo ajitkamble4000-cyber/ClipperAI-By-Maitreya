@@ -2,10 +2,12 @@ import type { Metadata, Viewport } from "next";
 import { Toaster } from "sonner";
 import "./globals.css";
 import "./caption-fonts.css";
+import { BRAND } from "@/lib/brand";
 
 export const metadata: Metadata = {
-  title: "Shorts Studio",
-  description: "Make YouTube Shorts: clip long videos and create AI stories.",
+  title: { default: BRAND, template: `%s · ${BRAND}` },
+  description: "Paste any video link and get captioned Shorts, or turn an idea into an animated AI story.",
+  applicationName: BRAND,
 };
 
 export const viewport: Viewport = { themeColor: "#14121c", width: "device-width", initialScale: 1 };

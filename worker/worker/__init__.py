@@ -1,1 +1,1 @@
-"""Shorts Studio background workers."""
+"""ClipperAI by Maitreya background workers."""

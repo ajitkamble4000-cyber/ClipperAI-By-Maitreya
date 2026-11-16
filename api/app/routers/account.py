@@ -402,5 +402,5 @@ def export_my_data(m: SessionMember) -> Response:
     return Response(
         body,
         media_type="application/json",
-        headers={"Content-Disposition": 'attachment; filename="shorts-studio-my-data.json"'},
+        headers={"Content-Disposition": 'attachment; filename="clipperai-my-data.json"'},
     )

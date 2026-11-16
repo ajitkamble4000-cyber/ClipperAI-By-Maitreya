@@ -8,7 +8,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-from studio_shared import db
+from studio_shared import brand, db
 from studio_shared.config import get_settings
 from studio_shared.errors import UserError
 from studio_shared.logging_setup import setup as setup_logging
@@ -26,7 +26,7 @@ async def lifespan(_: FastAPI):
     db.close_pool()
 
 
-app = FastAPI(title="Shorts Studio API", version="0.1.0", lifespan=lifespan)
+app = FastAPI(title=f"{brand.NAME} API", version="0.1.0", lifespan=lifespan)
 log = logging.getLogger("api")
 
 

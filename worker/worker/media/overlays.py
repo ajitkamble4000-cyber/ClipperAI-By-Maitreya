@@ -7,11 +7,12 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+from studio_shared import brand
 from studio_shared.config import get_settings
 
 from . import ffmpeg
 
-WATERMARK = "Made with Shorts Studio"
+WATERMARK = f"Made with {brand.NAME}"
 
 
 @dataclass

@@ -8,7 +8,7 @@ from typing import Annotated, Literal
 
 from fastapi import APIRouter, HTTPException, Query, Request, Response, status
 from pydantic import BaseModel, Field
-from studio_shared import db
+from studio_shared import brand, db
 from studio_shared.config import get_settings
 
 from ..access import clip_for, project_for
@@ -174,9 +174,9 @@ def ics_feed(token: str, request: Request) -> Response:
     lines = [
         "BEGIN:VCALENDAR",
         "VERSION:2.0",
-        "PRODID:-//Shorts Studio//Content calendar//EN",
+        f"PRODID:-//{brand.NAME}//Content calendar//EN",
         "CALSCALE:GREGORIAN",
-        "X-WR-CALNAME:Shorts Studio posts",
+        f"X-WR-CALNAME:{brand.NAME} posts",
     ]
     for r in rows:
         start = r["scheduled_at"].astimezone(UTC)

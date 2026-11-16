@@ -2,7 +2,6 @@
 
 import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Clapperboard } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,6 +9,7 @@ import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { api } from "@/lib/api";
 import { supabaseBrowser } from "@/lib/supabase/client";
+import { BrandMark } from "@/components/shell/brand-mark";
 
 /** Landing page for invite and password-reset links: establish the session, then set a password. */
 function Accept() {
@@ -77,7 +77,7 @@ function Accept() {
   return (
     <div className="flex min-h-dvh flex-col items-center justify-center px-4">
       <div className="mb-8 flex items-center gap-2 text-xl font-semibold">
-        <Clapperboard className="size-7 text-primary" /> Shorts Studio
+        <BrandMark size="lg" />
       </div>
       <Card className="w-full max-w-sm">
         <CardHeader>

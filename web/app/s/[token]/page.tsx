@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Clapperboard, Download } from "lucide-react";
+import { Download } from "lucide-react";
 import { env } from "@/lib/env";
+import { BrandMark } from "@/components/shell/brand-mark";
+import { BRAND } from "@/lib/brand";
 
 interface Shared {
   title: string;
@@ -23,7 +25,7 @@ async function load(token: string): Promise<Shared | null> {
   }
 }
 
-export const metadata: Metadata = { title: "Shared video · Shorts Studio", robots: { index: false, follow: false } };
+export const metadata: Metadata = { title: `Shared video · ${BRAND}`, robots: { index: false, follow: false } };
 
 const RATIO: Record<string, string> = { "9:16": "aspect-[9/16] max-w-sm", "1:1": "aspect-square max-w-xl", "4:5": "aspect-[4/5] max-w-md", "16:9": "aspect-video max-w-3xl" };
 
@@ -34,7 +36,7 @@ export default async function SharedPage({ params }: { params: Promise<{ token: 
   return (
     <div className="flex min-h-dvh flex-col items-center px-4 py-8">
       <Link href="/welcome" className="mb-6 flex items-center gap-2 font-semibold">
-        <Clapperboard className="size-6 text-primary" /> Shorts Studio
+        <BrandMark />
       </Link>
       {!v ? (
         <div className="mt-20 text-center">
@@ -58,7 +60,7 @@ export default async function SharedPage({ params }: { params: Promise<{ token: 
             </a>
           </div>
           <p className="mt-6 text-xs text-muted-foreground">
-            Made with Shorts Studio.{" "}
+            Made with {BRAND}.{" "}
             <Link href="/signup" className="text-primary hover:underline">
               Make your own for free
             </Link>

@@ -1,4 +1,4 @@
-# Shorts Studio
+# ClipperAI by Maitreya
 
 A hosted web app, run as a business, for making short-form video:
 

@@ -134,12 +134,15 @@ def test_overlay_chain(tmp_path):
     logo = tmp_path / "logo.png"
     logo.write_bytes(b"x")
     opts = OverlayOptions(
-        watermark_text="Made with Shorts Studio", logo=logo, handle="@me", progress_bar=True
+        watermark_text="Made with ClipperAI by Maitreya", logo=logo, handle="@me", progress_bar=True
     )
     parts, out = chain(opts, "v0", width=1080, height=1920, duration=10.0, logo_input=2)
     g = ";".join(parts)
     assert (
-        g.startswith("[v0]drawbox") and "[2:v]scale=" in g and "@me" in g and "Made with Shorts Studio" in g
+        g.startswith("[v0]drawbox")
+        and "[2:v]scale=" in g
+        and "@me" in g
+        and "Made with ClipperAI by Maitreya" in g
     )
     assert out == "ov4"
     assert OverlayOptions.from_params({"watermark": False}, lambda k: logo) is None

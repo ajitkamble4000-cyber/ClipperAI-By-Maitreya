@@ -105,7 +105,7 @@ def test_vision_frames_are_sent_as_images(mock_http, models_setting):
 
     def handler(req):
         body = json.loads(req.content)
-        assert req.url.host == "openrouter.ai" and req.headers["x-title"] == "Shorts Studio"
+        assert req.url.host == "openrouter.ai" and req.headers["x-title"] == "ClipperAI by Maitreya"
         content = body["messages"][-1]["content"]
         kinds = [c["type"] for c in content]
         assert kinds.count("image_url") == 2 and content[1]["image_url"]["url"].startswith(

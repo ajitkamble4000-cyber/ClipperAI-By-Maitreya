@@ -10,6 +10,7 @@ import json
 from pathlib import Path
 from typing import Any
 
+from ... import brand
 from ..base import Credentials, ImagePart, NotConfigured, ProviderError, http_client, raise_for
 
 OPENAI_VOICES = [
@@ -44,7 +45,7 @@ class OpenAILike:
         if json_body:
             h["Content-Type"] = "application/json"
         if self.c.provider == "openrouter":
-            h["X-Title"] = "Shorts Studio"
+            h["X-Title"] = brand.NAME
         return h
 
     # ------------------------------------------------------------ text

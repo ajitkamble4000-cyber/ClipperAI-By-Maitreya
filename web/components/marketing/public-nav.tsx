@@ -2,10 +2,10 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Clapperboard } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SiteBanner } from "@/components/shell/site-banner";
 import { supabaseBrowser } from "@/lib/supabase/client";
+import { BrandMark } from "@/components/shell/brand-mark";
 
 /** Top bar for public pages; shows "Open studio" when already signed in. */
 export function PublicNav() {
@@ -19,8 +19,8 @@ export function PublicNav() {
     <header className="sticky top-0 z-30 border-b bg-background/80 backdrop-blur">
       <SiteBanner />
       <div className="mx-auto flex max-w-6xl items-center gap-4 px-4 py-3">
-        <Link href="/welcome" className="flex items-center gap-2 font-semibold">
-          <Clapperboard className="size-6 text-primary" /> Shorts Studio
+        <Link href="/welcome">
+          <BrandMark />
         </Link>
         <nav className="ml-auto flex items-center gap-1 text-sm sm:gap-3">
           <Link href="/pricing" className="rounded-lg px-2 py-1.5 text-muted-foreground hover:text-foreground">
@@ -50,9 +50,7 @@ export function PublicFooter() {
   return (
     <footer className="mt-20 border-t">
       <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-4 px-4 py-8 text-sm text-muted-foreground">
-        <span className="flex items-center gap-2">
-          <Clapperboard className="size-4 text-primary" /> Shorts Studio
-        </span>
+        <BrandMark size="sm" />
         <Link href="/pricing" className="hover:text-foreground">
           Pricing
         </Link>

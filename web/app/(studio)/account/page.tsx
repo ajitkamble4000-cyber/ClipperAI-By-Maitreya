@@ -207,7 +207,7 @@ export default function AccountPage() {
         <Button
           variant="outline"
           data-testid="export-data"
-          onClick={() => downloadFrom("/me/export", "shorts-studio-my-data.json").catch((e) => toast.error((e as Error).message))}
+          onClick={() => downloadFrom("/me/export", "clipperai-my-data.json").catch((e) => toast.error((e as Error).message))}
         >
           <Download /> Download my data
         </Button>

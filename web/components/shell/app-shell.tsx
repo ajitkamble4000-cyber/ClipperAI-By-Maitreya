@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { BarChart3, CalendarDays, Clapperboard, Home, LayoutGrid, LogOut, Scissors, Settings, Shield, Sparkles, UserRound } from "lucide-react";
+import { BarChart3, CalendarDays, Home, LayoutGrid, LogOut, Scissors, Settings, Shield, Sparkles, UserRound } from "lucide-react";
 import { supabaseBrowser } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
 import { BudgetBanner } from "./budget-banner";
@@ -10,6 +10,7 @@ import { TokenChip } from "./token-chip";
 import { isAdmin, MemberProvider, type Me } from "./member-context";
 import { NotificationBell } from "./notification-bell";
 import { SiteBanner } from "./site-banner";
+import { BrandMark } from "./brand-mark";
 
 type NavItem = { href: string; label: string; icon: typeof Home; admin?: boolean; owner?: boolean };
 
@@ -42,8 +43,8 @@ export function AppShell({ me, children }: { me: Me; children: React.ReactNode }
         <div className="hidden border-r bg-card/40 md:block">
         <aside className="sticky top-0 flex h-dvh flex-col p-4">
           <div className="mb-8 flex items-center justify-between gap-2 px-2">
-            <Link href="/" className="flex items-center gap-2 font-semibold">
-              <Clapperboard className="size-6 text-primary" /> Shorts Studio
+            <Link href="/" className="min-w-0">
+              <BrandMark />
             </Link>
             <NotificationBell align="left" />
           </div>
@@ -74,8 +75,8 @@ export function AppShell({ me, children }: { me: Me; children: React.ReactNode }
         </aside>
         </div>
         <header className="sticky top-0 z-30 flex items-center justify-between border-b bg-background/80 px-4 py-3 backdrop-blur md:hidden">
-          <Link href="/" className="flex items-center gap-2 font-semibold">
-            <Clapperboard className="size-5 text-primary" /> Shorts Studio
+          <Link href="/" className="min-w-0">
+            <BrandMark size="sm" />
           </Link>
           <TokenChip className="ml-auto mr-1" initial={me.wallet} />
           <NotificationBell />
