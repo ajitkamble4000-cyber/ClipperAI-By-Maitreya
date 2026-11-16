@@ -21,6 +21,7 @@ def extra_routers() -> list[APIRouter]:
         projects,
         repurpose,
         settings,
+        sharing,
         story,
         story_media,
         tokens,
@@ -44,4 +45,5 @@ def extra_routers() -> list[APIRouter]:
         repurpose.router,
         developer.router,
         calendar.router,
+        sharing.router,
     ]

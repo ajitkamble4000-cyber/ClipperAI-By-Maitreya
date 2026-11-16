@@ -29,6 +29,7 @@ FEATURE_LABELS = {
     "no_watermark": "No watermark",
     "priority": "Priority processing",
     "api_access": "Developer API & webhooks",
+    "collaboration": "Share projects with collaborators",
 }
 LIGHT_KINDS = (
     "clip_zip",

@@ -48,7 +48,7 @@ function Section({ title, text, testId }: { title: string; text: string; testId?
 }
 
 /** Turn a video into writing: summary, YouTube chapters, quotes, blog post, X thread, LinkedIn post, newsletter. */
-export function RepurposePanel({ projectId, title }: { projectId: string; title: string }) {
+export function RepurposePanel({ projectId, title, readOnly }: { projectId: string; title: string; readOnly?: boolean }) {
   const [r, setR] = useState<Repurposed | null>(null);
   const [open, setOpen] = useState(false);
   const [jobId, setJobId] = useState<string | null>(null);
@@ -91,9 +91,11 @@ export function RepurposePanel({ projectId, title }: { projectId: string; title:
             <Download /> .md
           </Button>
         )}
-        <Button size="sm" variant={has ? "outline" : "default"} onClick={start} disabled={!!jobId} data-testid="write-it-up">
-          {jobId ? <Loader2 className="animate-spin" /> : null} {jobId ? "Writing…" : has ? "Rewrite" : "Write it up"}
-        </Button>
+        {!readOnly && (
+          <Button size="sm" variant={has ? "outline" : "default"} onClick={start} disabled={!!jobId} data-testid="write-it-up">
+            {jobId ? <Loader2 className="animate-spin" /> : null} {jobId ? "Writing…" : has ? "Rewrite" : "Write it up"}
+          </Button>
+        )}
         {has && (
           <Button size="icon" variant="ghost" onClick={() => setOpen((o) => !o)} aria-label={open ? "Hide write-up" : "Show write-up"}>
             <ChevronDown className={cn("transition", open && "rotate-180")} />

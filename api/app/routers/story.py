@@ -52,8 +52,8 @@ class StoryIn(StorySettings):
     generate: bool = True
 
 
-def story_or_404(project_id: str, m: Member) -> dict[str, Any]:
-    project_for(project_id, m)
+def story_or_404(project_id: str, m: Member, write: bool = True) -> dict[str, Any]:
+    project_for(project_id, m, write=write)
     row = db.fetch_one(
         "select s.*, p.created_by from stories s join projects p on p.id = s.project_id where s.project_id = %s",
         [project_id],

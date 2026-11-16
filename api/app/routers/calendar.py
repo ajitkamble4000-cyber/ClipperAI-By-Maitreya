@@ -69,7 +69,7 @@ class ItemIn(BaseModel):
 @router.post("/calendar", status_code=201)
 def create_item(body: ItemIn, m: CurrentMember) -> dict:
     if body.clip_id:
-        clip = clip_for(body.clip_id, m)
+        clip = clip_for(body.clip_id, m, write=False)
         project_id, clip_id = str(clip["project_id"]), body.clip_id
     elif body.project_id:
         project_for(body.project_id, m)

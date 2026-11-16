@@ -216,7 +216,7 @@ def share_clip(clip_id: str, body: ShareIn, m: CurrentMember) -> dict:
 @router.post("/projects/{project_id}/share", status_code=201)
 def share_story(project_id: str, body: ShareIn, m: CurrentMember) -> dict:
     require_feature(m, "share_links")
-    p = project_for(project_id, m)
+    p = project_for(project_id, m, write=True)
     if p["type"] != "story":
         raise HTTPException(status.HTTP_400_BAD_REQUEST, "Share a clip from its card")
     st = db.fetch_one("select render_key from stories where project_id = %s", [project_id])

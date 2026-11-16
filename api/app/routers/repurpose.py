@@ -21,7 +21,7 @@ def slug(text: str) -> str:
 
 @router.post("/projects/{project_id}/repurpose", status_code=201)
 def start_repurpose(project_id: str, m: CurrentMember) -> dict:
-    project_for(project_id, m)
+    project_for(project_id, m, write=True)
     if jobs.active_job_for_project(project_id, ("repurpose",)):
         raise HTTPException(status.HTTP_409_CONFLICT, "Already writing for this video")
     return launch(m, "repurpose", project_id, {}, {})
@@ -79,7 +79,9 @@ def search_transcripts(m: CurrentMember, q: str = Query(min_length=2, max_length
              left join members cm on cm.user_id = p.created_by,
                   websearch_to_tsquery('simple', %(q)s) query
             where pt.tsv @@ query
-              and (p.created_by = %(uid)s or %(admin)s or (%(team)s and cm.team is not null))
+              and (p.created_by = %(uid)s or %(admin)s or (%(team)s and cm.team is not null)
+                   or exists (select 1 from project_members pm
+                               where pm.project_id = p.id and pm.user_id = %(uid)s))
             order by rank desc, p.updated_at desc limit 20""",
         {"q": q, "uid": m.user_id, "admin": m.is_admin, "team": m.team is not None},
     )

@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { ArrowLeft, Check, Cloud, Loader2, RefreshCw, Trash2, Zap } from "lucide-react";
 import { toast } from "sonner";
 import { JobProgress } from "@/components/jobs/job-progress";
+import { ShareButton, ViewOnlyBanner, useProjectAccess } from "@/components/projects/share-dialog";
 import { useMe } from "@/components/shell/member-context";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -59,6 +60,9 @@ export function StoryEditor({ projectId }: { projectId: string }) {
   const activeAi = useMemo(() => jobs.find((j) => AI_KINDS.has(j.kind) && (j.status === "queued" || j.status === "running")), [jobs]);
   const lastAi = useMemo(() => jobs.find((j) => AI_KINDS.has(j.kind)), [jobs]);
   const [tab, setTab] = useState("script");
+  const { access, reload: reloadAccess } = useProjectAccess(projectId);
+  const viewOnly = access?.my_access === "viewer";
+  const invitee = viewOnly || access?.my_access === "editor";
 
   const total = (scenes ?? []).reduce((a, s) => a + estimateSeconds(s.narration), 0);
 
@@ -110,11 +114,17 @@ export function StoryEditor({ projectId }: { projectId: string }) {
               )}
             </div>
           </div>
-          {/* Delete rights (creator or admin) are enforced by the API. */}
-          <Button variant="ghost" size="icon" onClick={remove} aria-label="Delete story">
-            <Trash2 />
-          </Button>
+          <div className="flex gap-2">
+            <ShareButton projectId={projectId} access={access} reload={reloadAccess} />
+            {/* Delete rights (creator or admin) are enforced by the API. */}
+            {!invitee && (
+              <Button variant="ghost" size="icon" onClick={remove} aria-label="Delete story">
+                <Trash2 />
+              </Button>
+            )}
+          </div>
         </div>
+        <ViewOnlyBanner access={access} />
 
         {activeAi && <JobProgress job={activeAi} compact />}
         {!activeAi && lastAi?.status === "failed" && <JobProgress job={lastAi} />}
@@ -128,7 +138,8 @@ export function StoryEditor({ projectId }: { projectId: string }) {
               </TabsTrigger>
             ))}
           </TabsList>
-          <TabsContent value="script" className="mt-5 grid gap-4">
+          <TabsContent value="script" className="mt-5">
+            <fieldset disabled={viewOnly} className="grid min-w-0 gap-4">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <p className="text-sm text-muted-foreground">
                 {scenes?.length ?? 0} scenes · ~{total.toFixed(0)} s of narration (target {story.length_s} s)
@@ -154,10 +165,14 @@ export function StoryEditor({ projectId }: { projectId: string }) {
             ) : (
               <Storyboard projectId={projectId} scenes={scenes} setScenes={setScenes} aiBusy={!!activeAi} />
             )}
+            </fieldset>
           </TabsContent>
           {storyStepTabs.map((t) => (
             <TabsContent key={t.id} value={t.id} className="mt-5">
-              {scenes && <t.Component story={story} scenes={scenes} setScenes={setScenes} jobs={jobs} />}
+              {/* Viewers can still download the finished video on the Render step. */}
+              <fieldset disabled={viewOnly && t.id !== "render"} className="min-w-0">
+                {scenes && <t.Component story={story} scenes={scenes} setScenes={setScenes} jobs={jobs} />}
+              </fieldset>
             </TabsContent>
           ))}
         </Tabs>

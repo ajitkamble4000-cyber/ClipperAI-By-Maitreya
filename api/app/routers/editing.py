@@ -30,7 +30,7 @@ def _words(clip: dict) -> list[dict]:
 @router.get("/clips/{clip_id}/cues")
 def get_cues(clip_id: str, m: CurrentMember) -> list[dict]:
     """The captions as editable lines (start, end, text)."""
-    clip = clip_for(clip_id, m)
+    clip = clip_for(clip_id, m, write=False)
     return [{"start": a, "end": b, "text": t} for a, b, t in cues(_words(clip), per_line=6)]
 
 
@@ -78,7 +78,7 @@ class ExportIn(BaseModel):
 
 @router.post("/clips/{clip_id}/export", status_code=201)
 def export_clip(clip_id: str, body: ExportIn, m: CurrentMember) -> dict:
-    clip = clip_for(clip_id, m)
+    clip = clip_for(clip_id, m, write=False)
     if clip["status"] != "ready":
         raise HTTPException(status.HTTP_409_CONFLICT, "The clip isn't ready yet")
     return launch(m, "clip_export", str(clip["project_id"]), {"clip_id": clip_id, "format": body.format}, {})
@@ -92,7 +92,7 @@ class CompilationIn(BaseModel):
 
 @router.post("/clipper/projects/{project_id}/compilation", status_code=201)
 def compilation(project_id: str, body: CompilationIn, m: CurrentMember) -> dict:
-    p = project_for(project_id, m)
+    p = project_for(project_id, m, write=True)
     if p["type"] != "clip":
         raise HTTPException(status.HTTP_400_BAD_REQUEST, "Compilations are made from clips")
     try:

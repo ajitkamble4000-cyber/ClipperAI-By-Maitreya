@@ -74,7 +74,7 @@ function scoreVariant(s: number) {
   return s >= 80 ? "success" : s >= 60 ? "warning" : "secondary";
 }
 
-export function ClipCard({ clip, locked }: { clip: Clip; locked?: boolean }) {
+export function ClipCard({ clip, locked, readOnly }: { clip: Clip; locked?: boolean; readOnly?: boolean }) {
   const [src, setSrc] = useState<{ video: string; poster?: string } | null>(null);
   const [title, setTitle] = useState(clip.title);
   const [description, setDescription] = useState(clip.description);
@@ -202,7 +202,7 @@ export function ClipCard({ clip, locked }: { clip: Clip; locked?: boolean }) {
           <Button size="sm" className="flex-1" onClick={download} disabled={!clip.video_key || busy}>
             <Download /> Download
           </Button>
-          <Button size="sm" variant="secondary" onClick={() => setStyleOpen(true)} disabled={busy || locked} aria-label="Change caption style">
+          <Button size="sm" variant="secondary" onClick={() => setStyleOpen(true)} disabled={busy || locked || readOnly} aria-label="Change caption style">
             <Palette />
           </Button>
           <Button size="sm" variant="secondary" onClick={share} disabled={!clip.video_key || busy} aria-label="Share link" data-testid="share-clip">
@@ -231,6 +231,7 @@ export function ClipCard({ clip, locked }: { clip: Clip; locked?: boolean }) {
           </div>
           <Input
             id={`t-${clip.id}`}
+            readOnly={readOnly}
             value={title}
             maxLength={100}
             onFocus={() => (editing.current = true)}
@@ -247,6 +248,7 @@ export function ClipCard({ clip, locked }: { clip: Clip; locked?: boolean }) {
           </div>
           <Textarea
             id={`d-${clip.id}`}
+            readOnly={readOnly}
             rows={2}
             value={description}
             onFocus={() => (editing.current = true)}
@@ -263,6 +265,7 @@ export function ClipCard({ clip, locked }: { clip: Clip; locked?: boolean }) {
           </div>
           <Input
             id={`h-${clip.id}`}
+            readOnly={readOnly}
             value={tags}
             onFocus={() => (editing.current = true)}
             onChange={(e) => setTags(e.target.value)}
@@ -283,11 +286,11 @@ export function ClipCard({ clip, locked }: { clip: Clip; locked?: boolean }) {
             {(["start", "end"] as const).map((w) => (
               <div key={w} className="flex items-center gap-1">
                 <span className="w-9 text-xs capitalize text-muted-foreground">{w}</span>
-                <Button size="sm" variant="outline" onClick={() => nudge(w, -1)} aria-label={`${w} minus 1 second`} disabled={busy || locked}>
+                <Button size="sm" variant="outline" onClick={() => nudge(w, -1)} aria-label={`${w} minus 1 second`} disabled={busy || locked || readOnly}>
                   <Minus />
                 </Button>
                 <span className="w-12 text-center text-sm tabular-nums">{(w === "start" ? start : end).toFixed(1)}</span>
-                <Button size="sm" variant="outline" onClick={() => nudge(w, 1)} aria-label={`${w} plus 1 second`} disabled={busy || locked}>
+                <Button size="sm" variant="outline" onClick={() => nudge(w, 1)} aria-label={`${w} plus 1 second`} disabled={busy || locked || readOnly}>
                   <Plus />
                 </Button>
               </div>
@@ -301,7 +304,7 @@ export function ClipCard({ clip, locked }: { clip: Clip; locked?: boolean }) {
                 size="sm"
                 variant={a === aspect ? "default" : "outline"}
                 className="h-7 px-2 text-xs"
-                disabled={busy || locked}
+                disabled={busy || locked || readOnly}
                 onClick={() => reformat(a)}
                 aria-pressed={a === aspect}
               >
@@ -324,9 +327,11 @@ export function ClipCard({ clip, locked }: { clip: Clip; locked?: boolean }) {
         <ClipTools
           clipId={clip.id}
           disabled={busy || locked || clip.status !== "ready"}
+          readOnly={readOnly}
           music={clip.render_opts?.music}
           caption={[title, description, tags].filter(Boolean).join("\n\n")}
         />
+        {!readOnly && (
         <ExtrasPanel
           base={`/clips/${clip.id}`}
           covers={clip.covers}
@@ -341,6 +346,7 @@ export function ClipCard({ clip, locked }: { clip: Clip; locked?: boolean }) {
             save({ hashtags: h });
           }}
         />
+        )}
       </div>
 
       <Dialog open={styleOpen} onOpenChange={setStyleOpen}>

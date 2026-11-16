@@ -182,6 +182,7 @@ def test_prices_and_plans_admin(client, make_member, monkeypatch):
     db.execute("update members set role = 'admin' where role = 'owner'")
     oid = create_auth_user(email)
     owner = {"Authorization": f"Bearer {sign_in(email)}"}
+    before = db.fetch_one("select price_usd_month, limits, features from plans where id = 'pro'")
     try:
         r = client.put(
             "/admin/plans/pro",
@@ -202,10 +203,8 @@ def test_prices_and_plans_admin(client, make_member, monkeypatch):
         )
         assert b.status_code == 200
     finally:
-        db.execute(
-            "update plans set price_usd_month = 19, limits = jsonb_set(limits, '{max_clips_per_job}', '15'), "
-            "features = array['clipper','captions','story','exports','basic_voices','no_watermark','visual_analysis',"
-            "'brand_kit','translation','filler_removal','keyword_emphasis','templates','premium_voices','thumbnails',"
-            "'title_variants','share_links','output_formats'] where id = 'pro'"
+        db.execute(  # put the plan back exactly as it was (features added by later migrations included)
+            "update plans set price_usd_month = %s, limits = %s, features = %s where id = 'pro'",
+            [before["price_usd_month"], db.jsonb(before["limits"]), before["features"]],
         )
         db.execute("update members set role = 'user' where user_id = %s", [oid])

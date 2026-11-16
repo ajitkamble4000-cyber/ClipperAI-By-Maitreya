@@ -16,4 +16,5 @@ export const FEATURES: Record<string, { label: string; plan: "Pro" | "Business" 
   batch: { label: "Batch mode", plan: "Business" },
   priority: { label: "Priority processing", plan: "Business" },
   api_access: { label: "Developer API & webhooks", plan: "Business" },
+  collaboration: { label: "Share projects with collaborators", plan: "Pro" },
 };

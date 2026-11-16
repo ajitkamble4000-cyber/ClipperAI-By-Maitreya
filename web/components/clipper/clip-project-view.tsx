@@ -14,6 +14,7 @@ import { useProject, useProjectRows } from "@/hooks/use-rows";
 import { api, signedUrl } from "@/lib/api";
 import { CompilationButton } from "@/components/clipper/compilation-dialog";
 import { RepurposePanel } from "@/components/projects/repurpose-panel";
+import { ShareButton, ViewOnlyBanner, useProjectAccess } from "@/components/projects/share-dialog";
 import { ClipCard, type Clip } from "./clip-card";
 
 export function ClipProjectView({ projectId }: { projectId: string }) {
@@ -26,6 +27,8 @@ export function ClipProjectView({ projectId }: { projectId: string }) {
   const liveMain = useJob(mainJob?.id);
   const [zipJobId, setZipJobId] = useState<string | null>(null);
   const zipJob = useJob(zipJobId);
+  const { access, reload: reloadAccess } = useProjectAccess(projectId);
+  const viewOnly = access?.my_access === "viewer";
 
   useEffect(() => {
     if (zipJob?.status === "succeeded" && zipJob.result?.key) {
@@ -83,8 +86,9 @@ export function ClipProjectView({ projectId }: { projectId: string }) {
             {meta.options?.translate_to ? ` · captions in ${String(meta.options.translate_to)}` : ""}
           </p>
         </div>
-        <div className="flex gap-2">
-          {clips && <CompilationButton projectId={projectId} clips={clips} />}
+        <div className="flex flex-wrap gap-2">
+          <ShareButton projectId={projectId} access={access} reload={reloadAccess} />
+          {clips && !viewOnly && <CompilationButton projectId={projectId} clips={clips} />}
           <Button onClick={zip} disabled={!readyCount || !!zipJobId} data-testid="zip">
             <FileArchive /> {zipJobId ? `Zipping ${zipJob?.percent ?? 0}%` : "Download all (ZIP)"}
           </Button>
@@ -96,8 +100,11 @@ export function ClipProjectView({ projectId }: { projectId: string }) {
         </div>
       </div>
 
+      <ViewOnlyBanner access={access} />
       {liveMain && (generating || liveMain.status === "failed") && <JobProgress job={liveMain} />}
-      {!generating && meta.transcript_key ? <RepurposePanel projectId={projectId} title={String(project.title ?? "video")} /> : null}
+      {!generating && meta.transcript_key ? (
+        <RepurposePanel projectId={projectId} title={String(project.title ?? "video")} readOnly={viewOnly} />
+      ) : null}
       {meta.mode === "basic" && !generating && (
         <div className="flex gap-2 rounded-xl border border-warning/40 bg-warning/10 p-3 text-sm">
           <Info className="mt-0.5 size-4 shrink-0 text-warning" />
@@ -119,7 +126,7 @@ export function ClipProjectView({ projectId }: { projectId: string }) {
       ) : (
         <div className={meta.mode === "whole" ? "grid max-w-4xl gap-4" : "grid gap-4 xl:grid-cols-2"}>
           {clips.map((c) => (
-            <ClipCard key={c.id} clip={c} locked={!!generating} />
+            <ClipCard key={c.id} clip={c} locked={!!generating} readOnly={viewOnly} />
           ))}
         </div>
       )}

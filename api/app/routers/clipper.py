@@ -412,7 +412,7 @@ def clip_captions(clip_id: str, fmt: Literal["srt", "vtt", "txt"], m: CurrentMem
     """The captions exactly as burned into the clip (translated / jump-cut timing included)."""
     from studio_shared.captions_files import render_file
 
-    clip = clip_for(clip_id, m)
+    clip = clip_for(clip_id, m, write=False)
     if not clip.get("words_key"):
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Captions are available once the clip has rendered")
     try:

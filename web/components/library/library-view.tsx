@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
+import { api } from "@/lib/api";
 import { supabaseBrowser } from "@/lib/supabase/client";
 import { realtimeAuth } from "@/lib/supabase/realtime";
 import { timeAgo } from "@/lib/utils";
@@ -42,6 +43,7 @@ export function LibraryView({ fixedType }: { fixedType?: "clip" | "story" } = {}
   const [type, setType] = useState<string>(fixedType ?? "all");
   const [creator, setCreator] = useState("all");
   const [status, setStatus] = useState("all");
+  const [shared, setShared] = useState<Record<string, { role: string; owner_name: string }>>({});
 
   useEffect(() => {
     const sb = supabaseBrowser();
@@ -58,6 +60,9 @@ export function LibraryView({ fixedType }: { fixedType?: "clip" | "story" } = {}
       .then(({ data }) =>
         setMembers(Object.fromEntries((data ?? []).map((m) => [m.user_id, m.display_name || m.email.split("@")[0]]))),
       );
+    api<{ id: string; role: string; owner_name: string }[]>("/shared-with-me")
+      .then((list) => setShared(Object.fromEntries(list.map((p) => [p.id, { role: p.role, owner_name: p.owner_name }]))))
+      .catch(() => {});
     let ch: ReturnType<typeof sb.channel> | null = null;
     realtimeAuth(sb).then(() => {
       ch = sb.channel("library").on("postgres_changes", { event: "*", schema: "public", table: "projects" }, load).subscribe();
@@ -72,11 +77,11 @@ export function LibraryView({ fixedType }: { fixedType?: "clip" | "story" } = {}
     return (rows ?? []).filter(
       (r) =>
         (type === "all" || r.type === type) &&
-        (creator === "all" || r.created_by === creator) &&
+        (creator === "all" || (creator === "shared" ? !!shared[r.id] : r.created_by === creator)) &&
         (status === "all" || r.status === status) &&
         (!needle || r.title.toLowerCase().includes(needle)),
     );
-  }, [rows, q, type, creator, status]);
+  }, [rows, q, type, creator, status, shared]);
 
   const statuses = useMemo(() => [...new Set((rows ?? []).map((r) => r.status))], [rows]);
 
@@ -128,7 +133,12 @@ export function LibraryView({ fixedType }: { fixedType?: "clip" | "story" } = {}
         <Select
           value={creator}
           onValueChange={setCreator}
-          options={[{ value: "all", label: "Everyone" }, ...Object.entries(members).map(([value, label]) => ({ value, label }))]}
+          aria-label="Made by"
+          options={[
+            { value: "all", label: "Everyone" },
+            ...(Object.keys(shared).length ? [{ value: "shared", label: "Shared with me" }] : []),
+            ...Object.entries(members).map(([value, label]) => ({ value, label })),
+          ]}
         />
         <Select
           value={status}
@@ -158,8 +168,14 @@ export function LibraryView({ fixedType }: { fixedType?: "clip" | "story" } = {}
                 </Badge>
               </div>
               <p className="mt-0.5 text-xs text-muted-foreground">
-                {r.type === "clip" ? "Clips" : "Story"} · {members[r.created_by ?? ""] ?? "Unknown"} · {timeAgo(r.created_at)}
+                {r.type === "clip" ? "Clips" : "Story"} · {members[r.created_by ?? ""] ?? shared[r.id]?.owner_name?.split("@")[0] ?? "Unknown"} ·{" "}
+                {timeAgo(r.created_at)}
               </p>
+              {shared[r.id] && (
+                <Badge variant="secondary" className="mt-1" data-testid="shared-badge">
+                  Shared with you · {shared[r.id].role === "editor" ? "can edit" : "view only"}
+                </Badge>
+              )}
             </Link>
           ))}
         </div>

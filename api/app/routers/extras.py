@@ -99,7 +99,7 @@ def clip_thumbnail(clip_id: str, body: ThumbIn, m: CurrentMember) -> dict:
 @router.post("/story/{project_id}/thumbnail", status_code=201)
 def story_thumbnail(project_id: str, body: ThumbIn, m: CurrentMember) -> dict:
     require_feature(m, "thumbnails")
-    p = project_for(project_id, m)
+    p = project_for(project_id, m, write=True)
     if p["type"] != "story":
         raise HTTPException(status.HTTP_400_BAD_REQUEST, "Not a story")
     _busy("thumbnail", "story_id", project_id)
@@ -117,7 +117,7 @@ def clip_ideas(clip_id: str, m: CurrentMember) -> dict:
 @router.post("/story/{project_id}/ideas", status_code=201)
 def story_ideas(project_id: str, m: CurrentMember) -> dict:
     require_feature(m, "title_variants")
-    p = project_for(project_id, m)
+    p = project_for(project_id, m, write=True)
     if p["type"] != "story":
         raise HTTPException(status.HTTP_400_BAD_REQUEST, "Not a story")
     _busy("title_variants", "story_id", project_id)

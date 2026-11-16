@@ -35,11 +35,14 @@ const fmt = (t: number) => `${Math.floor(t / 60)}:${(t % 60).toFixed(1).padStart
 export function ClipTools({
   clipId,
   disabled,
+  readOnly,
   music,
   caption,
 }: {
   clipId: string;
   disabled?: boolean;
+  /** Viewers of a shared project: exports and scheduling only. */
+  readOnly?: boolean;
   music?: { mood?: string; volume?: number };
   caption?: string;
 }) {
@@ -100,7 +103,7 @@ export function ClipTools({
 
   return (
     <div className="flex flex-wrap items-center gap-2" data-testid="clip-tools">
-      <Button size="sm" variant="outline" onClick={openEditor} disabled={disabled} data-testid="edit-captions">
+      <Button size="sm" variant="outline" onClick={openEditor} disabled={disabled || readOnly} data-testid="edit-captions">
         <PencilLine /> Edit captions
       </Button>
       <Button size="sm" variant="outline" onClick={() => exportAs("mp3")} disabled={disabled || !!exportJob} data-testid="export-mp3">
@@ -112,7 +115,7 @@ export function ClipTools({
       <ScheduleButton clipId={clipId} defaultCaption={caption} />
       <span className="inline-flex items-center gap-1">
         <Music className="size-4 text-muted-foreground" />
-        <Select value={mood} onValueChange={setMusic} disabled={disabled} className="h-8 w-44 text-xs" aria-label="Background music" options={MUSIC_MOODS} />
+        <Select value={mood} onValueChange={setMusic} disabled={disabled || readOnly} className="h-8 w-44 text-xs" aria-label="Background music" options={MUSIC_MOODS} />
       </span>
 
       <Dialog open={open} onOpenChange={setOpen}>

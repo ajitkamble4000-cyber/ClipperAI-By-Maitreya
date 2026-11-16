@@ -38,3 +38,6 @@ infra/supabase/.temp
 # test output
 web/test-results/
 web/playwright-report/
+
+# Celery beat state (created when the worker runs with -B)
+celerybeat-schedule*
