@@ -24,6 +24,8 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
+    outputs:
+      pages: ${{ steps.pages.outcome }}
     defaults:
       run:
         working-directory: web
@@ -36,23 +38,28 @@ jobs:
           cache-dependency-path: web/package-lock.json
       - id: pages
         uses: actions/configure-pages@v5
+        continue-on-error: true # Pages not switched on yet: still build (as a check), skip publishing
+      - if: steps.pages.outcome != 'success'
+        run: echo "::warning title=GitHub Pages is off::Turn it on in Settings → Pages → Source → GitHub Actions, then re-run this workflow. The site was built but not published."
       - run: npm ci
       - name: Build static site
         run: npx next build
         env:
           STATIC_EXPORT: "1"
-          PAGES_BASE_PATH: ${{ steps.pages.outputs.base_path }}
+          PAGES_BASE_PATH: ${{ steps.pages.outputs.base_path || format('/{0}', github.event.repository.name) }}
           NEXT_PUBLIC_SUPABASE_URL: ${{ vars.NEXT_PUBLIC_SUPABASE_URL }}
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ vars.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
           NEXT_PUBLIC_API_URL: ${{ vars.NEXT_PUBLIC_API_URL }}
           NEXT_TELEMETRY_DISABLED: "1"
       - run: touch out/.nojekyll
-      - uses: actions/upload-pages-artifact@v3
+      - if: steps.pages.outcome == 'success'
+        uses: actions/upload-pages-artifact@v3
         with:
           path: web/out
 
   deploy:
     needs: build
+    if: needs.build.outputs.pages == 'success'
     runs-on: ubuntu-latest
     environment:
       name: github-pages
