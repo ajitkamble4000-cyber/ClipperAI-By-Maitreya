@@ -10,6 +10,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from studio_shared import db
 from studio_shared.config import get_settings
+from studio_shared.errors import UserError
 from studio_shared.logging_setup import setup as setup_logging
 from studio_shared.tokens import InsufficientTokens
 from studio_shared.usage import BudgetExceeded
@@ -51,6 +52,11 @@ app.add_middleware(
 @app.exception_handler(InsufficientTokens)
 async def tokens_handler(_: Request, exc: InsufficientTokens) -> JSONResponse:
     return JSONResponse({"detail": str(exc)}, status_code=402)
+
+
+@app.exception_handler(UserError)
+async def user_error_handler(_: Request, exc: UserError) -> JSONResponse:
+    return JSONResponse({"detail": str(exc)}, status_code=400)
 
 
 @app.exception_handler(BudgetExceeded)

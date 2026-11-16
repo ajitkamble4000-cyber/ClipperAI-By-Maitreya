@@ -23,7 +23,9 @@ def plan_row(plan_id: str) -> dict:
 
 def me_payload(m) -> dict:
     plan = plan_row("team" if m.unlimited else m.plan_id) if m.unlimited else plan_row(m.plan_id)
-    row = db.fetch_one("select onboarding from members where user_id = %s", [m.user_id]) or {}
+    row = (
+        db.fetch_one("select onboarding, plan_expires_at from members where user_id = %s", [m.user_id]) or {}
+    )
     return {
         "user_id": m.user_id,
         "email": m.email,
@@ -36,6 +38,7 @@ def me_payload(m) -> dict:
         "features": list(plan.get("features") or []),
         "limits": plan.get("limits") or {},
         "onboarding": row.get("onboarding") or {},
+        "trial_ends_at": row.get("plan_expires_at"),
         "wallet": tokens.get_wallet(m.user_id).to_json(),
     }
 

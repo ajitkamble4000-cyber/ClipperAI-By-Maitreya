@@ -100,6 +100,12 @@ export default function AccountPage() {
               </Button>
             )}
           </div>
+          {me.trial_ends_at && (
+            <p className="text-sm text-primary" data-testid="trial-note">
+              Trial: {me.plan.name} until {new Date(me.trial_ends_at).toLocaleDateString(undefined, { day: "numeric", month: "long" })}, then back to your
+              previous plan.
+            </p>
+          )}
           {pending && (
             <p className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground" data-testid="pending-request">
               You asked for {pending.plan_name} {timeAgo(pending.created_at)}. We'll notify you when it's approved.

@@ -12,6 +12,8 @@ const TABS = [
   { href: "/admin/requests", label: "Upgrade requests" },
   { href: "/admin/jobs", label: "Jobs" },
   { href: "/admin/plans", label: "Plans & prices" },
+  { href: "/admin/promos", label: "Promo codes" },
+  { href: "/admin/site", label: "Site & referrals" },
   { href: "/admin/announcements", label: "Announcements" },
   { href: "/admin/audit", label: "Audit log" },
   { href: "/admin/health", label: "System health" },

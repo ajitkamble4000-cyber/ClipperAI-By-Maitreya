@@ -9,6 +9,7 @@ import { BudgetBanner } from "./budget-banner";
 import { TokenChip } from "./token-chip";
 import { isAdmin, MemberProvider, type Me } from "./member-context";
 import { NotificationBell } from "./notification-bell";
+import { SiteBanner } from "./site-banner";
 
 type NavItem = { href: string; label: string; icon: typeof Home; admin?: boolean; owner?: boolean };
 
@@ -79,6 +80,9 @@ export function AppShell({ me, children }: { me: Me; children: React.ReactNode }
           <NotificationBell />
         </header>
         <main className="min-w-0 px-4 pb-24 pt-6 md:px-8 md:pb-10">
+          <div className="-mx-4 -mt-6 mb-6 md:-mx-8">
+            <SiteBanner />
+          </div>
           <BudgetBanner />
           {children}
         </main>

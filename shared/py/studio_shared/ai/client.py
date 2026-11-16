@@ -59,7 +59,9 @@ def role_chain(role: str, override: str | None = None) -> list[tuple[str, str]]:
     refs += list(models.get(f"{role}_fallback") or [])
     chain = [p for p in (parse_model_ref(r) for r in refs if r) if p]
     if not chain:
-        raise NotConfigured(f"No {role} model is selected. The owner can choose one in Settings → AI providers.")
+        raise NotConfigured(
+            f"No {role} model is selected. The owner can choose one in Settings → AI providers."
+        )
     return chain
 
 

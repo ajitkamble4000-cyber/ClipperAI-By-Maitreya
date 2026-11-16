@@ -85,6 +85,15 @@ def launch(
     """Create + charge + enqueue. Raises 402 with a clear message if the user lacks tokens.
     Batch launches (a plan feature with its own size limit) queue up instead of hitting the concurrency cap."""
     check_job_rate(m.user_id, rate_cost)
+    if not m.is_admin:
+        from studio_shared.growth import site
+
+        if site()["jobs_paused"]:
+            raise HTTPException(
+                status.HTTP_503_SERVICE_UNAVAILABLE,
+                site()["maintenance_message"]
+                or "New jobs are paused for maintenance. Please try again soon.",
+            )
     if kind not in LIGHT_KINDS and not batch:
         check_concurrency(m)
     qp = quote_params if quote_params is not None else params

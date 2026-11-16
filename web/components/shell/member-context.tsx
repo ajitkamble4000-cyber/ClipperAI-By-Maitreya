@@ -34,6 +34,7 @@ export interface Me {
   limits: Record<string, number | boolean>;
   onboarding: Record<string, boolean>;
   wallet: Wallet;
+  trial_ends_at?: string | null;
 }
 
 const Ctx = createContext<Me | null>(null);

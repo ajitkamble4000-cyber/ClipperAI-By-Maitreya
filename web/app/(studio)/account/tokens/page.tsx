@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { ArrowDownRight, Coins, Gift, Infinity as InfinityIcon, RefreshCcw, RotateCcw } from "lucide-react";
+import { RedeemCard, ReferralCard } from "@/components/account/growth-cards";
 import { PageHeader } from "@/components/shell/page-header";
 import { useMe } from "@/components/shell/member-context";
 import { useWallet } from "@/components/shell/token-chip";
@@ -36,7 +37,7 @@ const REASON: Record<string, { label: string; icon: typeof Coins }> = {
   charge: { label: "Spent", icon: ArrowDownRight },
   refund: { label: "Refunded", icon: RotateCcw },
   adjust: { label: "Returned", icon: RotateCcw },
-  grant: { label: "Gift from the team", icon: Gift },
+  grant: { label: "Bonus tokens", icon: Gift },
   revoke: { label: "Removed by the team", icon: ArrowDownRight },
   daily_refill: { label: "Daily refill", icon: RefreshCcw },
   plan_change: { label: "New plan allowance", icon: RefreshCcw },
@@ -50,8 +51,9 @@ export default function TokensPage() {
   const [prices, setPrices] = useState<Price[]>([]);
   const [labels, setLabels] = useState<Record<string, string>>({});
 
+  const loadLedger = () => api<Entry[]>("/tokens/ledger?limit=100").then(setRows).catch(() => setRows([]));
   useEffect(() => {
-    api<Entry[]>("/tokens/ledger?limit=100").then(setRows).catch(() => setRows([]));
+    loadLedger();
     api<Price[]>("/tokens/prices")
       .then((p) => {
         setPrices(p.filter((x) => x.tokens > 0));
@@ -110,6 +112,11 @@ export default function TokensPage() {
           .
         </p>
       )}
+
+      <div className="grid gap-4 md:grid-cols-2">
+        <RedeemCard onDone={loadLedger} />
+        <ReferralCard />
+      </div>
 
       <Card>
         <CardHeader>

@@ -28,6 +28,7 @@ app.conf.update(
     beat_schedule={
         "recover-stuck-jobs": {"task": "worker.recover_stuck_jobs", "schedule": 120.0},
         "cleanup-sources": {"task": "worker.cleanup_sources", "schedule": crontab(minute=17, hour="*/6")},
+        "expire-trials": {"task": "worker.expire_trials", "schedule": 900.0},
     },
 )
 

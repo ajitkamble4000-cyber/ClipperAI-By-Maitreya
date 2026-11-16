@@ -76,7 +76,7 @@ def _bearer(request: Request) -> str:
 
 PROFILE_SQL = """
     select m.user_id, m.email, m.role, m.display_name, m.plan_id, m.team, m.status, m.suspended_reason,
-           m.last_seen_at, u.email_confirmed_at, lower(u.email) as auth_email
+           m.last_seen_at, m.plan_expires_at, u.email_confirmed_at, lower(u.email) as auth_email
       from public.members m join auth.users u on u.id = m.user_id
      where m.user_id = %s
 """
@@ -116,6 +116,11 @@ def load_member(user_id: str) -> Member | None:
         if not row:
             return None
     row = sync_owner(row)
+    if row.get("plan_expires_at") is not None:
+        from studio_shared.growth import expire_trial
+
+        if expire_trial(user_id):
+            row = db.fetch_one(PROFILE_SQL, [user_id]) or row
     if row["last_seen_at"] is None or (
         db.fetch_one("select now() - %s::timestamptz > interval '5 minutes' as stale", [row["last_seen_at"]])
         or {}

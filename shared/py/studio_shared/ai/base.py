@@ -181,7 +181,9 @@ def credentials(provider: str) -> Credentials:
         key = app_settings.gemini_key()
     base = (row.get("base_url") or info.default_base_url or "").rstrip("/") or None
     if row and row.get("enabled") is False:
-        raise NotConfigured(f"{info.label} is turned off. The owner can enable it in Settings → AI providers.")
+        raise NotConfigured(
+            f"{info.label} is turned off. The owner can enable it in Settings → AI providers."
+        )
     return Credentials(provider, key, base, row.get("extra") or {})
 
 

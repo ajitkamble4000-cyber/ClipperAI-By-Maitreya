@@ -28,6 +28,15 @@ def on_job_finished(job: dict[str, Any], status: str, result: dict[str, Any]) ->
         _notify(job, "failed", result.get("error"))
     elif status == "succeeded":
         _notify(job, "succeeded", None)
+        if job["kind"] in ("clip", "story_render") and job.get("created_by"):
+            try:  # a friend's first finished video unlocks the referral reward for both of them
+                from studio_shared.growth import maybe_reward_referral
+
+                maybe_reward_referral(str(job["created_by"]))
+            except Exception:  # noqa: BLE001 - rewards must never break a finished job
+                import logging
+
+                logging.getLogger(__name__).exception("referral reward failed")
     new = _PROJECT_STATUS.get((job["kind"], status))
     if new and job.get("project_id"):
         db.execute("update projects set status = %s where id = %s", [new, job["project_id"]])

@@ -61,7 +61,7 @@ Panels: 51 notifications · 52 landing page · 53 pricing page · 54 onboarding 
 
 ## V3 batch (more features)
 
-- [ ] 17. Growth: promo codes (bonus tokens or plan trials with auto-expiry), referral program (both sides
+- [x] 17. Growth: promo codes (bonus tokens or plan trials with auto-expiry), referral program (both sides
       rewarded after the friend's first finished video), owner site controls (sign-ups open/closed,
       maintenance banner, referral rewards)
 - [ ] 18. Editing: fix caption words and re-render, background music on clips (auto-ducked), compilations

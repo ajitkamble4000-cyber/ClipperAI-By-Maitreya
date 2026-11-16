@@ -151,3 +151,11 @@ def cleanup_sources() -> int:
                 pass
         db.execute("update uploads set status = 'aborted' where id = %s", [u["id"]])
     return len(rows)
+
+
+@app.task(name="worker.expire_trials")
+def expire_trials() -> int:
+    """Plan trials from promo codes end on time even for people who don't sign in."""
+    from studio_shared.growth import expire_trials as run
+
+    return run()

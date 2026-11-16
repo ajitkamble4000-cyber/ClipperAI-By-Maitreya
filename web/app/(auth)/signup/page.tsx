@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { useSiteStatus } from "@/components/shell/site-banner";
 import { supabaseBrowser } from "@/lib/supabase/client";
 
 export default function SignupPage() {
@@ -24,6 +25,8 @@ function Signup() {
   const params = useSearchParams();
   const raw = params.get("next");
   const next = raw && raw.startsWith("/") && !raw.startsWith("//") ? raw : "/";
+  const ref = (params.get("ref") ?? "").toLowerCase().replace(/[^a-z0-9]/g, "").slice(0, 16);
+  const site = useSiteStatus();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -37,10 +40,10 @@ function Signup() {
     const { data, error } = await supabaseBrowser().auth.signUp({
       email: email.trim().toLowerCase(),
       password,
-      options: { data: { display_name: name.trim() }, emailRedirectTo: `${window.location.origin}/auth/accept?mode=signup&next=${encodeURIComponent(next)}` },
+      options: { data: { display_name: name.trim(), ...(ref ? { ref } : {}) }, emailRedirectTo: `${window.location.origin}/auth/accept?mode=signup&next=${encodeURIComponent(next)}` },
     });
     setBusy(false);
-    if (error) return toast.error(error.message);
+    if (error) return toast.error(/closed/i.test(error.message) || /Database error/i.test(error.message) ? "Sign-ups are closed right now." : error.message);
     if (data.session) {
       router.replace(next);
       router.refresh();
@@ -63,9 +66,31 @@ function Signup() {
     );
   }
 
+  if (site && !site.signups_open) {
+    return (
+      <Card data-testid="signups-closed">
+        <CardHeader>
+          <CardTitle>Sign-ups are closed right now</CardTitle>
+          <CardDescription>
+            We&apos;re not taking new accounts at the moment. Have an account?{" "}
+            <Link href="/login" className="text-primary hover:underline">
+              Sign in
+            </Link>
+            .
+          </CardDescription>
+        </CardHeader>
+      </Card>
+    );
+  }
+
   return (
     <Card>
       <CardHeader>
+        {ref && site && site.referral_reward > 0 && (
+          <p className="mb-2 rounded-lg bg-primary/10 px-3 py-2 text-sm text-primary" data-testid="referral-note">
+            A friend invited you: you&apos;ll both get {site.referral_reward.toLocaleString()} bonus tokens after your first video.
+          </p>
+        )}
         <CardTitle>Create your free account</CardTitle>
         <CardDescription>1,000 tokens every day: enough for several captioned videos. No card needed.</CardDescription>
       </CardHeader>
