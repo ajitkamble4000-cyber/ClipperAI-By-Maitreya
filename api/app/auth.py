@@ -23,6 +23,7 @@ class Member:
     team: str | None = None
     status: str = "active"
     extra: dict[str, Any] = field(default_factory=dict)
+    via_api_key: bool = False
 
     @property
     def is_owner(self) -> bool:
@@ -138,9 +139,37 @@ def load_member(user_id: str) -> Member | None:
     )
 
 
+def _api_key_user(key: str) -> str:
+    from studio_shared.apikeys import hash_key
+
+    row = db.fetch_one(
+        "select id, user_id, last_used_at from api_keys where key_hash = %s and revoked_at is null",
+        [hash_key(key)],
+    )
+    if not row:
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Invalid API key")
+    db.execute(
+        "update api_keys set last_used_at = now() where id = %s and (last_used_at is null or last_used_at < now() - interval '1 minute')",
+        [row["id"]],
+    )
+    return str(row["user_id"])
+
+
 def current_member(request: Request) -> Member:
-    claims = verify_token(_bearer(request))
-    m = load_member(claims["sub"])
+    api_key = request.headers.get("x-api-key")
+    if api_key and not request.headers.get("authorization"):
+        m = load_member(_api_key_user(api_key))
+        if m:
+            from .plans import has_feature
+
+            m.via_api_key = True
+            if not has_feature(m, "api_access"):
+                raise HTTPException(
+                    status.HTTP_403_FORBIDDEN, "The API is part of the Business plan. See Pricing to upgrade."
+                )
+    else:
+        claims = verify_token(_bearer(request))
+        m = load_member(claims["sub"])
     if not m:
         raise HTTPException(status.HTTP_403_FORBIDDEN, "Account not found")
     if m.status != "active":
@@ -151,19 +180,31 @@ def current_member(request: Request) -> Member:
     return m
 
 
+def require_session(member: Annotated[Member, Depends(current_member)]) -> Member:
+    """Things an API key must never do (manage keys, webhooks, the account): sign in instead."""
+    if member.via_api_key:
+        raise HTTPException(status.HTTP_403_FORBIDDEN, "Sign in to do this (API keys can't)")
+    return member
+
+
 def require_admin(member: Annotated[Member, Depends(current_member)]) -> Member:
+    if member.via_api_key:
+        raise HTTPException(status.HTTP_403_FORBIDDEN, "Admin actions need you to sign in (API keys can't)")
     if not member.is_admin:
         raise HTTPException(status.HTTP_403_FORBIDDEN, "Admins only")
     return member
 
 
 def require_owner(member: Annotated[Member, Depends(current_member)]) -> Member:
+    if member.via_api_key:
+        raise HTTPException(status.HTTP_403_FORBIDDEN, "Owner actions need you to sign in (API keys can't)")
     if not member.is_owner:
         raise HTTPException(status.HTTP_403_FORBIDDEN, "Only the owner can do this")
     return member
 
 
 CurrentMember = Annotated[Member, Depends(current_member)]
+SessionMember = Annotated[Member, Depends(require_session)]
 AdminMember = Annotated[Member, Depends(require_admin)]
 OwnerMember = Annotated[Member, Depends(require_owner)]
 

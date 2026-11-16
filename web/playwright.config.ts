@@ -21,7 +21,7 @@ export default defineConfig({
       cwd: `${ROOT}/api`,
       url: "http://127.0.0.1:8000/health",
       reuseExistingServer: true,
-      env: { PYTHONPATH: `${ROOT}/api`, OWNER_EMAIL: "e2e-owner@example.com" }, // test owner, never the real one
+      env: { PYTHONPATH: `${ROOT}/api`, OWNER_EMAIL: "e2e-owner@example.com", WEBHOOK_ALLOW_PRIVATE: "1" }, // test owner, never the real one
     },
     { command: "npx next start -p 3000", url: "http://localhost:3000/login", reuseExistingServer: true },
   ],

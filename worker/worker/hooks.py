@@ -37,6 +37,7 @@ def on_job_finished(job: dict[str, Any], status: str, result: dict[str, Any]) ->
                 import logging
 
                 logging.getLogger(__name__).exception("referral reward failed")
+    _fire_webhooks(job, status, result.get("error") if status == "failed" else None)
     new = _PROJECT_STATUS.get((job["kind"], status))
     if new and job.get("project_id"):
         db.execute("update projects set status = %s where id = %s", [new, job["project_id"]])
@@ -86,3 +87,30 @@ def _notify(job: dict[str, Any], status: str, error: str | None) -> None:
             )
     except Exception:  # noqa: BLE001 - notifications must never break a job
         pass
+
+
+QUIET_KINDS = ("dummy", "story_scene_ai", "story_image_one")
+
+
+def _fire_webhooks(job: dict[str, Any], status: str, error: str | None) -> None:
+    """Queue a signed event for each of the owner's webhooks (delivered with retries by worker.deliver_webhook)."""
+    if status not in ("succeeded", "failed") or not job.get("created_by") or job["kind"] in QUIET_KINDS:
+        return
+    try:
+        from celery import current_app
+        from studio_shared import webhooks
+        from studio_shared.queue import QUEUE_AI
+
+        event = f"job.{status}"
+        hooks = webhooks.targets(str(job["created_by"]), event)
+        if not hooks:
+            return
+        data = webhooks.job_payload(job, status, error)
+        for h in hooks:
+            current_app.send_task(
+                "worker.deliver_webhook", args=[str(h["id"]), event, data, 1], queue=QUEUE_AI
+            )
+    except Exception:  # noqa: BLE001 - webhooks must never break a finished job
+        import logging
+
+        logging.getLogger(__name__).exception("webhook queueing failed")

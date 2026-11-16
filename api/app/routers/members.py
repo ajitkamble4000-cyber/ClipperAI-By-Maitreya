@@ -10,7 +10,7 @@ from studio_shared import db, tokens
 from studio_shared.config import get_settings
 
 from .. import supabase_admin
-from ..auth import AdminMember, CurrentMember, audit
+from ..auth import AdminMember, CurrentMember, SessionMember, audit
 
 router = APIRouter(tags=["members"])
 
@@ -54,7 +54,7 @@ class ProfileIn(BaseModel):
 
 
 @router.patch("/me")
-def update_me(body: ProfileIn, m: CurrentMember) -> dict:
+def update_me(body: ProfileIn, m: SessionMember) -> dict:
     if body.display_name is not None:
         db.execute("update members set display_name = %s where user_id = %s", [body.display_name, m.user_id])
     if body.onboarding is not None:
@@ -66,7 +66,7 @@ def update_me(body: ProfileIn, m: CurrentMember) -> dict:
 
 
 @router.delete("/me")
-def delete_me(m: CurrentMember) -> dict:
+def delete_me(m: SessionMember) -> dict:
     """Delete my account and everything I made (projects cascade; files are removed by the cleanup task)."""
     if m.is_owner:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, "The owner account can't be deleted from the app.")

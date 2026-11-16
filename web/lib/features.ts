@@ -15,4 +15,5 @@ export const FEATURES: Record<string, { label: string; plan: "Pro" | "Business" 
   premium_video: { label: "Premium AI video", plan: "Business" },
   batch: { label: "Batch mode", plan: "Business" },
   priority: { label: "Priority processing", plan: "Business" },
+  api_access: { label: "Developer API & webhooks", plan: "Business" },
 };

@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ChevronRight, Coins, Link2, LogOut, Palette, Receipt, Trash2 } from "lucide-react";
+import { ChevronRight, Code2, Coins, Link2, LogOut, Palette, Receipt, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { LockedBadge } from "@/components/plan/locked";
 import { PageHeader } from "@/components/shell/page-header";
@@ -131,6 +131,7 @@ export default function AccountPage() {
           { href: "/account/tokens", icon: Coins, label: "Tokens & history", hint: "Balance, refills and every charge" },
           { href: "/account/brand", icon: Palette, label: "Brand kit", hint: "Logo, @handle and colours", feature: "brand_kit" },
           { href: "/pricing", icon: Receipt, label: "Plans & pricing", hint: "What each plan includes" },
+          { href: "/account/developer", icon: Code2, label: "Developer API", hint: "API keys and webhooks", feature: "api_access" },
         ].map((x) => (
           <Link key={x.href} href={x.href} className="flex items-center gap-3 rounded-xl border p-4 hover:border-primary/50">
             <x.icon className="size-5 text-primary" />

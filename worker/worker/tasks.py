@@ -159,3 +159,18 @@ def expire_trials() -> int:
     from studio_shared.growth import expire_trials as run
 
     return run()
+
+
+@app.task(name="worker.deliver_webhook", bind=True)
+def deliver_webhook(self, hook_id: str, event: str, data: dict, attempt: int = 1) -> dict:
+    """POST one webhook event; retried twice (after 30 s and 2 min) if the receiver fails."""
+    from studio_shared import webhooks
+
+    res = webhooks.deliver(hook_id, event, data, attempt)
+    if not res["ok"] and attempt < 3 and res.get("error") != "webhook is off":
+        deliver_webhook.apply_async(
+            args=[hook_id, event, data, attempt + 1],
+            countdown=30 if attempt == 1 else 120,
+            queue=self.request.delivery_info.get("routing_key") or "ai",
+        )
+    return res

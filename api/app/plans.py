@@ -28,6 +28,7 @@ FEATURE_LABELS = {
     "batch": "Batch mode",
     "no_watermark": "No watermark",
     "priority": "Priority processing",
+    "api_access": "Developer API & webhooks",
 }
 LIGHT_KINDS = (
     "clip_zip",
